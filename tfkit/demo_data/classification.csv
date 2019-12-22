@@ -1,0 +1,100 @@
+SENTENCE,LABEL
+One hundred thirty-four patients suspected of having pancreas cancer successfully underwent gray scale ultrasound examination of the pancreas .,population
+"The prospective ultrasound findings were correlated with the final diagnoses , laparotomy findings , and pathology findings .",outcome
+"Fifty-four patients had pancreas cancer , confirmed by resection or biopsy in all cases .",outcome
+"On ultrasonography , the pancreas was correctly reported to have abnormalities in sixty-one of seventy-eight patients ( 78 per cent ) and correctly reported to have no abnornalities in thirty-eight of fifty-six patients ( 68 per cent ) .",outcome
+"A correct ultrasound diagnosis of pancreas cancer was made for forty-four of fifty-six patients ( 81 per cent ) , and there were thirteen false-positive reports .",outcome
+Ninety-four percent of cancers confined to the head of the pancreas and 70 per cent of cancers at other locations within the gland were detected by ultrasound examination .,outcome
+"The correct ultrasound diagnosis was given for fifteen of seventeen patients with resectable pancreas cancer , the degree of associated pancreatitis ranging from minimal to severe .",outcome
+Analysis of the predictive values of positive and negative ultrasound examinations suggests that this test could be used to screen a population of patients with symptoms mildly suggestive of pancreas cancer .,outcome
+"The importance of preselecting the level of confidence of a positive test result , a , ove which further investigation is indicated , is emphasized .",outcome
+"In this secondary data analysis of Primary Care Research in Substance Abuse and Mental Health for the Elderly ( PRIMSe ) study , we hypothesized that older minorities who receive mental health services integrated in primary care settings would have greater s",background
+"We identified 2,022 ( 48 % minorities ) primary care patients 65 years and older , who met study inclusion criteria and had either alcohol misuse , depression , and/or anxiety .",population
+They were randomized to receive treatment for these disorders in the primary care clinic or to a brokerage case management model that linked patients to community-based services .,intervention
+"Service use and clinical outcomes were collected at baseline , three months and six months post randomization on all participants .",other
+Access to and participation in mental health / substance abuse services was greater in the integrated model than in referral ; there were no treatment by ethnicity effects .,outcome
+There were no treatment effects for any of the clinical outcomes ; Whites and older minorities in both integrated and referral groups failed to show clinically significant improvement in symptoms and physical functioning at 6 months .,outcome
+"While providing services in primary care results in better access to and use of these services , accessing these services is not enough for assuring adequate clinical outcomes .",outcome
+"This report describes the case mix and outcome ( mortality , intensive care unit ( ICU ) and hospital length of stay ) for admissions to ICU for head injury and evaluates the predictive ability of five risk adjustment models .",background
+"A secondary analysis was conducted of data from the Intensive Care National Audit and Research Centre ( ICNARC ) Case Mix Programme , a high quality clinical database , of 374,594 admissions to 171 adult critical care units across England , Wales and Northern",population
+"The discrimination and calibration of five risk prediction models , SAPS II , MPM II , APACHE II and III and the ICNARC model plus raw Glasgow Coma Score ( GCS ) were compared .",other
+"There were 11,021 admissions following traumatic brain injury identified ( 3 % of all database admissions ) .",outcome
+Mortality in ICU was 23.5 % and in-hospital was 33.5 % .,outcome
+"Median ICU and hospital lengths of stay were 3.2 and 24 days , respectively , for survivors and 1.6 and 3 days , respectively , for non-survivors .",outcome
+"The ICNARC model , SAPS II and MPM II discriminated best between survivors and non-survivors and were better calibrated than raw GCS , APACHE II and III in 5,393 patients eligible for all models .",outcome
+Traumatic brain injury requiring intensive care has a high mortality rate .,outcome
+Non-survivors have a short length of ICU and hospital stay .,outcome
+"APACHE II and III have poorer calibration and discrimination than SAPS II , MPM II and the ICNARC model in traumatic brain injury ; however , no model had perfect calibration .",outcome
+"Patients with multiple sclerosis who develop progressive disability from onset without relapses or remissions pose difficulties in diagnosis , monitoring of disease activity and treatment .",background
+"There is a need to define the diagnostic criteria for this group more precisely and , in particular , to describe a comprehensive battery of investigations to exclude other conditions .",background
+"The mechanisms underlying the development of disability and the role of MRI in monitoring disease activity in this clinical subgroup require elucidation , particularly in view of the lack of change on conventional imaging in the presence of continuing clin",background
+The prognosis is poor and there are currently no treatment trials for this form of the disease .,background
+Diabetes mellitus affects 21 million Americans ; an additional 41 million individuals in this country have impaired glucose tolerance .,background
+"These individuals are at high risk for developing not only diabetes , but eventually dying from the cardiovascular complications associated with chronic exposure to hyperglycemia .",background
+"Not only do patients with diabetes carry a 1.5 - to 4.5-fold increased risk of cardiovascular mortality , any microvascular complications they develop such as retinopathy , neuropathy , and nephropathy can have a profoundly negative effect on their quality of",background
+Even mild hyperglycemia is associated with macrovascular disease .,background
+"Similarly , hyperglycemia that occurs concurrently during an acute myocardial infarction or stroke is associated with worse outcomes .",background
+"Therefore , evidence suggests that both chronic and acute hyperglycemia lead to higher morbidity and mortality .",background
+"As people age , their 2-hour postchallenge blood glucose level typically increases , often independent of their fasting glucose level .",other
+"At diagnosis , 25 % of patients with type 2 diabetes have normal fasting glucose levels .",other
+The incidence of isolated impaired glucose tolerance is approximately 3 times greater than isolated impaired fasting glucose .,other
+"Therefore , most patients with asymptomatic diabetes have isolated postchallenge hyperglycemia .",other
+A growing body of literature supports targeting postprandial hyperglycemia to lower glycosylated hemoglobin ( A1C ) levels and reduce microvascular and macrovascular complications associated with chronic hyperglycemia .,background
+This article will evaluate a typical patient case and strategies employed by the patient and health care provider .,background
+"Seventy two spinal cord injured subjects ( 63 males and 9 females ) with long-standing lesions ( mean 110 months , range 43-187 ) were admitted to the Sunnaas Hospital for routine examination ( questionnaire , neurological status , radiography , urodynamics , blood",population
+"The subjects were divided into three groups with Low - ( peak VO2 less than 15 ml/kg/min ) , Medium - ( 15 less than VO2 greater than 25 ) and High - ( VO2 greater than 25 ) endurance capacity .",other
+"The rate of urinary tract infections ( UTIs ) and osteoporotic leg bones , was significantly reduced with increasing oxygen uptake ( p less than 0.05 , X2 test ) .",outcome
+"Differences in scores for ADL-independency ( ADL = Activities of daily living ) and ambulation on crutches with braces , were even more pronounced between the L , M and H groups ( p less than 0.001 ) .",outcome
+"The same trends , although not always statistically significant , were also observed in a homogeneous group of paraplegic patients ( n = 43 , injury level below T6 ) .",outcome
+"The results emphasise the importance of regular physical endurance activities to patient well-being , because relatively high endurance capacity was found to be related to less frequent medical complications , and to a higher degree of ADL self-independency",outcome
+Studies aimed at characterizing the operation of cognitive functions in normal individuals have examined data from patients with focal cerebral insult .,background
+These studies assume that brain damage impairs functions of the cognitive processes along lines that honour the ` normal ' pre-morbid organization of the cognitive system .,background
+"For example , detailed study of individual brain-damaged patients has revealed apparently selective disruption of cognitive functions such as auditory/verbal working memory , phonological processing ability , grapheme-to-phoneme translation procedures and se",background
+Warrington et al. have studied patients with even more fine-grained selective disturbances of the semantic system .,background
+The most selective deficits have been reported for four patients who were significantly better at identifying inanimate objects than they were at identifying living things and foods .,background
+"These patterns of selective deficit after localized brain damage provide important information about the normal organization of the lexicon , and ultimately about how components of the lexical system are related to particular neural substrates .",background
+"Here , we report a case study of a patient demonstrating a very selective disturbance of the ability to name items from two related semantic categories .",population
+"Despite normal performance on a large battery of lexical/semantic tasks , the patient shows a consistent and striking disability in naming members of the semantic categories of ` fruits ' and ` vegetables ' .",outcome
+"The selectivity of this deficit supports a category-specific organization of the mental lexicon , and suggests independence of the processing routes involving naming and name recognition .",outcome
+Patients with severe decompensated congestive heart failure ( CHF ) commonly exhibit acid-base and electrolyte disturbances mainly due to the activation of several neurohumoral mechanisms as well as to drugs regularly used in this population .,background
+"Magnesium deficit is not infrequently observed in CHF patients but its pathophysiology remains less well-studied as compared with other electrolyte alterations , such as hypokalemia .",background
+"However , there is evidence that early detection and correction of magnesium abnormalities could obviate potentially deleterious arrhythmogenic effects .",background
+To assess the incidence of magnesium level disorders and analyze the underlying pathophysiological mechanisms in patients with CHF .,other
+Eighty-six consecutive CHF patients ( NYHA class III or IV ) admitted to our hospital over a period of 5 years were studied .,population
+"Patients with diabetes mellitus , liver or renal failure , and chronic obstructive lung disease were excluded .",other
+"All patients received conventional treatment with digoxin , diuretic agents and an angiotensin converting enzyme inhibitor .",intervention
+"On admission , blood and urine electrolytes and renal function parameters were determined .",other
+Arterial blood gases and serum anion gap determinations were also performed .,other
+Hypomagnesemia was found in 15 [ n = 15 ( 17.4 % ) ] CHF patients .,outcome
+"The majority of these patients also exhibited other electrolyte abnormalities , such as hypokalemia , hypocalcemia and hypophosphatemia .",outcome
+Inappropriate magnesiuria ( fractional excretion of magnesium > 4 % ) was evident in eight hypomagnesemic patients .,outcome
+"A variety of associated conditions , including poor dietary intake , also favored magnesium depletion .",outcome
+Magnesium deficit is a common electrolyte disorder in CHF ( NYHA class III/IV ) patients and several interrelated mechanisms are implicated in its pathogenesis .,outcome
+Clinicians ' awareness of the incidence of hypomagnesemia in this population as well as its related pathophysiology could be useful for the early detection and appropriate treatment to inhibit its arrhythmogenic potential .,outcome
+Recent advances in therapy for multiple sclerosis ( MS ) have centred on the use of the disease-modifying drugs glatiramer acetate ( GA ) and interferon ( IFN ) beta .,background
+"Several large-scale clinical trials have been carried out on the use of these compounds , but there have been few studies that have directly compared their efficacy in MS.",background
+"Furthermore , there has been controversy and confusion over the IFN beta therapy regimen that will achieve the best possible clinical outcome for MS patients .",background
+"This review focuses principally on clinical trials of IFN beta-1a , where data that allow direct comparison of different treatment regimens are now available .",intervention
+"Current data indicate that IFN beta , and in particular IFN beta-1a , has important advantages over GA in the treatment of relapsing-remitting MS ( RRMS ) .",outcome
+"Additionally , IFN beta-1a ( Rebif , Serono ) , 44 microg administered subcutaneously ( s.c. ) three times weekly ( t.i.w. ) , is significantly more effective than IFN beta-1a ( Avonex , Biogen ) , 30 microg administered intramuscularly once weekly .",outcome
+"For optimal management of RRMS , treatment with IFN beta-1a , 44 microg s.c. t.i.w. , should begin as early as possible after diagnosis .",outcome
+The objective was to study the effectiveness of a modified washing toilet seat equipped with a CCD camera monitor and an electronic bidet to facilitate precise hitting of the anal area with water streams to stimulate bowel movement in patients with spinal,background
+"There were 20 subjects , all of whom had traumatic SCI , were at least 5 mos post acute injury , and could change their position on the toilet seat while watching the monitor .",population
+Stimulation of bowel movement with the modified toilet seat was provided for a maximum of 30 mins .,intervention
+"Success or failure to induce bowel movement was evaluated as related to injury level , ASIA impairment scale , and ability to voluntarily increase anorectal pressure , measured with a manometory .",other
+Bowel movement was successfully induced in 15 of the 20 patients ( 75 % ) .,outcome
+"Success was not related significantly to injury level , ASIA impairment scale , or ability to voluntarily squeeze .",outcome
+"Compared with their usual manner of bowel management , for which they spent more than 30 mins , time needed for successful bowel movement was shortened in 11 of 13 patients .",outcome
+No complications were observed .,outcome
+This preliminary study suggests that our newly modified washing toilet seat with a monitoring system could be a useful alternative for bowel management in patients with SCI .,outcome
+There is increasing realization among health care administrative decision makers and service providers that we must measure the true value of expensive services by demonstrating the achievement of identified goals .,background
+The objective of this study was to determine whether clients who received the home-based intervention for a hip arthroplasty would result in a more timely discharge home from hospital .,other
+Two hundred and eight clients receiving a total hip replacement at two acute care hospitals comprised the sample .,population
+One hospital included the more costly home-based pre-operative teaching by an occupational therapist as part of its protocol while the other provided comparative occupational therapy intervention within its hospital based pre-admission clinic .,intervention
+Discharge disposition and length of hospital stay were measured .,other
+"Though no significant difference in either of these outcomes was found , a number of issues were raised indicating the complexity of resource allocation to this client population and the importance of the qualitative dimensions of care .",other
+The location for pre-operative teaching for total hip replacements was not found to impact the length of hospital stay nor whether clients are discharged directly home .,outcome
+Nociceptive inputs from primary afferents are primarily mediated at fast glutamatergic synapses onto second order neurons in the dorsal horn of the spinal cord through activation of AMPA/kainate and NMDA receptor subtypes of ionotropic glutamate receptors,background
+At these glutamatergic synapses several forms of short-lasting and long-lasting enhancement of synaptic transmission are known .,background
+"Enhancement of excitatory synaptic transmission in nociceptive pathways is thought to be a key neural substrate underlying chronic pain , and thus the cellular and molecular mechanisms producing this enhancement represent potential targets for developing n",background
+"Central to the mechanisms for pain hypersensitivity is the NMDA receptor , the activity of which is facilitated by convergent intracellular biochemical cascades in dorsal horn neurons .",background
