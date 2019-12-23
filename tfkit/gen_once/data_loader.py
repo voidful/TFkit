@@ -5,13 +5,13 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
-from transformers import BertTokenizer
-
+from transformers import AutoTokenizer
+from utility.tok import *
 
 class loadOnceDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=510, cache=False):
         sample = []
-        tokenizer = BertTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -43,14 +43,14 @@ def get_data_from_file(fpath):
         for i in list(csv.reader(csvfile)):
             source_text = i[0]
             target_text = i[1]
-            input = "[CLS] " + source_text + " [SEP]"
-            target = target_text + " [SEP]"
+            input = source_text
+            target = target_text
             yield tasks, task, input, target
 
 
 def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict = dict()
-    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     mask_id = [1] * len(tokenized_input)
     type_id = [0] * len(tokenized_input)
 
@@ -58,7 +58,7 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['ntarget'] = np.asarray([-1] * maxlen)
 
     if target is not None:
-        tokenized_target = tokenizer.tokenize(target)
+        tokenized_target = tokenizer.tokenize(target) + [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * len(tokenized_input)
         tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
@@ -81,8 +81,9 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['type'] = np.asarray(type_id)
     row_dict['mask'] = np.asarray(mask_id)
     row_dict['start'] = target_start
-    # if debug:
+    # if True:
     #     print("*** Example ***")
+    #     print("tokenized_input",input,tokenized_input)
     #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
     #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
     #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")

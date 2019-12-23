@@ -5,14 +5,15 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 from tqdm import tqdm
+from utility.tok import *
 
 
 class loadOneByOneDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=510, cache=False):
         sample = []
-        tokenizer = BertTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -20,12 +21,19 @@ class loadOneByOneDataset(data.Dataset):
         else:
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
-                feature = get_feature_from_data(tokenizer, maxlen, input, target, ntarget=negative_text)
+                for j in range(1, len(target) + 1):
+                    feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                                                    " ".join(target[:j]),
+                                                    ntarget=negative_text)
+                    sample.append(feature)
+
+                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target),
+                                                ntarget=negative_text)
+                sample.append(feature)
+
                 # if "[SEP]" in target:
                 #     feature = data_loader.get_feature_from_data(tokenizer, maxlen, input, target, ntarget=negative_text,
                 #                                                 debug=True)
-                if len(feature['input']) <= 512:
-                    sample.append(feature)
 
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -48,18 +56,17 @@ def get_data_from_file(fpath):
             source_text = i[0]
             target_text = i[1].split(" ")
             negative_text = i[2] if len(i) > 2 else None
-            input = "[CLS] " + source_text + " [SEP]"
-            for j in range(1, len(target_text) + 1):
-                target = " ".join(target_text[:j])
-                yield tasks, task, input + " ".join(target_text[:j - 1]), target, negative_text
-            input += " ".join(target_text)
-            target = " ".join(target_text) + " [SEP]"
+            input = source_text
+            target = target_text
             yield tasks, task, input, target, negative_text
 
 
-def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
+def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None):
     row_dict = dict()
-    tokenized_input = tokenizer.tokenize(input)
+
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
+    tokenized_previous = tokenizer.tokenize(previous)
+    tokenized_input.extend(tokenized_previous)
     tokenized_input.append('[MASK]')
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     mask_id = [1] * len(tokenized_input)
@@ -71,17 +78,16 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
 
     if target is not None:
         tokenized_target = tokenizer.tokenize(target)
-        last_index_t = len(tokenized_target[:-1])
+        if previous == target:
+            tokenized_target = [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * target_start
-        tokenized_target_id.append(tokenizer.convert_tokens_to_ids([tokenized_target[last_index_t]])[0])
+        tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[0])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = np.asarray(tokenized_target_id)
-        print(tokenized_input, tokenized_target[last_index_t])
     if ntarget is not None:
         tokenized_ntarget = tokenizer.tokenize(ntarget)
-        last_index_t = len(tokenized_ntarget[:-1])
         tokenized_ntarget_id = [-1] * target_start
-        ntarget_token = tokenized_ntarget[last_index_t] if last_index_t < len(tokenized_ntarget) else "[SEP]"
+        ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else "[SEP]"
         ntarget_token_id = tokenizer.convert_tokens_to_ids([ntarget_token])[0]
         tokenized_ntarget_id.append(ntarget_token_id)
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
@@ -96,7 +102,7 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['mask'] = np.asarray(mask_id)
     row_dict['start'] = target_start
 
-    # if debug:
+    # if True:
     #     print("*** Example ***")
     #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
     #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")

@@ -1,6 +1,17 @@
-# TFKit - Transformer Kit  
-NLP library for different downstream tasks, built on huggingface project,   
+# 🤖 TFKit - Transformer Kit 🤗   
+NLP library for different downstream tasks, built on huggingface 🤗 project,   
 for developing wide variety of nlp tasks.
+
+## Feature
+- support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert  
+- modularize data loading
+- easy to modify
+- special loss function for handling different cases: focalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
+- eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
+- multi-class multi-task multi-label classifier  
+- word/sentence level text generation  
+- token tagging
+
 
 ## Package Overview
 

@@ -6,21 +6,21 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 import torch.nn as nn
-from transformers import BertTokenizer, BertModel
-from transformers.modeling_bert import BertOnlyMLMHead
+from transformers import *
 from gen_onebyone.data_loader import get_feature_from_data
 from itertools import combinations
 from torch.nn.functional import softmax
 from math import log
 from utility.loss import *
+from utility.tok import *
 
 
 class BertOneByOne(nn.Module):
-    def __init__(self, model_config="bert-base-multilingual-cased", maxlen=512):
+    def __init__(self, model_config, maxlen=512):
         super().__init__()
-        self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        self.bert = BertModel.from_pretrained(model_config)
-        self.model = BertOnlyMLMHead(self.bert.config)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
 
@@ -40,18 +40,18 @@ class BertOneByOne(nn.Module):
         type_tensors = torch.tensor(types).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
 
-        outputs = self.bert(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
+        outputs = self.pretrained(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
         sequence_output = outputs[0]
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)
 
         if eval is False:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.bert.config.vocab_size),
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
 
             negative_loss_fct = NegativeCElLoss().to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.bert.config.vocab_size),
+            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
             masked_lm_loss += negative_loss
             outputs = (masked_lm_loss,) + outputs
@@ -64,7 +64,7 @@ class BertOneByOne(nn.Module):
             output = ""
             output_prob_dict = []
             while True:
-                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input + output, debug=False)
+                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
                 if len(feature_dict['input']) > self.maxlen:
                     break
                 start = feature_dict['start']
@@ -80,7 +80,7 @@ class BertOneByOne(nn.Module):
                 predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
                 if predicted_token[0] != "#":
                     predicted_token[0] = predicted_token[0].replace("#", "")
-                if '[SEP]' in predicted_token:
+                if tok_sep(self.tokenizer.sep_token) in predicted_token:
                     break
                 output += predicted_token[0] + ' '
             return output, output_prob_dict
@@ -112,9 +112,9 @@ class BertOneByOne(nn.Module):
                 all_candidates = list()
                 exceed = False
                 for seq in sequences:
-                    if "[SEP]" not in seq[0]:
+                    if tok_sep(self.tokenizer.sep_token) not in seq[0]:
                         tokens, score = seq
-                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input + " ".join(tokens))
+                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(tokens))
                         if len(feature_dict['input']) > self.maxlen:
                             exceed = True
                             all_candidates.append(seq)
@@ -142,14 +142,14 @@ class BertOneByOne(nn.Module):
                 sequences = ordered[:topk]
                 stop = 0
                 for i in sequences:
-                    if "[SEP]" in i[0]:
+                    if tok_sep(self.tokenizer.sep_token) in i[0]:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break
 
             for i in range(len(sequences)):
-                if "[SEP]" in sequences[i][0]:
-                    sequences[i][0] = sequences[i][0][:sequences[i][0].index("[SEP]")]
+                if tok_sep(self.tokenizer.sep_token) in sequences[i][0]:
+                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer.sep_token))]
                 sequences[i][0] = " ".join(sequences[i][0])
             top = sequences[0][0]
             return top, sequences

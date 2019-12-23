@@ -3,14 +3,15 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
-from transformers import BertTokenizer
+from transformers import AutoTokenizer
 from sklearn.preprocessing import MultiLabelBinarizer
+from utility.tok import *
 
 
 class loadClassifierDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=512, cache=False):
         samples = []
-        tokenizer = BertTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         for i in get_data_from_file(fpath):
             tasks, task, input, target = i
             feature = get_feature_from_data(tokenizer, maxlen, tasks, task, input, target)
@@ -52,7 +53,7 @@ def get_data_from_file(fpath):
                 task = headers[0] + "_" + headers[pos]
                 item = item.strip()
                 target = item.split('/') if '/' in item else [item]
-                input = "[CLS] " + row[0] + " [SEP]"
+                input = row[0]
                 yield tasks, task, input, target
 
 
@@ -61,7 +62,8 @@ def get_feature_from_data(tokenizer, maxlen, task_lables, task, input, target=No
     row_dict['task'] = task
     # bert embedding
     # inputs[id] += "[SEP]".join(task_lables)
-    input_token = tokenizer.tokenize(input)
+
+    input_token = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_input_id = tokenizer.convert_tokens_to_ids(input_token)
     mask_id = [1] * len(tokenized_input_id)
     tokenized_input_id.extend([tokenizer.pad_token_id] * (maxlen - len(tokenized_input_id)))

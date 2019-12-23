@@ -9,16 +9,15 @@ import torch.nn as nn
 from transformers import *
 from torch.nn.functional import softmax
 from gen_once.data_loader import get_feature_from_data
-from transformers.modeling_bert import BertOnlyMLMHead
 from utility.loss import *
-
+from utility.tok import *
 
 class BertOnce(nn.Module):
-    def __init__(self, model_config="bert-base-multilingual-cased", maxlen=128):
+    def __init__(self, model_config, maxlen=128):
         super().__init__()
-        self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        self.bert = BertModel.from_pretrained(model_config)
-        self.model = BertOnlyMLMHead(self.bert.config)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
@@ -37,18 +36,18 @@ class BertOnce(nn.Module):
         loss_tensors = torch.tensor(targets).to(self.device)
         negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
 
-        output = self.bert(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
+        output = self.pretrained(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)
 
         if eval is False:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.bert.config.vocab_size),
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
 
             negative_loss_fct = NegativeCElLoss().to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.bert.config.vocab_size),
+            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
             masked_lm_loss += negative_loss
             outputs = (masked_lm_loss,) + outputs
@@ -64,7 +63,6 @@ class BertOnce(nn.Module):
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
             predictions = self.forward(feature_dict, eval=True)
-            print(len(predictions), len(predictions[0][0]), len(predictions[0][0]))
             predictions = predictions[0][0]
             output = ""
             end = False
@@ -75,7 +73,7 @@ class BertOnce(nn.Module):
                 prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
                 prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
                 output_prob_dict.append(prob_result)
-                if '[SEP]' in predicted_token:
+                if tok_sep(self.tokenizer.sep_token) in predicted_token:
                     end = True
                 if end is False:
                     output += predicted_token[0] + " "

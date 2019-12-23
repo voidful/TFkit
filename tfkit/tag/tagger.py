@@ -16,21 +16,21 @@ from tag.data_loader import get_feature_from_data
 
 class BertTagger(nn.Module):
 
-    def __init__(self, labels, model_config="bert-base-multilingual-cased", maxlen=512, dropout=0.2):
+    def __init__(self, labels, model_config, maxlen=512, dropout=0.2):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        self.bert = BertModel.from_pretrained(model_config)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        self.pretrained = AutoModel.from_pretrained(model_config)
         self.dropout = nn.Dropout(dropout)
-        self.tagger = nn.Linear(self.bert.config.hidden_size, len(labels))
+        self.tagger = nn.Linear(self.pretrained.config.hidden_size, len(labels))
         self.labels = labels
         self.maxlen = maxlen
         # self.loss_fct = nn.CrossEntropyLoss()
         self.loss_fct = FocalLoss()
         # self.loss_fct = GWLoss()
 
-        self.bert = self.bert.to(self.device)
+        self.pretrained = self.pretrained.to(self.device)
         self.loss_fct = self.loss_fct.to(self.device)
 
     def forward(self, batch_data, eval=False, separator=" "):
@@ -40,7 +40,7 @@ class BertTagger(nn.Module):
         # bert embedding
         token_tensor = torch.tensor(inputs, dtype=torch.long).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
-        bert_output = self.bert(token_tensor, attention_mask=mask_tensors)
+        bert_output = self.pretrained(token_tensor, attention_mask=mask_tensors)
         res = bert_output[0]
         pooled_output = self.dropout(res)
         # tagger

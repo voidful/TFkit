@@ -7,13 +7,13 @@ from collections import defaultdict
 import numpy as np
 from torch.utils import data
 from tqdm import tqdm
-from transformers import BertTokenizer
-
+from transformers import AutoTokenizer
+from utility.tok import *
 
 class loadColTaggerDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=368, cache=False):
         samples = []
-        tokenizer = BertTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -45,7 +45,7 @@ class loadRowTaggerDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=512, separator=" ", cache=False):
         samples = []
         labels = []
-        tokenizer = BertTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -120,8 +120,8 @@ def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, sep
 def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, separator=" "):
     # ``1`` for tokens that are NOT MASKED, ``0`` for MASKED tokens.
     row_dict = dict()
-    input_token = tokenizer.tokenize("[CLS] " + input + " [SEP]")
-    input_id = tokenizer.convert_tokens_to_ids(input_token)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
+    input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     input = input.split()
     mapping_index = []
 
