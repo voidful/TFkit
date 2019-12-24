@@ -11,7 +11,7 @@ setup(
     long_description_content_type="text/markdown",
     classifiers=[
         'Development Status :: 4 - Beta',
-        "Intended Audience :: Science/Research/Developers",
+        "Intended Audience :: Science/Research",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "License :: OSI Approved :: Apache Software License",
         'Programming Language :: Python :: 3.6'

@@ -6,10 +6,11 @@ for developing wide variety of nlp tasks.
 - support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert  
 - modularize data loading
 - easy to modify
-- special loss function for handling different cases: focalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
+- special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
 - eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
 - multi-class multi-task multi-label classifier  
 - word/sentence level text generation  
+- support beamsarch on decoding
 - token tagging
 
 

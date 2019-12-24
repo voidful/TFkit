@@ -10,6 +10,7 @@ from tqdm import tqdm
 from transformers import AutoTokenizer
 from utility.tok import *
 
+
 class loadColTaggerDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, maxlen=368, cache=False):
         samples = []

@@ -17,9 +17,9 @@ class TestLoss(unittest.TestCase):
     alln_targets = torch.Tensor([-1, -1]).long()
     onen_targets = torch.Tensor([-1, 1]).long()
 
-    def testSoothingCElLoss(self):
+    def testLabelSmoothingCrossEntropy(self):
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
-        custom_criterion = tfkit.utility.loss.SoothingCElLoss(smoothing=0)
+        custom_criterion = tfkit.utility.loss.LabelSmoothingCrossEntropy(eps=0.0)
         self.assertTrue(criterion(self.outputs, self.targets) == custom_criterion(self.outputs, self.targets))
         self.assertTrue(criterion(self.outputs, self.alln_targets) == custom_criterion(self.outputs, self.alln_targets))
         self.assertTrue(criterion(self.outputs, self.onen_targets) == custom_criterion(self.outputs, self.onen_targets))

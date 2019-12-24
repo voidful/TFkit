@@ -81,39 +81,40 @@ class NegativeCElLoss(nn.Module):
         return self.nll(torch.log(nsoftmax), target)
 
 
-class SoothingCElLoss(nn.Module):
-    def __init__(self, smoothing=0.1):
-        super(SoothingCElLoss, self).__init__()
-        self.smoothing = smoothing
+class LabelSmoothingCrossEntropy(nn.Module):
+    def __init__(self, eps: float = 0.1, reduction='mean'):
+        super(LabelSmoothingCrossEntropy, self).__init__()
         self.softmax = nn.Softmax()
-        self.nll = nn.NLLLoss(ignore_index=-1)
+        self.eps, self.reduction = eps, reduction
 
-    def forward(self, input, target):
-        softmax = self.softmax(input)
-        weight = input.new_ones(input.size()) * \
-                 self.smoothing / (input.size(-1) - 1.)
-        ptarget = target.clone()
-        ptarget[ptarget < 0] = 0
-        weight.scatter_(-1, ptarget.unsqueeze(-1), (1. - self.smoothing))
-        logsoftmax = torch.log(softmax)
-        return self.nll(weight * logsoftmax, target)
+    def forward(self, output, target):
+        c = output.size()[-1]
+        softmax = self.softmax(output)
+        log_preds = torch.log(softmax)
+        if self.reduction == 'sum':
+            loss = -log_preds.sum()
+        else:
+            loss = -log_preds.sum(dim=-1)
+            if self.reduction == 'mean':  loss = loss.mean()
+        return loss * self.eps / c + (1 - self.eps) * F.nll_loss(log_preds, target, reduction=self.reduction,
+                                                                 ignore_index=-1)
 
 
-class NegativeSoothingCElLoss(nn.Module):
-    def __init__(self, smoothing=0.0, ratio=0.7):
-        super(NegativeSoothingCElLoss, self).__init__()
-        self.ratio = ratio
-        self.smoothing = smoothing
-        self.softmax = nn.Softmax()
-        self.nll = nn.NLLLoss(ignore_index=-1)
+class NegativeLabelSmoothingCrossEntropy(nn.Module):
+    def __init__(self, eps: float = 0.1, reduction='mean'):
+        super(NegativeLabelSmoothingCrossEntropy, self).__init__()
+        self.eps, self.reduction = eps, reduction
 
-    def forward(self, input, target):
-        softmax = self.softmax(input)
+    def forward(self, output, target):
+        c = output.size()[-1]
+        softmax = self.softmax(output, dim=-1)
         nsoftmax = torch.clamp((1.0 - softmax), min=1e-5)
+        log_preds = torch.log(nsoftmax)
 
-        weight = input.new_ones(input.size()) * self.smoothing / (input.size(-1) - 1.)
-        ptarget = target.clone()
-        ptarget[ptarget < 0] = 0
-        weight.scatter_(-1, ptarget.unsqueeze(-1), (1. - self.smoothing))
-        logsoftmax = torch.log(nsoftmax)
-        return self.nll(weight * logsoftmax, target)
+        if self.reduction == 'sum':
+            loss = -log_preds.sum()
+        else:
+            loss = -log_preds.sum(dim=-1)
+            if self.reduction == 'mean':  loss = loss.mean()
+        return loss * self.eps / c + (1 - self.eps) * F.nll_loss(log_preds, target, reduction=self.reduction,
+                                                                 ignore_index=-1)
