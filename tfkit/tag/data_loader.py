@@ -16,9 +16,9 @@ from utility.tok import *
 
 
 class loadColTaggerDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, maxlen=368, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=368, cache=False):
         samples = []
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -30,9 +30,9 @@ class loadColTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) and len(feature['input']) <= 512:
+                if len(feature['input']) == len(feature['target']) and \
+                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
                     samples.append(feature)
-
                 if cache:
                     with open(cache_path, 'wb') as cf:
                         pickle.dump({'samples': samples, 'labels': labels}, cf)
@@ -47,10 +47,10 @@ class loadColTaggerDataset(data.Dataset):
 
 
 class loadRowTaggerDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, maxlen=512, separator=" ", cache=False):
+    def __init__(self, fpath, pretrained, maxlen=512, separator=" ", cache=False):
         samples = []
         labels = []
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -62,7 +62,8 @@ class loadRowTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) and len(feature['input']) <= 512:
+                if len(feature['input']) == len(feature['target']) and \
+                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
                     samples.append(feature)
                 if cache:
                     with open(cache_path, 'wb') as cf:

@@ -11,9 +11,9 @@ from utility.tok import *
 
 
 class loadOneByOneDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, maxlen=510, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=510, cache=False):
         sample = []
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -25,11 +25,15 @@ class loadOneByOneDataset(data.Dataset):
                     feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
                                                     " ".join(target[:j]),
                                                     ntarget=negative_text)
-                    sample.append(feature)
+                    if len(feature['input']) == len(feature['target']) and \
+                            len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                        sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target),
                                                 ntarget=negative_text)
-                sample.append(feature)
+                if len(feature['input']) == len(feature['target']) and \
+                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                    sample.append(feature)
 
                 # if "[SEP]" in target:
                 #     feature = data_loader.get_feature_from_data(tokenizer, maxlen, input, target, ntarget=negative_text,

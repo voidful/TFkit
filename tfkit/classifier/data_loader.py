@@ -9,13 +9,15 @@ from utility.tok import *
 
 
 class loadClassifierDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, maxlen=512, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=512, cache=False):
         samples = []
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained)
         for i in get_data_from_file(fpath):
             tasks, task, input, target = i
             feature = get_feature_from_data(tokenizer, maxlen, tasks, task, input, target)
-            samples.append(feature)
+            if len(feature['input']) == len(feature['target']) and \
+                    len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                samples.append(feature)
 
         self.sample = samples
         self.task = tasks

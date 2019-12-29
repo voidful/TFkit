@@ -9,9 +9,9 @@ from transformers import AutoTokenizer
 from utility.tok import *
 
 class loadOnceDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, maxlen=510, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=510, cache=False):
         sample = []
-        tokenizer = AutoTokenizer.from_pretrained(tokenizer)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -20,7 +20,8 @@ class loadOnceDataset(data.Dataset):
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, maxlen, input, target)
-                if len(feature['input']) <= 512:
+                if len(feature['input']) == len(feature['target']) and \
+                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
                     sample.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
