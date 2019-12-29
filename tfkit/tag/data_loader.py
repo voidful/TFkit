@@ -1,6 +1,10 @@
+import sys
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
+
 import csv
 import json
-import os
 import pickle
 from collections import defaultdict
 

@@ -1,4 +1,7 @@
 import unittest
+
+from transformers import AutoTokenizer
+
 import tfkit
 import os
 

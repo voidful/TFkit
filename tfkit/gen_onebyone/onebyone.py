@@ -93,11 +93,11 @@ class BertOneByOne(nn.Module):
     def isSimilar(self, s, t):
         return self.jaccard_similarity(s, t) > 0.5
 
-    def filterSimilar(self, d):
+    def filterSimilar(self, d,topk):
         while True:
             filteredOne = False
             for s, t in combinations(d, 2):
-                if self.isSimilar(s[0], t[0]):
+                if self.isSimilar(s[0], t[0]) and len(d)-1 >= topk:
                     d.remove(t)
                     filteredOne = True
                     break
@@ -138,7 +138,7 @@ class BertOneByOne(nn.Module):
                         all_candidates.append(seq)
 
                 ordered = sorted(all_candidates, key=lambda tup: tup[1])
-                self.filterSimilar(ordered)
+                self.filterSimilar(ordered,topk)
                 sequences = ordered[:topk]
                 stop = 0
                 for i in sequences:
