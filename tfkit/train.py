@@ -89,24 +89,24 @@ if __name__ == "__main__":
 
     arg.model = arg.model.lower()
     if "once" in arg.model:
-        train_dataset = loadOnceDataset(arg.train[0], tokenizer=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        eval_dataset = loadOnceDataset(arg.valid[0], tokenizer=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertOnce(model_config=arg.config, maxlen=arg.maxlen)
     elif "onebyone" in arg.model:
-        train_dataset = loadOneByOneDataset(arg.train[0], tokenizer=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        eval_dataset = loadOneByOneDataset(arg.valid[0], tokenizer=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        eval_dataset = loadOneByOneDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertOneByOne(model_config=arg.config, maxlen=arg.maxlen)
     elif 'classify' in arg.model:
-        train_dataset = loadClassifierDataset(arg.train[0], tokenizer=arg.config)
-        eval_dataset = loadClassifierDataset(arg.valid[0], tokenizer=arg.config)
+        train_dataset = loadClassifierDataset(arg.train[0], pretrained=arg.config)
+        eval_dataset = loadClassifierDataset(arg.valid[0], pretrained=arg.config)
         model = BertMtClassifier(train_dataset.task, arg.config)
     elif 'tag' in arg.model:
         if "row" in arg.model:
-            train_dataset = loadRowTaggerDataset(arg.train[0], tokenizer=arg.config, maxlen=arg.maxlen)
-            eval_dataset = loadRowTaggerDataset(arg.valid[0], tokenizer=arg.config, maxlen=arg.maxlen)
+            train_dataset = loadRowTaggerDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen)
+            eval_dataset = loadRowTaggerDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen)
         elif "col" in arg.model:
-            train_dataset = loadColTaggerDataset(arg.train[0], tokenizer=arg.config, maxlen=arg.maxlen)
-            eval_dataset = loadColTaggerDataset(arg.valid[0], tokenizer=arg.config, maxlen=arg.maxlen)
+            train_dataset = loadColTaggerDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen)
+            eval_dataset = loadColTaggerDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen)
         model = BertTagger(train_dataset.label, arg.config, maxlen=arg.maxlen)
 
     train_iter = data.DataLoader(dataset=train_dataset,
