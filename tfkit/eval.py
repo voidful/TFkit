@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--beamsearch", action='store_true')
     parser.add_argument("--topk", type=int, default=1)
     arg = parser.parse_args()
-    arg.model = arg.model.lower()
+    arg.type = arg.type.lower()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     package = torch.load(arg.model, map_location=device)
