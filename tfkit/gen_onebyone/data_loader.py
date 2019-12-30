@@ -8,6 +8,7 @@ from torch.utils import data
 from transformers import AutoTokenizer
 from tqdm import tqdm
 from utility.tok import *
+import gen_once
 
 
 class loadOneByOneDataset(data.Dataset):
@@ -25,15 +26,19 @@ class loadOneByOneDataset(data.Dataset):
                     feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
                                                     " ".join(target[:j]),
                                                     ntarget=negative_text)
-                    if len(feature['input']) == len(feature['target']) and \
-                            len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                    if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
                         sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target),
                                                 ntarget=negative_text)
-                if len(feature['input']) == len(feature['target']) and \
-                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
                     sample.append(feature)
+
+                # # sentence level negative loss
+                # feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
+                #                                                      ntarget=negative_text)
+                # if len(feature['input']) == len(feature['target']) == tokenizer.max_model_input_sizes[pretrained]:
+                #     sample.append(feature)
 
                 # if "[SEP]" in target:
                 #     feature = data_loader.get_feature_from_data(tokenizer, maxlen, input, target, ntarget=negative_text,
@@ -91,8 +96,8 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     if ntarget is not None:
         tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * target_start
-        ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else "[SEP]"
-        ntarget_token_id = tokenizer.convert_tokens_to_ids([ntarget_token])[0]
+        ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else ["[SEP]"]
+        ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[0]
         tokenized_ntarget_id.append(ntarget_token_id)
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
         if tokenized_ntarget_id != tokenized_target_id:

@@ -30,8 +30,7 @@ class loadColTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) and \
-                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
                     samples.append(feature)
                 if cache:
                     with open(cache_path, 'wb') as cf:
@@ -62,8 +61,7 @@ class loadRowTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) and \
-                        len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
                     samples.append(feature)
                 if cache:
                     with open(cache_path, 'wb') as cf:

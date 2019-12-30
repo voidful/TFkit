@@ -15,8 +15,7 @@ class loadClassifierDataset(data.Dataset):
         for i in get_data_from_file(fpath):
             tasks, task, input, target = i
             feature = get_feature_from_data(tokenizer, maxlen, tasks, task, input, target)
-            if len(feature['input']) == len(feature['target']) and \
-                    len(feature['input']) < tokenizer.max_model_input_sizes[pretrained]:
+            if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
                 samples.append(feature)
 
         self.sample = samples
