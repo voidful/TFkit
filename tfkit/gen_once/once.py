@@ -73,7 +73,7 @@ class BertOnce(nn.Module):
                 prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
                 prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
                 output_prob_dict.append(prob_result)
-                if tok_sep(self.tokenizer.sep_token) in predicted_token:
+                if tok_sep(self.tokenizer) in predicted_token:
                     end = True
                 if end is False:
                     output += predicted_token[0] + " "

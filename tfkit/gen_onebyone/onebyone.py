@@ -80,7 +80,7 @@ class BertOneByOne(nn.Module):
                 predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
                 if predicted_token[0] != "#":
                     predicted_token[0] = predicted_token[0].replace("#", "")
-                if tok_sep(self.tokenizer.sep_token) in predicted_token:
+                if tok_sep(self.tokenizer) in predicted_token:
                     break
                 output += predicted_token[0] + ' '
             return output, output_prob_dict
@@ -142,14 +142,14 @@ class BertOneByOne(nn.Module):
                 sequences = ordered[:topk]
                 stop = 0
                 for i in sequences:
-                    if tok_sep(self.tokenizer.sep_token) in i[0]:
+                    if tok_sep(self.tokenizer) in i[0]:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break
 
             for i in range(len(sequences)):
-                if tok_sep(self.tokenizer.sep_token) in sequences[i][0]:
-                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer.sep_token))]
+                if tok_sep(self.tokenizer) in sequences[i][0]:
+                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
                 sequences[i][0] = " ".join(sequences[i][0])
             top = sequences[0][0]
             return top, sequences
