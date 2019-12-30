@@ -90,14 +90,14 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         if previous == target:
             tokenized_target = [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * target_start
-        tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[0])
+        tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[-1])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = np.asarray(tokenized_target_id)
     if ntarget is not None:
         tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * target_start
         ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else ["[SEP]"]
-        ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[0]
+        ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[-1]
         tokenized_ntarget_id.append(ntarget_token_id)
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
         if tokenized_ntarget_id != tokenized_target_id:

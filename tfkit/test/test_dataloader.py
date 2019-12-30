@@ -29,9 +29,12 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
             print(i)
         for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-chinese',
-                                                        maxlen=512):
-            self.assertTrue(len(i['input']) < 512)
-            self.assertTrue(len(i['target']) < 512)
+                                                        maxlen=24):
+            # print(len(i['input']))
+            # print(len(i['target']))
+            # print(i)
+            self.assertTrue(len(i['input']) <= 24)
+            self.assertTrue(len(i['target']) <= 24)
 
     def testClassifier(self):
         for i in tfkit.classifier.get_data_from_file('../demo_data/classification.csv'):

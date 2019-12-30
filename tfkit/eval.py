@@ -13,7 +13,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch", type=int, default=3)
     parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
     parser.add_argument("--metric", type=str, choices=['em', 'nlg', 'classification'])
-    parser.add_argument("--outprint", action='store_true')
+    parser.add_argument("--print", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
     parser.add_argument("--topk", type=int, default=1)
     arg = parser.parse_args()
@@ -24,6 +24,12 @@ if __name__ == "__main__":
     maxlen = package['maxlen']
     type = arg.type if arg.type else package['type']
     config = package['model_config'] if 'model_config' in package else package['bert']
+    type = type.lower()
+
+    print("===model info===")
+    print("maxlen", maxlen)
+    print("type", type)
+    print('==========')
 
     if "once" in type:
         eval_dataset = gen_once.get_data_from_file(arg.valid)
@@ -51,7 +57,12 @@ if __name__ == "__main__":
         input = i[2]
         target = i[3]
         result, outprob = model.predict(task=task, input=input)
-        print(input, target, result)
+        if arg.print:
+            print('===eval===')
+            print(input)
+            print(target)
+            print(result)
+            print('==========')
         eval_metric.add_record(result, target)
 
     print(list(eval_metric.cal_score(arg.metric, arg)))
