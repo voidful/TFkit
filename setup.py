@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.0.1',
+    version='0.0.2',
     description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -26,6 +26,9 @@ setup(
         "sklearn",
         "nlp2"
     ],
+    entry_points={
+        'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main']
+    },
     python_requires=">=3.6.1",
     zip_safe=False,
 )

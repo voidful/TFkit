@@ -49,7 +49,7 @@ for developing wide variety of nlp tasks.
 
 ## Installation
 
-TFKit requires Python 3.6.1 or later.   
+TFKit requires **Python 3.6** or later.   
 
 ### Installing via pip
 ```bash
@@ -61,7 +61,7 @@ pip install tfkit
 Once you've installed TFKit, you can run train.py for training or eval.py for evaluation.  
 
 ```
-$ train.py
+$ tfkit-train
 Run training
 
 arguments:
@@ -84,7 +84,7 @@ optional arguments:
 ```
 
 ```
-$ eval.py
+$ tfkit-eval
 Run evaluation on different benchmark
 arguments:
   --model       model for evaluate       

@@ -65,7 +65,7 @@ def eval(model, iterator, fname):
     return avg_t_loss
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=20)
     parser.add_argument("--lr", type=float, default=5e-5)
@@ -74,9 +74,9 @@ if __name__ == "__main__":
     parser.add_argument("--savedir", type=str, default="checkpoints/")
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
-    parser.add_argument("--model", type=str, default="once",
+    parser.add_argument("--model", type=str, required=True,
                         choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
-    parser.add_argument("--config", type=str, default='bert-base-multilingual-cased',
+    parser.add_argument("--config", type=str, default='bert-base-multilingual-cased',required=True,
                         help='bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
@@ -156,3 +156,7 @@ if __name__ == "__main__":
         if arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)
             writer.add_scalar("eval_loss/epoch", eval_avg_loss, epoch)
+
+
+if __name__ == "__main__":
+    main()

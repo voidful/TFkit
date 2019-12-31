@@ -6,13 +6,14 @@ import classifier
 import tag
 from utility.eval_metric import EvalMetric
 
-if __name__ == "__main__":
+
+def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str)
-    parser.add_argument("--valid", type=str)
+    parser.add_argument("--model", required=True, type=str)
+    parser.add_argument("--valid", required=True, type=str)
     parser.add_argument("--batch", type=int, default=3)
     parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
-    parser.add_argument("--metric", type=str, choices=['em', 'nlg', 'classification'])
+    parser.add_argument("--metric", required=True, type=str, choices=['em', 'nlg', 'classification'])
     parser.add_argument("--print", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
     parser.add_argument("--topk", type=int, default=1)
@@ -66,3 +67,7 @@ if __name__ == "__main__":
         eval_metric.add_record(result, target)
 
     print(list(eval_metric.cal_score(arg.metric, arg)))
+
+
+if __name__ == "__main__":
+    main()
