@@ -52,7 +52,7 @@ class EvalMetric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
                 mlb = MultiLabelBinarizer().fit(task['target'])
-                result = classification_report(mlb.transform(task['target']),
+                result = classification_report(mlb.transform([task['predicted']]),
                                                mlb.transform(task['target']),
                                                target_names=list(mlb.classes_))
             yield (name, result)

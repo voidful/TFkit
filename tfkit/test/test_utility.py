@@ -77,3 +77,10 @@ class TestEval(unittest.TestCase):
         for s6 in eval6.cal_score('nlg'):
             print(s6)
         self.assertTrue(s1 == s3 == s6)
+
+    def testClassify(self):
+        eval = tfkit.utility.eval_metric.EvalMetric()
+        eval.add_record("abc", "abb[SEP]acc[SEP]abc", task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
