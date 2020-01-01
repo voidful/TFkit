@@ -4,6 +4,7 @@ import gen_once
 import gen_onebyone
 import classifier
 import tag
+from tqdm import tqdm
 from utility.eval_metric import EvalMetric
 
 
@@ -52,7 +53,7 @@ def main():
     model.load_state_dict(package['model_state_dict'], strict=False)
 
     eval_metric = EvalMetric()
-    for i in eval_dataset:
+    for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
         input = i[2]
