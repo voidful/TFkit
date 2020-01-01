@@ -52,3 +52,28 @@ class TestLoss(unittest.TestCase):
         self.assertTrue(criterion(self.outputs, self.targets) > custom_criterion(self.outputs, self.targets))
         self.assertTrue(criterion(self.outputs, self.alln_targets) == custom_criterion(self.outputs, self.alln_targets))
         self.assertTrue(criterion(self.outputs, self.onen_targets) > custom_criterion(self.outputs, self.onen_targets))
+
+
+class TestEval(unittest.TestCase):
+    def testEM(self):
+        eval = tfkit.utility.eval_metric.EvalMetric()
+        eval.add_record("abc", "abb[SEP]acc[SEP]abc", task='default')
+        for s in eval.cal_score('em'):
+            print(s)
+
+    def testNLG(self):
+        eval1 = tfkit.utility.eval_metric.EvalMetric(max_candidate=1)
+        eval1.add_record("abc", "abc", task='default')
+        for s1 in eval1.cal_score('nlg'):
+            print(s1)
+
+        eval3 = tfkit.utility.eval_metric.EvalMetric(max_candidate=3)
+        eval3.add_record("abc", "abb[SEP]acc[SEP]abc", task='default')
+        for s3 in eval3.cal_score('nlg'):
+            print(s3)
+
+        eval6 = tfkit.utility.eval_metric.EvalMetric(max_candidate=6)
+        eval6.add_record("abc", "abb[SEP]acc[SEP]abc", task='default')
+        for s6 in eval6.cal_score('nlg'):
+            print(s6)
+        self.assertTrue(s1 == s3 == s6)
