@@ -67,7 +67,9 @@ def main():
             print('==========')
         eval_metric.add_record(result, target)
 
-    print(list(eval_metric.cal_score(arg.metric, arg)))
+    for i in eval_metric.cal_score(arg.metric):
+        print("TASK: ", i[0])
+        print(i[1])
 
 
 if __name__ == "__main__":

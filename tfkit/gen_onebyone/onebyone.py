@@ -112,7 +112,7 @@ class BertOneByOne(nn.Module):
                 all_candidates = list()
                 exceed = False
                 for seq in sequences:
-                    if tok_sep(self.tokenizer.sep_token) not in seq[0]:
+                    if tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(tokens))
                         if len(feature_dict['input']) > self.maxlen:

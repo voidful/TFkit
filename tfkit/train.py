@@ -82,6 +82,7 @@ def main():
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='Caching training data')
+    global arg
     arg = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -118,6 +119,7 @@ def main():
                                 shuffle=False,
                                 num_workers=arg.worker)
     if arg.tensorboard:
+        global writer
         writer = tensorboard.SummaryWriter()
 
     model = model.to(device)
