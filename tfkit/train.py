@@ -30,7 +30,7 @@ def optimizer(model, arg):
     return optimizer
 
 
-def train(model, iterator, arg, fname):
+def train(model, iterator, arg, fname, epoch):
     model = nn.DataParallel(model)
     optim = optimizer(model, arg)
     t_loss = 0
@@ -51,7 +51,7 @@ def train(model, iterator, arg, fname):
     return t_loss / len(iterator)
 
 
-def eval(model, iterator, fname):
+def eval(model, iterator, fname, epoch):
     model.eval()
     t_loss = 0
     with torch.no_grad():
@@ -76,7 +76,7 @@ def main():
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
                         choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
-    parser.add_argument("--config", type=str, default='bert-base-multilingual-cased',required=True,
+    parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
@@ -136,7 +136,7 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(model, train_iter, arg, fname)
+        train_avg_loss = train(model, train_iter, arg, fname, epoch)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
@@ -153,7 +153,7 @@ def main():
         write_log(f"weights were saved to {fname}.pt")
 
         write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = eval(model, eval_iter, fname)
+        eval_avg_loss = eval(model, eval_iter, fname, epoch)
 
         if arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)

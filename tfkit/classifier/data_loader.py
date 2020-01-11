@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
+from tqdm import tqdm
 from transformers import AutoTokenizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from utility.tok import *
@@ -12,10 +13,10 @@ class loadClassifierDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=512, cache=False):
         samples = []
         tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        for i in get_data_from_file(fpath):
+        for i in tqdm(get_data_from_file(fpath)):
             tasks, task, input, target = i
             feature = get_feature_from_data(tokenizer, maxlen, tasks, task, input, target)
-            if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+            if len(feature['input']) <= tokenizer.max_model_input_sizes[pretrained]:
                 samples.append(feature)
 
         self.sample = samples
