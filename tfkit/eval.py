@@ -58,12 +58,15 @@ def main():
         task = i[1]
         input = i[2]
         target = i[3]
-        result, outprob = model.predict(task=task, input=input)
+        if arg.beamsearch:
+            model.predict_beamsearch(input, topk=3)
+        else:
+            result, outprob = model.predict(task=task, input=input)
         if arg.print:
             print('===eval===')
-            print(input)
-            print(target)
-            print(result)
+            print("input", input)
+            print("target", target)
+            print("result", result)
             print('==========')
         eval_metric.add_record(result, target)
 

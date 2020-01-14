@@ -14,7 +14,7 @@ from utility.loss import *
 
 class BertMtClassifier(nn.Module):
 
-    def __init__(self, tasks_detail, model_config, maxlen=512, dropout=0.2):
+    def __init__(self, tasks_detail, model_config, maxlen=512, dropout=0.1):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
@@ -22,7 +22,7 @@ class BertMtClassifier(nn.Module):
         self.pretrained = AutoModel.from_pretrained(model_config)
 
         self.dropout = nn.Dropout(dropout)
-        self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
+        self.loss_fct = FocalLoss()
         self.loss_fct_mt = BCEFocalLoss()
         # self.loss_fct = FocalLoss()
         # self.loss_fct = GWLoss()
@@ -57,7 +57,7 @@ class BertMtClassifier(nn.Module):
 
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
             pooled_output = self.dropout(output)
-            classifier_output = self.classifier_list[task_id](pooled_output)[0, 0]
+            classifier_output = self.classifier_list[task_id](pooled_output)[0,0]
             reshaped_logits = classifier_output.view(-1, len(task_lables))  # 0 for cls position
             result_logits.append(reshaped_logits)
             if 'multi_target' in task:
@@ -89,9 +89,12 @@ class BertMtClassifier(nn.Module):
         self.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, self.tasks_detail[task], task, input)
-            for k, v in feature_dict.items():
-                feature_dict[k] = [v]
-            result = self.forward(feature_dict, eval=True)
-            result = result[0][0]
-            res = sorted(result, key=result.get, reverse=True)
-            return res[:topk], result
+            if len(feature_dict['input']) <= self.maxlen:
+                for k, v in feature_dict.items():
+                    feature_dict[k] = [v]
+                result = self.forward(feature_dict, eval=True)
+                result = result[0][0]
+                res = sorted(result, key=result.get, reverse=True)
+                return res[:topk], result
+            else:
+                return [""],[]

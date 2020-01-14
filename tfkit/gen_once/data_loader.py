@@ -20,7 +20,7 @@ class loadOnceDataset(data.Dataset):
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, maxlen, input, target)
-                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= tokenizer.max_model_input_sizes[pretrained]:
                     sample.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:

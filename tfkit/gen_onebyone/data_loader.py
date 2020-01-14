@@ -26,18 +26,18 @@ class loadOneByOneDataset(data.Dataset):
                     feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
                                                     " ".join(target[:j]),
                                                     ntarget=negative_text)
-                    if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= tokenizer.max_model_input_sizes[pretrained]:
                         sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target),
                                                 ntarget=negative_text)
-                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= tokenizer.max_model_input_sizes[pretrained]:
                     sample.append(feature)
 
                 # # sentence level negative loss
                 # feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
                 #                                                      ntarget=negative_text)
-                # if len(feature['input']) == len(feature['target']) == tokenizer.max_model_input_sizes[pretrained]:
+                # if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == tokenizer.max_model_input_sizes[pretrained]:
                 #     sample.append(feature)
 
                 # if "[SEP]" in target:
