@@ -16,8 +16,11 @@ def main():
     parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
     parser.add_argument("--metric", required=True, type=str, choices=['em', 'nlg', 'classification'])
     parser.add_argument("--print", action='store_true')
+    parser.add_argument("--outfile", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
-    parser.add_argument("--topk", type=int, default=1)
+    parser.add_argument("--beamsize", type=int, default=3)
+    parser.add_argument("--beamselect", type=int, default=0)
+    parser.add_argument("--beamfiltersim", action='store_true')
     arg = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -59,16 +62,28 @@ def main():
         input = i[2]
         target = i[3]
         if arg.beamsearch:
-            model.predict_beamsearch(input, topk=3)
+            result, possible = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
+            result = possible[arg.beamselect][0]
         else:
             result, outprob = model.predict(task=task, input=input)
         if arg.print:
             print('===eval===')
-            print("input", input)
-            print("target", target)
-            print("result", result)
+            print("input: ", input)
+            print("target: ", target)
+            print("result: ", result)
+            if arg.beamsearch:
+                print("possible: ", possible)
             print('==========')
         eval_metric.add_record(result, target)
+
+    argtype = ""
+    if arg.beamsearch:
+        argtype = "_beam_" + str(arg.beamselect)
+    outfile_name = arg.model + argtype + ".out"
+    if arg.outfile:
+        with open(outfile_name, "w", encoding='utf8') as f:
+            for output in eval_metric.get_record():
+                f.write(output + "\n")
 
     for i in eval_metric.cal_score(arg.metric):
         print("TASK: ", i[0])

@@ -60,11 +60,14 @@ class BertOneByOne(nn.Module):
 
     def predict(self, input, task=None):
         self.eval()
+        predicted = 0
         with torch.no_grad():
             output = ""
+            outputs = []
             output_prob_dict = []
             while True:
                 feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
+                # print(feature_dict)
                 if len(feature_dict['input']) > self.maxlen:
                     break
                 start = feature_dict['start']
@@ -80,9 +83,8 @@ class BertOneByOne(nn.Module):
                 predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
                 if predicted_token[0] != "#":
                     predicted_token[0] = predicted_token[0].replace("#", "")
-                if tok_sep(self.tokenizer) in predicted_token:
-                    break
                 output += predicted_token[0] + ' '
+
             return output, output_prob_dict
 
     def jaccard_similarity(self, list1, list2):
@@ -93,18 +95,18 @@ class BertOneByOne(nn.Module):
     def isSimilar(self, s, t):
         return self.jaccard_similarity(s, t) > 0.5
 
-    def filterSimilar(self, d,topk):
+    def filterSimilar(self, d, topk):
         while True:
             filteredOne = False
             for s, t in combinations(d, 2):
-                if self.isSimilar(s[0], t[0]) and len(d)-1 >= topk:
+                if self.isSimilar(s[0], t[0]) and len(d) - 1 >= topk:
                     d.remove(t)
                     filteredOne = True
                     break
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, topk=3):
+    def predict_beamsearch(self, input, topk=3, filtersim=False):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -123,7 +125,7 @@ class BertOneByOne(nn.Module):
                             feature_dict[k] = [v]
                         predictions = self.forward(feature_dict, eval=True)
                         predictions = predictions[0][0]
-                        predictions = predictions[feature_dict['start']]
+                        predictions = predictions[feature_dict['start']][0]
                         logit_prob = softmax(predictions).data.tolist()
                         prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
 
@@ -138,7 +140,8 @@ class BertOneByOne(nn.Module):
                         all_candidates.append(seq)
 
                 ordered = sorted(all_candidates, key=lambda tup: tup[1])
-                self.filterSimilar(ordered,topk)
+                if filtersim:
+                    self.filterSimilar(ordered, topk)
                 sequences = ordered[:topk]
                 stop = 0
                 for i in sequences:

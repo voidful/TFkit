@@ -57,7 +57,7 @@ class BertMtClassifier(nn.Module):
 
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
             pooled_output = self.dropout(output)
-            classifier_output = self.classifier_list[task_id](pooled_output)[0,0]
+            classifier_output = self.classifier_list[task_id](pooled_output)[0, 0]
             reshaped_logits = classifier_output.view(-1, len(task_lables))  # 0 for cls position
             result_logits.append(reshaped_logits)
             if 'multi_target' in task:
@@ -97,4 +97,4 @@ class BertMtClassifier(nn.Module):
                 res = sorted(result, key=result.get, reverse=True)
                 return res[:topk], result
             else:
-                return [""],[]
+                return [""], []
