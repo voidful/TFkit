@@ -1,4 +1,6 @@
 import argparse
+import csv
+
 import torch
 import gen_once
 import gen_onebyone
@@ -56,6 +58,14 @@ def main():
     model.load_state_dict(package['model_state_dict'], strict=False)
 
     eval_metric = EvalMetric()
+    argtype = ""
+    if arg.beamsearch:
+        argtype = "_beam_" + str(arg.beamselect)
+        if arg.beamfiltersim:
+            argtype += "_filtersim_"
+    outfile_name = arg.model + argtype + ".out"
+    outfile_arr = []
+
     for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
@@ -74,16 +84,15 @@ def main():
             if arg.beamsearch:
                 print("possible: ", possible)
             print('==========')
+        if arg.outfile:
+            outfile_arr.append([input, target, result])
         eval_metric.add_record(result, target)
 
-    argtype = ""
-    if arg.beamsearch:
-        argtype = "_beam_" + str(arg.beamselect)
-    outfile_name = arg.model + argtype + ".out"
     if arg.outfile:
         with open(outfile_name, "w", encoding='utf8') as f:
-            for output in eval_metric.get_record():
-                f.write(output + "\n")
+            writer = csv.writer(f)
+            for r in outfile_arr:
+                writer.writerow(r)
 
     for i in eval_metric.cal_score(arg.metric):
         print("TASK: ", i[0])

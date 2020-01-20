@@ -5,6 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
+from tqdm import tqdm
 from transformers import AutoTokenizer
 from utility.tok import *
 
@@ -40,7 +41,7 @@ def get_data_from_file(fpath):
     task = 'default'
     tasks[task] = []
     with open(fpath, encoding='utf') as csvfile:
-        for i in list(csv.reader(csvfile)):
+        for i in tqdm(list(csv.reader(csvfile))):
             source_text = i[0]
             target_text = i[1]
             input = source_text

@@ -24,8 +24,8 @@ class EvalMetric:
         self.tasks[task]['targets'].append(targets)
         self.tasks[task]['target'].append(target[0])
 
-    def get_record(self, task='default'):
-        return self.tasks[task]['predicted']
+    def get_record(self, field='predicted', task='default'):
+        return self.tasks[task][field]
 
     def cal_score(self, metric):
         for name, task in self.tasks.items():

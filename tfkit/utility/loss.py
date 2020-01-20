@@ -81,6 +81,22 @@ class NegativeCElLoss(nn.Module):
         return self.nll(torch.log(nsoftmax), target)
 
 
+class FocalSmoothingLoss(nn.Module):
+    def __init__(self, eps: float = 0.1, gamma=2):
+        super(FocalSmoothingLoss, self).__init__()
+        self.gamma = gamma
+        self.eps = eps
+        self.softmax = nn.Softmax()
+        self.nll = nn.NLLLoss(ignore_index=-1)
+
+    def forward(self, input, target):
+        c = input.size()[-1]
+        softmax = self.softmax(input)
+        logpt = torch.log(softmax)
+        pt = Variable(logpt.data.exp())
+        return -logpt.sum(dim=-1) * self.eps / c + (1 - self.eps) * self.nll((1 - pt) ** self.gamma * logpt, target)
+
+
 class LabelSmoothingCrossEntropy(nn.Module):
     def __init__(self, eps: float = 0.1, reduction='mean'):
         super(LabelSmoothingCrossEntropy, self).__init__()
