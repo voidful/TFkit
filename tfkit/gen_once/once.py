@@ -12,6 +12,7 @@ from gen_once.data_loader import get_feature_from_data
 from utility.loss import *
 from utility.tok import *
 
+
 class BertOnce(nn.Module):
     def __init__(self, model_config, maxlen=128):
         super().__init__()
@@ -36,7 +37,7 @@ class BertOnce(nn.Module):
         loss_tensors = torch.tensor(targets).to(self.device)
         negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
 
-        output = self.pretrained(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
+        output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)

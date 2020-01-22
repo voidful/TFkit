@@ -40,7 +40,7 @@ class BertOneByOne(nn.Module):
         type_tensors = torch.tensor(types).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
 
-        outputs = self.pretrained(tokens_tensor, token_type_ids=type_tensors, attention_mask=mask_tensors)
+        outputs = self.pretrained(tokens_tensor,  attention_mask=mask_tensors)
         sequence_output = outputs[0]
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)
