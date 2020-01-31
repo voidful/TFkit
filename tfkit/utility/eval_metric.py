@@ -24,8 +24,8 @@ class EvalMetric:
         self.tasks[task]['targets'].append(targets)
         self.tasks[task]['target'].append(target[0])
 
-    def get_record(self, field='predicted', task='default'):
-        return self.tasks[task][field]
+    def get_record(self, task='default'):
+        return self.tasks[task]['predicted']
 
     def cal_score(self, metric):
         for name, task in self.tasks.items():
@@ -34,12 +34,11 @@ class EvalMetric:
                 em = 0
                 total = 0
                 for pos, predict in enumerate(task['predicted']):
-                    targets = task['target'][pos]
+                    target = task['target'][pos]
                     equal = False
-                    for target in targets:
-                        if predict[0].replace("[SEP]", "").replace(" ", "") == target.replace("[SEP]", "").replace(" ",
+                    if predict.replace("[SEP]", "").replace(" ", "") == target.replace("[SEP]", "").replace(" ",
                                                                                                                    ""):
-                            equal = True
+                        equal = True
                     em += 1 if equal else 0
                     total += 1
                 result = em / total

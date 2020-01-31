@@ -1,6 +1,7 @@
 import argparse
 import tensorboardX as tensorboard
 from gen_once import *
+from gen_twice import *
 from gen_onebyone import *
 from classifier import *
 from tag import *
@@ -75,7 +76,7 @@ def main():
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
-                        choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
+                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol'])
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
@@ -93,6 +94,10 @@ def main():
         train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertOnce(model_config=arg.config, maxlen=arg.maxlen)
+    if "twice" in arg.model:
+        train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        model = BertTwice(model_config=arg.config, maxlen=arg.maxlen)
     elif "onebyone" in arg.model:
         train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         eval_dataset = loadOneByOneDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)

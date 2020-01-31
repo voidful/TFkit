@@ -1,8 +1,7 @@
 import argparse
-import csv
-
 import torch
 import gen_once
+import gen_twice
 import gen_onebyone
 import classifier
 import tag
@@ -41,6 +40,9 @@ def main():
     if "once" in type:
         eval_dataset = gen_once.get_data_from_file(arg.valid)
         model = gen_once.BertOnce(model_config=config, maxlen=maxlen)
+    elif "twice" in type:
+        eval_dataset = gen_once.get_data_from_file(arg.valid)
+        model = gen_twice.BertTwice(model_config=config, maxlen=maxlen)
     elif "onebyone" in type:
         eval_dataset = gen_once.get_data_from_file(arg.valid)
         model = gen_onebyone.BertOneByOne(model_config=config, maxlen=maxlen)
@@ -58,14 +60,6 @@ def main():
     model.load_state_dict(package['model_state_dict'], strict=False)
 
     eval_metric = EvalMetric()
-    argtype = ""
-    if arg.beamsearch:
-        argtype = "_beam_" + str(arg.beamselect)
-        if arg.beamfiltersim:
-            argtype += "_filtersim_"
-    outfile_name = arg.model + argtype + ".out"
-    outfile_arr = []
-
     for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
@@ -84,15 +78,16 @@ def main():
             if arg.beamsearch:
                 print("possible: ", possible)
             print('==========')
-        if arg.outfile:
-            outfile_arr.append([input, target, result])
         eval_metric.add_record(result, target)
 
+    argtype = ""
+    if arg.beamsearch:
+        argtype = "_beam_" + str(arg.beamselect)
+    outfile_name = arg.model + argtype + ".out"
     if arg.outfile:
         with open(outfile_name, "w", encoding='utf8') as f:
-            writer = csv.writer(f)
-            for r in outfile_arr:
-                writer.writerow(r)
+            for output in eval_metric.get_record():
+                f.write(output + "\n")
 
     for i in eval_metric.cal_score(arg.metric):
         print("TASK: ", i[0])
