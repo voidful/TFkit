@@ -21,8 +21,10 @@ class EvalMetric:
                 targets.append("")
 
         self.tasks[task]['predicted'].append(predicted)
+        self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else list(predicted))
         self.tasks[task]['targets'].append(targets)
         self.tasks[task]['target'].append(target[0])
+        self.tasks[task]['target_list'].append(target[0].split(" ") if " " in target[0] else list(target[0]))
 
     def get_record(self, task='default'):
         return self.tasks[task]['predicted']
@@ -37,7 +39,7 @@ class EvalMetric:
                     target = task['target'][pos]
                     equal = False
                     if predict.replace("[SEP]", "").replace(" ", "") == target.replace("[SEP]", "").replace(" ",
-                                                                                                                   ""):
+                                                                                                            ""):
                         equal = True
                     em += 1 if equal else 0
                     total += 1
@@ -54,8 +56,8 @@ class EvalMetric:
             if "classification" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
-                mlb = MultiLabelBinarizer().fit(task['target'])
-                result = classification_report(mlb.transform(task['predicted']),
-                                               mlb.transform(task['target']),
+                mlb = MultiLabelBinarizer().fit(task['target_list'])
+                result = classification_report(mlb.transform(task['predicted_list']),
+                                               mlb.transform(task['target_list']),
                                                target_names=list(mlb.classes_))
             yield (name, result)

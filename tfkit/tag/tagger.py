@@ -84,9 +84,9 @@ class BertTagger(nn.Module):
             result = self.forward(feature_dict, eval=True)
             result = result[0][0]
             result_map = []
+
             for map in json.loads(mapping):
                 char, pos = map['char'], map['pos']
-                if self.labels[result[pos]] is not "O":
-                    output += char
-                    result_map.append({char: self.labels[result[pos]]})
-        return output, result_map
+                output += " " + self.labels[result[pos]]
+                result_map.append({char: self.labels[result[pos]]})
+        return output.strip(), result_map

@@ -75,6 +75,7 @@ def main():
             print("input: ", input)
             print("target: ", target)
             print("result: ", result)
+            print("outprob: ", outprob)
             if arg.beamsearch:
                 print("possible: ", possible)
             print('==========')
