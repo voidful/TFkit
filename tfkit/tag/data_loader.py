@@ -1,5 +1,6 @@
 import sys
 import os
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
@@ -146,7 +147,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
 
         target_id = [labels.index("O")] + target_token + [labels.index("O")]
         if len(input_id) != len(target_id):
-            print("input target len no equal", len(input), len(target), input, target)
+            print("input target len not equal", len(input), len(target), input, target, input_id, target_id)
         target_id.extend([0] * (maxlen - len(target_id)))
         row_dict['target'] = np.asarray(target_id)
 
