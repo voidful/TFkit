@@ -73,7 +73,8 @@ def get_data_from_file(fpath):
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None):
     row_dict = dict()
 
-    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
+    # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
+    tokenized_input = tokenizer.tokenize(input)
     tokenized_previous = tokenizer.tokenize(previous)
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append('[MASK]')
