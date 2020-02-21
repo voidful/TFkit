@@ -95,6 +95,6 @@ class BertMtClassifier(nn.Module):
                 result = self.forward(feature_dict, eval=True)
                 result = result[0][0]
                 res = sorted(result, key=result.get, reverse=True)
-                return res[:topk], result
+                return res[:topk], [result]
             else:
                 return [""], []
