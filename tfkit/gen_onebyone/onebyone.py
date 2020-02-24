@@ -42,7 +42,7 @@ class BertOneByOne(nn.Module):
         type_tensors = torch.tensor(types).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
 
-        outputs = self.pretrained(tokens_tensor,  attention_mask=mask_tensors)
+        outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = outputs[0]
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)
@@ -110,7 +110,7 @@ class BertOneByOne(nn.Module):
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, topk=3, filtersim=False):
+    def predict_beamsearch(self, input, topk=3, filtersim=False, task=None):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
