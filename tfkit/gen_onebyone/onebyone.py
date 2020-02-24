@@ -79,7 +79,7 @@ class BertOneByOne(nn.Module):
                 predictions = predictions[0][0]
                 logit_prob = softmax(predictions[start]).data.tolist()
                 prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:10]
+                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:3]
                 output_prob_dict.append(prob_result)
                 predicted_index = torch.argmax(predictions[start]).item()
                 predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
