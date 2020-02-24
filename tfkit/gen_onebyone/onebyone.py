@@ -1,6 +1,8 @@
 import sys
 import os
 
+from tfkit.utility import tok_sep
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
@@ -77,12 +79,14 @@ class BertOneByOne(nn.Module):
                 predictions = predictions[0][0]
                 logit_prob = softmax(predictions[start]).data.tolist()
                 prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:10]
                 output_prob_dict.append(prob_result)
                 predicted_index = torch.argmax(predictions[start]).item()
                 predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
                 if predicted_token[0] != "#":
                     predicted_token[0] = predicted_token[0].replace("#", "")
+                if tok_sep(self.tokenizer) in predicted_token:
+                    break
                 output += predicted_token[0] + ' '
 
             return output, output_prob_dict
