@@ -60,14 +60,15 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['ntarget'] = np.asarray([-1] * maxlen)
 
     if target is not None:
-        tokenized_target = tokenizer.tokenize(target) + [tok_sep(tokenizer)]
+        tokenized_target = [x for x in tokenizer.tokenize(target) if x not in tokenizer.all_special_tokens]
+        tokenized_target += [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * len(tokenized_input)
         tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = np.asarray(tokenized_target_id)
 
     if ntarget is not None:
-        tokenized_ntarget = tokenizer.tokenize(ntarget)
+        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if x not in tokenizer.all_special_tokens]
         tokenized_ntarget_id = [-1] * len(tokenized_input)
         tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))

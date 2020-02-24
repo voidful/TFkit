@@ -62,14 +62,11 @@ class BertOneByOne(nn.Module):
 
     def predict(self, input, task=None):
         self.eval()
-        predicted = 0
         with torch.no_grad():
             output = ""
-            outputs = []
             output_prob_dict = []
             while True:
                 feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
-                # print(feature_dict)
                 if len(feature_dict['input']) > self.maxlen:
                     break
                 start = feature_dict['start']
@@ -78,7 +75,7 @@ class BertOneByOne(nn.Module):
                 predictions = self.forward(feature_dict, eval=True)
                 predictions = predictions[0][0]
                 logit_prob = softmax(predictions[start]).data.tolist()
-                prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
+                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
                 prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:3]
                 output_prob_dict.append(prob_result)
                 predicted_index = torch.argmax(predictions[start]).item()
@@ -110,7 +107,7 @@ class BertOneByOne(nn.Module):
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, topk=3, filtersim=False, task=None):
+    def predict_beamsearch(self, input, topk=3, filtersim=True, task=None):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -131,7 +128,7 @@ class BertOneByOne(nn.Module):
                         predictions = predictions[0][0]
                         predictions = predictions[feature_dict['start']][0]
                         logit_prob = softmax(predictions).data.tolist()
-                        prob_result = {self.tokenizer.ids_to_tokens[id]: prob for id, prob in enumerate(logit_prob)}
+                        prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
 
                         for k, v in sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:50]:
                             if k != "#":

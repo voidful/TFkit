@@ -75,7 +75,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
 
     # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_input = tokenizer.tokenize(input)
-    tokenized_previous = tokenizer.tokenize(previous)
+    tokenized_previous = [x for x in tokenizer.tokenize(previous) if x not in tokenizer.all_special_tokens]
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append('[MASK]')
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
@@ -87,7 +87,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     row_dict['ntarget'] = np.asarray([-1] * maxlen)
 
     if target is not None:
-        tokenized_target = tokenizer.tokenize(target)
+        tokenized_target = [x for x in tokenizer.tokenize(target) if x not in tokenizer.all_special_tokens]
         if previous == target:
             tokenized_target = [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * target_start
@@ -95,7 +95,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = np.asarray(tokenized_target_id)
     if ntarget is not None:
-        tokenized_ntarget = tokenizer.tokenize(ntarget)
+        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if x not in tokenizer.all_special_tokens]
         tokenized_ntarget_id = [-1] * target_start
         ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else ["[SEP]"]
         ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[-1]
