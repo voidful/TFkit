@@ -42,5 +42,5 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.classifier.loadClassifierDataset('../demo_data/classification.csv',
                                                         pretrained='bert-base-chinese',
                                                         maxlen=512):
-            self.assertTrue(len(i['input']) < 512)
+            self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)

@@ -133,7 +133,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
 
     pos = 1  # cls as start 0
     for i in input:
-        for _ in range(len([x for x in tokenizer.tokenize(i) if x not in tokenizer.all_special_tokens])):
+        for _ in range(len([x for x in tokenizer.tokenize(i) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token])):
             if _ < 1:
                 mapping_index.append({'char': i, 'pos': pos})
             pos += 1
@@ -143,7 +143,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
         target_token = []
 
         for i, t in zip(input, target):
-            for _ in range(len([x for x in tokenizer.tokenize(i) if x not in tokenizer.all_special_tokens])):
+            for _ in range(len([x for x in tokenizer.tokenize(i) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token])):
                 target_token += [labels.index(t)]
 
         target_id = [labels.index("O")] + target_token + [labels.index("O")]
