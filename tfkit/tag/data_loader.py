@@ -148,7 +148,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
 
         target_id = [labels.index("O")] + target_token + [labels.index("O")]
         if len(input_id) != len(target_id):
-            print("input target len not equal", len(input), len(target), input, target, input_id, target_id)
+            print("input target len not equal", len(input_id), len(target_id), len(input), len(target))
         target_id.extend([0] * (maxlen - len(target_id)))
         row_dict['target'] = np.asarray(target_id)
 

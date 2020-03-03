@@ -68,6 +68,7 @@ def main():
         if arg.beamsearch:
             result, possible = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
             result = possible[arg.beamselect][0]
+            outprob = "NONE"
         else:
             result, outprob = model.predict(task=task, input=input)
         if arg.print:
