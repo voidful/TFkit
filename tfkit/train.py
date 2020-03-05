@@ -5,6 +5,7 @@ from gen_twice import *
 from gen_onebyone import *
 from classifier import *
 from tag import *
+from qa import *
 from torch.utils import data
 from tqdm import tqdm
 from utility.optim import *
@@ -76,9 +77,9 @@ def main():
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
-                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol'])
+                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa'])
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
-                        help='bert-base-multilingual-cased/bert-base-chinese')
+                        help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
@@ -116,6 +117,10 @@ def main():
                                                  cache=arg.cache)
             eval_dataset = loadColTaggerDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertTagger(train_dataset.label, arg.config, maxlen=arg.maxlen)
+    elif 'qa' in arg.model:
+        train_dataset = loadQADataset(arg.train[0], pretrained=arg.config, cache=arg.cache)
+        eval_dataset = loadQADataset(arg.valid[0], pretrained=arg.config, cache=arg.cache)
+        model = BertQA(model_config=arg.config, maxlen=arg.maxlen)
 
     train_iter = data.DataLoader(dataset=train_dataset,
                                  batch_size=arg.batch,

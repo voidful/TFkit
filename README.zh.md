@@ -1,14 +1,11 @@
 # 🤖 TFKit - Transformer Kit 🤗   
-NLP library for different downstream tasks, built on huggingface 🤗 project,   
-for developing wide variety of nlp tasks.
+這是一個模組化的NLP工具包，用於fine-tune預訓練的transformer模型。   
+這個工具包重整 🤗huggingface 的project而來，支援更多功能:
 
-Read this in other languages: [正體中文(施工中👷)](https://github.com/voidful/TFkit/blob/master/README.zh.md).
-
-
-## Feature
-- support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert  
-- modularize data loading
-- easy to modify
+## 功能
+- 支持 Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 各種模型，隨心換 [全部支持的模型](https://huggingface.co/models)   
+- 模組換資料載入部分，也針對此做了資料下載預處理套件 [NLPrep](https://github.com/voidful/NLPrep)   
+- 易於修改，可以加入自己的fine-tune架構
 - special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
 - eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
 - multi-class multi-task multi-label classifier  

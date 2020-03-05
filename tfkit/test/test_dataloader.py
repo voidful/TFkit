@@ -44,3 +44,12 @@ class TestDataLoader(unittest.TestCase):
                                                         maxlen=512):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
+
+    def testQA(self):
+        for i in tfkit.qa.get_data_from_file('../demo_data/qa.csv'):
+            print(i)
+        for i in tfkit.qa.loadQADataset('../demo_data/qa.csv',
+                                                        pretrained='bert-base-chinese',
+                                                        maxlen=512):
+            self.assertTrue(len(i['input']) <= 512)
+            self.assertTrue(len(i['target']) == 2)

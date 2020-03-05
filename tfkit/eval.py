@@ -3,6 +3,7 @@ import torch
 import gen_once
 import gen_twice
 import gen_onebyone
+import qa
 import classifier
 import tag
 from tqdm import tqdm
@@ -14,7 +15,7 @@ def main():
     parser.add_argument("--model", required=True, type=str)
     parser.add_argument("--valid", required=True, type=str)
     parser.add_argument("--batch", type=int, default=3)
-    parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol'])
+    parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol','qa'])
     parser.add_argument("--metric", required=True, type=str, choices=['em', 'nlg', 'classification'])
     parser.add_argument("--print", action='store_true')
     parser.add_argument("--outfile", action='store_true')
@@ -55,6 +56,9 @@ def main():
         elif "col" in type:
             eval_dataset = tag.get_data_from_file_col(arg.valid)
         model = tag.BertTagger(package['label'], model_config=config, maxlen=maxlen)
+    elif 'qa' in type:
+        eval_dataset = qa.get_data_from_file(arg.valid)
+        model = qa.BertQA(model_config=config, maxlen=maxlen)
 
     model = model.to(device)
     model.load_state_dict(package['model_state_dict'], strict=False)
