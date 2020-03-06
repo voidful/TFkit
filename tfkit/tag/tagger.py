@@ -20,7 +20,10 @@ class BertTagger(nn.Module):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        if 'albert_chinese' in model_config:
+            self.tokenizer = BertTokenizer.from_pretrained(model_config)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
         self.pretrained = AutoModel.from_pretrained(model_config)
         self.dropout = nn.Dropout(dropout)
         self.tagger = nn.Linear(self.pretrained.config.hidden_size, len(labels))
