@@ -12,14 +12,17 @@ from collections import defaultdict
 import numpy as np
 from torch.utils import data
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BertTokenizer
 from utility.tok import *
 
 
 class loadColTaggerDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=368, cache=False):
         samples = []
-        tokenizer = AutoTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained:
+            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -31,7 +34,7 @@ class loadColTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) <= maxlen:
                     samples.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -62,7 +65,7 @@ class loadRowTaggerDataset(data.Dataset):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) <= maxlen:
                     samples.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:

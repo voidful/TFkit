@@ -6,13 +6,17 @@ from collections import defaultdict
 import numpy as np
 from torch.utils import data
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BertTokenizer
 from utility.tok import *
+
 
 class loadOnceDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=510, cache=False):
         sample = []
-        tokenizer = AutoTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained:
+            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -21,7 +25,7 @@ class loadOnceDataset(data.Dataset):
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, maxlen, input, target)
-                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= maxlen:
                     sample.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -60,7 +64,8 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['ntarget'] = np.asarray([-1] * maxlen)
 
     if target is not None:
-        tokenized_target = [x for x in tokenizer.tokenize(target) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_target = [x for x in tokenizer.tokenize(target) if
+                            x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
         tokenized_target += [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * len(tokenized_input)
         tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
@@ -68,7 +73,8 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
         row_dict['target'] = np.asarray(tokenized_target_id)
 
     if ntarget is not None:
-        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if
+                             x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
         tokenized_ntarget_id = [-1] * len(tokenized_input)
         tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))

@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BertTokenizer
 from tqdm import tqdm
 from utility.tok import *
 import gen_once
@@ -14,7 +14,10 @@ import gen_once
 class loadOneByOneDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=510, cache=False):
         sample = []
-        tokenizer = AutoTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained:
+            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -37,7 +40,7 @@ class loadOneByOneDataset(data.Dataset):
                 # # sentence level negative loss
                 # feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
                 #                                                      ntarget=negative_text)
-                # if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == tokenizer.max_model_input_sizes[pretrained]:
+                # if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                 #     sample.append(feature)
 
                 # if "[SEP]" in target:
@@ -75,7 +78,8 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
 
     # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_input = tokenizer.tokenize(input)
-    tokenized_previous = [x for x in tokenizer.tokenize(previous) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+    tokenized_previous = [x for x in tokenizer.tokenize(previous) if
+                          x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append('[MASK]')
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
@@ -87,7 +91,8 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     row_dict['ntarget'] = np.asarray([-1] * maxlen)
 
     if target is not None:
-        tokenized_target = [x for x in tokenizer.tokenize(target) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_target = [x for x in tokenizer.tokenize(target) if
+                            x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
         if previous == target:
             tokenized_target += [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * target_start
@@ -95,7 +100,8 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = np.asarray(tokenized_target_id)
     if ntarget is not None:
-        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if
+                             x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
         tokenized_ntarget_id = [-1] * target_start
         ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else ["[SEP]"]
         ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[-1]

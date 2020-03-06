@@ -18,7 +18,10 @@ class BertQA(nn.Module):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        if 'albert_chinese' in model_config:
+            self.tokenizer = BertTokenizer.from_pretrained(model_config)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
         self.pretrained = AutoModel.from_pretrained(model_config)
         self.maxlen = maxlen
 
@@ -80,6 +83,6 @@ class BertQA(nn.Module):
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
                 start, end = result[0][0]
-                return raw_input[start:end+1], [start, end]
+                return raw_input[start:end + 1], [start, end]
             else:
                 return [""], []

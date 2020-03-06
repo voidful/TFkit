@@ -6,14 +6,17 @@ from collections import defaultdict
 import numpy as np
 from torch.utils import data
 from tqdm import tqdm
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, BertTokenizer
 from utility.tok import *
 
 
 class loadQADataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=512, cache=False):
         samples = []
-        tokenizer = AutoTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained:
+            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -22,7 +25,7 @@ class loadQADataset(data.Dataset):
             for i in tqdm(get_data_from_file(fpath)):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, input, target, maxlen=maxlen)
-                if len(feature['input']) <= tokenizer.max_model_input_sizes[pretrained]:
+                if len(feature['input']) <= maxlen:
                     samples.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -52,6 +55,7 @@ def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator="
     row_dict['target'] = np.asarray([0, 0])
     tokenized_input = tokenizer.tokenize(input)
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
+
     input = input.split()
     if target is not None:
         start, end = target

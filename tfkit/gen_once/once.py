@@ -16,7 +16,10 @@ from utility.tok import *
 class BertOnce(nn.Module):
     def __init__(self, model_config, maxlen=128):
         super().__init__()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        if 'albert_chinese' in model_config:
+            self.tokenizer = BertTokenizer.from_pretrained(model_config)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
         self.pretrained = AutoModel.from_pretrained(model_config)
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.maxlen = maxlen

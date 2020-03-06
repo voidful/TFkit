@@ -20,7 +20,10 @@ from utility.tok import *
 class BertOneByOne(nn.Module):
     def __init__(self, model_config, maxlen=512):
         super().__init__()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        if 'albert_chinese' in model_config:
+            self.tokenizer = BertTokenizer.from_pretrained(model_config)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
         self.pretrained = AutoModel.from_pretrained(model_config)
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
