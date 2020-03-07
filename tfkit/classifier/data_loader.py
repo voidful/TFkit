@@ -68,8 +68,7 @@ def get_feature_from_data(tokenizer, maxlen, task_lables, task, input, target=No
     # bert embedding
     # inputs[id] += "[SEP]".join(task_lables)
 
-    # input_token = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    input_token = tokenizer.tokenize(input)
+    input_token = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_input_id = tokenizer.convert_tokens_to_ids(input_token)
     mask_id = [1] * len(tokenized_input_id)
     tokenized_input_id.extend([tokenizer.pad_token_id] * (maxlen - len(tokenized_input_id)))
