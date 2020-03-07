@@ -56,7 +56,7 @@ def get_data_from_file(fpath):
 def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict = dict()
     # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     mask_id = [1] * len(tokenized_input)
     type_id = [0] * len(tokenized_input)
 

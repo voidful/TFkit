@@ -21,7 +21,8 @@ class TestDataLoader(unittest.TestCase):
     def testOnce(self):
         for i in tfkit.gen_once.get_data_from_file('../demo_data/generate.csv'):
             print(i)
-        for i in tfkit.gen_once.loadOnceDataset('../demo_data/generate.csv', pretrained='bert-base-chinese', maxlen=128):
+        for i in tfkit.gen_once.loadOnceDataset('../demo_data/generate.csv', pretrained='bert-base-chinese',
+                                                maxlen=128):
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
@@ -49,7 +50,14 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.qa.get_data_from_file('../demo_data/qa.csv'):
             print(i)
         for i in tfkit.qa.loadQADataset('../demo_data/qa.csv',
-                                                        pretrained='bert-base-chinese',
-                                                        maxlen=512):
+                                        pretrained='bert-base-chinese',
+                                        maxlen=512):
+            print(i['raw_input'][int(i['target'][0]):int(i['target'][1])])
+            self.assertTrue(len(i['input']) <= 512)
+            self.assertTrue(len(i['target']) == 2)
+        for i in tfkit.qa.loadQADataset('../demo_data/qa.csv',
+                                        pretrained='voidful/albert_chinese_tiny',
+                                        maxlen=512):
+            print(i['raw_input'][int(i['target'][0]):int(i['target'][1])])
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)

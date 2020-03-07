@@ -53,7 +53,10 @@ class loadRowTaggerDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=512, separator=" ", cache=False):
         samples = []
         labels = []
-        tokenizer = AutoTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained:
+            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(pretrained)
         cache_path = fpath + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
