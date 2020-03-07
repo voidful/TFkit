@@ -77,7 +77,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     row_dict = dict()
 
     # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_previous = [x for x in tokenizer.tokenize(previous) if
                           x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
     tokenized_input.extend(tokenized_previous)

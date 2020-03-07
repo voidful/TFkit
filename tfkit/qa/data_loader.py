@@ -53,9 +53,8 @@ def get_data_from_file(fpath):
 def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator=" "):
     row_dict = dict()
     row_dict['target'] = np.asarray([0, 0])
-    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
-
     input = input.split()
     if target is not None:
         start, end = target
