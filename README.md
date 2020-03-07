@@ -5,6 +5,7 @@ for developing wide variety of nlp tasks.
 Read this in other languages: [正體中文(施工中👷)](https://github.com/voidful/TFkit/blob/master/README.zh.md).
 
 ## DEMO
+
 ### Distilbert NER model
 three line code train and host NER model [Colab](https://colab.research.google.com/drive/1x5DLBQ6ufRUfi1PPmHcXtYqTl_9krRWz)
 ```bash
@@ -13,10 +14,18 @@ tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --valid ./c
 nlp2go --model ./checkpoints/3.pt --predictor biotag --cli     
 ```
 
+### albert QA model
+three line code train and host QA model [Colab](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ)
+```bash
+nlprep --dataset drcdqa --task qa --outdir ./drcdqa/
+tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./drcdqa/train --valid ./drcdqa/test --model qa --config voidful/albert_chinese_small  --cache
+nlp2go --model ./drcd_qa_model/3.pt --cli --predictor qa
+```
+
 ## Feature
-- support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert [Model list](https://huggingface.co/models)  
-- create a data preprocessing library on many task [NLPrep](https://github.com/voidful/NLPrep)  
-- create model hosting library for demo  [nlp2go](https://github.com/voidful/nlp2go)  
+- [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
+- [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
+- [nlp2go](https://github.com/voidful/nlp2go): create model hosting library for demo  
 - modularize data loading
 - easy to modify
 - special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
@@ -26,6 +35,8 @@ nlp2go --model ./checkpoints/3.pt --predictor biotag --cli
 - support beamsarch on decoding
 - token tagging
 
+## Flow Overview
+![nlp kit flow](https://raw.githubusercontent.com/voidful/TFkit/master/img/flow.png)
 
 ## Package Overview
 
