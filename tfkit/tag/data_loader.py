@@ -131,8 +131,7 @@ def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, sep
 def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, separator=" "):
     # ``1`` for tokens that are NOT MASKED, ``0`` for MASKED tokens.
     row_dict = dict()
-    # tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     input = input.split()
     mapping_index = []
