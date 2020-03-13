@@ -76,7 +76,7 @@ class BertTagger(nn.Module):
 
     def predict(self, input, task=None):
         self.eval()
-        output = ""
+        output = []
         with torch.no_grad():
             feature_dict = get_feature_from_data(tokenizer=self.tokenizer, labels=self.labels, input=input.strip(),
                                                  maxlen=self.maxlen)
@@ -90,6 +90,8 @@ class BertTagger(nn.Module):
 
             for map in json.loads(mapping):
                 char, pos = map['char'], map['pos']
-                output += " " + self.labels[result[pos]]
+                output.append(self.labels[result[pos]])
                 result_map.append({char: self.labels[result[pos]]})
-        return output.strip(), result_map
+
+        output = "".join(self.tokenizer.convert_tokens_to_string(output))
+        return output, result_map

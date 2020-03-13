@@ -25,7 +25,7 @@ class loadQADataset(data.Dataset):
             for i in tqdm(get_data_from_file(fpath)):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, input, target, maxlen=maxlen)
-                if len(feature['input']) <= maxlen:
+                if len(feature['input']) <= maxlen and 0 <= feature['target'][0] < maxlen and 0 <= feature['target'][1] < maxlen:
                     samples.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -53,23 +53,27 @@ def get_data_from_file(fpath):
 def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator=" "):
     row_dict = dict()
     row_dict['target'] = np.asarray([0, 0])
+    tokenized_input_ori = tokenizer.tokenize(input)
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
-    input = input.split()
+    ext_tok = []
+    input = input.split(" ")
     if target is not None:
         start, end = target
-        start = int(start) + 1
-        end = int(end)
+        ori_start = start = int(start)
+        ori_end = end = int(end)
+        ori_ans = input[ori_start:ori_end]
+
         for pos, i in enumerate(input):
-            length = len([x for x in tokenizer.tokenize(i) if
-                          x not in tokenizer.all_special_tokens or x == tokenizer.unk_token])
-            if length > 1:
-                if pos < start:
-                    start += length - 1
-                if pos < end:
-                    end += length - 1
-        # print("ANS:", start, end, tokenized_input[start:end + 1])
-        row_dict['target'] = np.asarray([start, end])
+            ext_tok.extend(tokenizer.tokenize(i))
+            length = len(tokenizer.tokenize(i))
+            if pos < ori_start:
+                start += length - 1
+            if pos < ori_end:
+                end += length - 1
+
+        # print("ORI ANS:", ori_ans, "TOK ANS:", tokenized_input[start + 1:end + 1])
+        row_dict['target'] = np.asarray([start + 1, end + 1])  # cls +1
 
     mask_id = [1] * len(input_id)
     mask_id.extend([0] * (maxlen - len(mask_id)))
