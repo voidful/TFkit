@@ -45,7 +45,6 @@ class BertOnce(nn.Module):
         prediction_scores = self.model(sequence_output)
         outputs = (prediction_scores,)
 
-
         if eval is False:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
@@ -69,7 +68,7 @@ class BertOnce(nn.Module):
                 feature_dict[k] = [v]
             predictions = self.forward(feature_dict, eval=True)
             predictions = predictions[0][0]
-            output = ""
+            output = []
             end = False
             while start < self.maxlen:
                 predicted_index = torch.argmax(predictions[start]).item()
@@ -81,7 +80,8 @@ class BertOnce(nn.Module):
                 if tok_sep(self.tokenizer) in predicted_token:
                     end = True
                 if end is False:
-                    output += predicted_token[0] + " "
+                    output.append(predicted_token[0])
                 start += 1
 
+        output = "".join(self.tokenizer.convert_tokens_to_string(output))
         return output, output_prob_dict

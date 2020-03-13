@@ -84,6 +84,9 @@ def main():
             if arg.beamsearch:
                 print("possible: ", possible)
             print('==========')
+
+        if 'qa' in type:
+            target = input[int(target[0]),int(target[1])]
         eval_metric.add_record(result, target)
 
     argtype = ""

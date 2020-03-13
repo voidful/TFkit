@@ -66,7 +66,7 @@ class BertOneByOne(nn.Module):
     def predict(self, input, task=None):
         self.eval()
         with torch.no_grad():
-            output = ""
+            output = []
             output_prob_dict = []
             while True:
                 feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
@@ -87,8 +87,9 @@ class BertOneByOne(nn.Module):
                     predicted_token[0] = predicted_token[0].replace("#", "")
                 if tok_sep(self.tokenizer) in predicted_token:
                     break
-                output += predicted_token[0] + ' '
+                output.append(predicted_token[0])
 
+            output = "".join(self.tokenizer.convert_tokens_to_string(output))
             return output, output_prob_dict
 
     def jaccard_similarity(self, list1, list2):
