@@ -83,6 +83,6 @@ class BertQA(nn.Module):
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
                 start, end = result[0][0]
-                return "".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end + 1])), [start, end]
+                return "".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end])), [start, end]
             else:
                 return [""], []

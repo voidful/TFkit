@@ -38,7 +38,7 @@ class EvalMetric:
                 for pos, predict in enumerate(task['predicted']):
                     target = task['target'][pos]
                     equal = False
-                    if not isinstance(predict, list) and predict.replace("[SEP]", "").replace(" ", "") == target.replace("[SEP]", "").replace(" ",
+                    if not isinstance(predict, list) and predict.lower().replace("[SEP]", "").replace(" ", "") == target.lower().replace("[SEP]", "").replace(" ",
                                                                                                             ""):
                         equal = True
                     em += 1 if equal else 0

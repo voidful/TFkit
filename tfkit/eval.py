@@ -15,7 +15,7 @@ def main():
     parser.add_argument("--model", required=True, type=str)
     parser.add_argument("--valid", required=True, type=str)
     parser.add_argument("--batch", type=int, default=3)
-    parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol','qa'])
+    parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa'])
     parser.add_argument("--metric", required=True, type=str, choices=['em', 'nlg', 'classification'])
     parser.add_argument("--print", action='store_true')
     parser.add_argument("--outfile", action='store_true')
@@ -75,6 +75,10 @@ def main():
             outprob = "NONE"
         else:
             result, outprob = model.predict(task=task, input=input)
+
+        if 'qa' in type:
+            target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+
         if arg.print:
             print('===eval===')
             print("input: ", input)
@@ -85,8 +89,6 @@ def main():
                 print("possible: ", possible)
             print('==========')
 
-        if 'qa' in type:
-            target = input[int(target[0]),int(target[1])]
         eval_metric.add_record(result, target)
 
     argtype = ""
