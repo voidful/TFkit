@@ -50,30 +50,28 @@ class BertQA(nn.Module):
         end_logits = end_logits.squeeze(-1)
 
         if eval:
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': []
+            }
             reshaped_start_logits = softmax(start_logits)
             reshaped_end_logits = softmax(end_logits)
-            start_prob = reshaped_start_logits.data.tolist()
-            end_prob = reshaped_end_logits.data.tolist()
-            max_start = []
-            max_end = []
-            for pos_logit_prob in start_prob:
-                max_index = pos_logit_prob.index(max(pos_logit_prob))
-                max_start.append(max_index)
-            for pos_logit_prob in end_prob:
-                max_index = pos_logit_prob.index(max(pos_logit_prob))
-                max_end.append(max_index)
-            outputs = (list(zip(max_start, max_end)),)
+            start_prob = reshaped_start_logits.data.tolist()[0]
+            end_prob = reshaped_end_logits.data.tolist()[0]
+            result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob))})
+            result_dict['label_prob_all'].append({'end': dict(zip(range(len(end_prob)), end_prob))})
+            result_dict['label_map'].append({'start': start_prob.index(max(start_prob))})
+            result_dict['label_map'].append({'end': end_prob.index(max(end_prob))})
+            outputs = result_dict
         else:
-            outputs = ([start_logits, end_logits],)
-        if eval is False:
             start_loss = self.loss_fct(start_logits, start_positions)
             end_loss = self.loss_fct(end_logits, end_positions)
             total_loss = (start_loss + end_loss) / 2
-            outputs = (total_loss,) + outputs
+            outputs = total_loss
 
         return outputs
 
-    def predict(self, input, task=None):
+    def predict(self, input, topk=1, task=None):
         self.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, input, maxlen=self.maxlen)
@@ -82,7 +80,21 @@ class BertQA(nn.Module):
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
-                start, end = result[0][0]
-                return "".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end])), [start, end]
+
+                if topk < 2:
+                    start = [i['start'] for i in result['label_map'] if 'start' in i][0]
+                    end = [i['end'] for i in result['label_map'] if 'end' in i][0]
+                    return ["".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end]))], result
+                else:
+                    start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
+                    end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
+                    answers = []
+                    for start_index in start_dict:
+                        for end_index in end_dict:
+                            answers.append((start_index, end_index, start_dict[start_index] + end_dict[end_index]))
+                    answer_results = sorted(answers, key=lambda answers: answers[2],
+                                            reverse=True)[:topk]
+                    return ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
+                            answer_results], result
             else:
-                return [""], []
+                return [""], {}

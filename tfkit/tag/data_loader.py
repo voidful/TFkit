@@ -80,6 +80,7 @@ class loadRowTaggerDataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
@@ -138,8 +139,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
 
     pos = 1  # cls as start 0
     for i in input:
-        for _ in range(len([x for x in tokenizer.tokenize(i) if
-                            x not in tokenizer.all_special_tokens or x == tokenizer.unk_token])):
+        for _ in range(len(tokenizer.tokenize(i))):
             if _ < 1:
                 mapping_index.append({'char': i, 'pos': pos})
             pos += 1
@@ -149,23 +149,23 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
         target_token = []
 
         for i, t in zip(input, target):
-            for _ in range(len([x for x in tokenizer.tokenize(i) if
-                                x not in tokenizer.all_special_tokens or x == tokenizer.unk_token])):
+            for _ in range(len(tokenizer.tokenize(i))):
                 target_token += [labels.index(t)]
 
         target_id = [labels.index("O")] + target_token + [labels.index("O")]
         if len(input_id) != len(target_id):
-            print("input target len not equal", len(input_id), len(target_id), len(input), len(target))
+            print("input target len not equal", len(input_id), len(target_id), len(input), len(target),
+                  len(tokenized_input), len(target_token))
         target_id.extend([0] * (maxlen - len(target_id)))
-        row_dict['target'] = np.asarray(target_id)
+        row_dict['target'] = target_id
 
     row_dict['mapping'] = json.dumps(mapping_index, ensure_ascii=False)
     mask_id = [1] * len(input_id)
     mask_id.extend([0] * (maxlen - len(mask_id)))
-    row_dict['mask'] = np.asarray(mask_id)
+    row_dict['mask'] = mask_id
     row_dict['end'] = len(input_id)
     input_id.extend([0] * (maxlen - len(input_id)))
-    row_dict['input'] = np.asarray(input_id)
+    row_dict['input'] = input_id
 
     # if debug:
     #     print("*** Example ***")

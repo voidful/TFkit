@@ -1,6 +1,6 @@
 import sys
 import os
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -46,52 +46,61 @@ class BertTagger(nn.Module):
         bert_output = self.pretrained(token_tensor, attention_mask=mask_tensors)
         res = bert_output[0]
         pooled_output = self.dropout(res)
-        # tagger
         reshaped_logits = self.tagger(pooled_output)
-        result_items = []
-        result_labels = []
-        for ilogit in reshaped_logits:
-            ilogit = softmax(ilogit)
-            logit_prob = ilogit.data.tolist()
-            result_item = []
-            for pos_logit_prob in logit_prob:
-                max_index = pos_logit_prob.index(max(pos_logit_prob))
-                result_item.append(max_index)
-            result_labels.append(ilogit)
-            result_items.append(result_item)
+
         if eval:
-            outputs = (result_items,)
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': []
+            }
+
+            ilogit = softmax(reshaped_logits[0])
+            result_labels = ilogit.data.tolist()
+            result_items = []
+            for pos_logit_prob in result_labels:
+                max_index = pos_logit_prob.index(max(pos_logit_prob))
+                result_items.append(
+                    [self.labels[max_index], dict(zip(self.labels, pos_logit_prob))])
+
+            mapping = batch_data['mapping']
+            for map in json.loads(mapping[0]):
+                char, pos = map['char'], map['pos']
+                result_dict['label_map'].append({char: result_items[pos][0]})
+                result_dict['label_prob_all'].append({char: result_items[pos][1]})
+
+            outputs = result_dict
         else:
-            outputs = (result_labels,)
-        # output
-        if eval is False:
             targets = batch_data["target"]
             loss = 0
             target_tensor = torch.tensor(targets, dtype=torch.long).to(self.device)
             for logit, label in zip(reshaped_logits, target_tensor):
                 loss += self.loss_fct(logit, label)
-            outputs = (loss,) + outputs
+            outputs = loss
 
         return outputs
 
-    def predict(self, input, task=None):
+    def predict(self, input, neg="O", task=None):
         self.eval()
-        output = []
         with torch.no_grad():
             feature_dict = get_feature_from_data(tokenizer=self.tokenizer, labels=self.labels, input=input.strip(),
                                                  maxlen=self.maxlen)
-            mapping = feature_dict['mapping']
 
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
             result = self.forward(feature_dict, eval=True)
-            result = result[0][0]
-            result_map = []
 
-            for map in json.loads(mapping):
-                char, pos = map['char'], map['pos']
-                output.append(self.labels[result[pos]])
-                result_map.append({char: self.labels[result[pos]]})
+            output = []
+            target_str = ["", ""]
+            for map in result['label_map']:
+                for k, y in map.items():
+                    if y is not neg:
+                        target_str[0] += k
+                        target_str[1] = y
+                    else:
+                        if len(target_str[0]) > 0:
+                            output.append(target_str)
+                        target_str = ["", ""]
+            if len(target_str[0]) > 0:
+                output.append(target_str)
 
-        output = "".join(self.tokenizer.convert_tokens_to_string(output))
-        return output, result_map
+            return output, result

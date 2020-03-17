@@ -37,6 +37,7 @@ class loadOnceDataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
@@ -59,25 +60,23 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     mask_id = [1] * len(tokenized_input)
     type_id = [0] * len(tokenized_input)
 
-    row_dict['target'] = np.asarray([-1] * maxlen)
-    row_dict['ntarget'] = np.asarray([-1] * maxlen)
+    row_dict['target'] = [-1] * maxlen
+    row_dict['ntarget'] = [-1] * maxlen
 
     if target is not None:
-        tokenized_target = [x for x in tokenizer.tokenize(target) if
-                            x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_target = tokenizer.tokenize(target)
         tokenized_target += [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * len(tokenized_input)
         tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
-        row_dict['target'] = np.asarray(tokenized_target_id)
+        row_dict['target'] = tokenized_target_id
 
     if ntarget is not None:
-        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if
-                             x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * len(tokenized_input)
         tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
-        row_dict['ntarget'] = np.asarray(tokenized_ntarget_id)
+        row_dict['ntarget'] = tokenized_ntarget_id
 
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     target_start = len(tokenized_input_id)
@@ -85,9 +84,9 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     mask_id.extend([0] * (maxlen - len(mask_id)))
     type_id.extend([1] * (maxlen - len(type_id)))
 
-    row_dict['input'] = np.asarray(tokenized_input_id)
-    row_dict['type'] = np.asarray(type_id)
-    row_dict['mask'] = np.asarray(mask_id)
+    row_dict['input'] = tokenized_input_id
+    row_dict['type'] = type_id
+    row_dict['mask'] = mask_id
     row_dict['start'] = target_start
     # if True:
     #     print("*** Example ***")
