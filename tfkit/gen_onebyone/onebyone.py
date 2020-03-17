@@ -36,21 +36,31 @@ class BertOneByOne(nn.Module):
         inputs = batch_data['input']
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
-        types = batch_data['type']
         masks = batch_data['mask']
 
         tokens_tensor = torch.tensor(inputs).to(self.device)
         loss_tensors = torch.tensor(targets).to(self.device)
         negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
-        type_tensors = torch.tensor(types).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
 
         outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = outputs[0]
         prediction_scores = self.model(sequence_output)
-        outputs = (prediction_scores,)
-
-        if eval is False:
+        if eval:
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': [],
+                'prob_list': []
+            }
+            start = batch_data['start'][0]
+            logit_prob = softmax(prediction_scores[0][start]).data.tolist()
+            prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+            prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+            result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
+            result_dict['label_prob_all'].append(prob_result)
+            result_dict['label_map'].append(prob_result[0])
+            outputs = result_dict
+        else:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
@@ -59,7 +69,7 @@ class BertOneByOne(nn.Module):
             negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
             masked_lm_loss += negative_loss
-            outputs = (masked_lm_loss,) + outputs
+            outputs = masked_lm_loss
 
         return outputs
 
@@ -67,30 +77,29 @@ class BertOneByOne(nn.Module):
         self.eval()
         with torch.no_grad():
             output = []
-            output_prob_dict = []
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': [],
+                'prob_list': []
+            }
             while True:
-                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
+                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(output))
                 if len(feature_dict['input']) > self.maxlen:
                     break
-                start = feature_dict['start']
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
                 predictions = self.forward(feature_dict, eval=True)
-                predictions = predictions[0][0]
-                logit_prob = softmax(predictions[start]).data.tolist()
-                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:3]
-                output_prob_dict.append(prob_result)
-                predicted_index = torch.argmax(predictions[start]).item()
-                predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
-                if predicted_token[0] != "#":
-                    predicted_token[0] = predicted_token[0].replace("#", "")
-                if tok_sep(self.tokenizer) in predicted_token:
+                result_dict['label_prob_all'].append(predictions['label_prob_all'])
+                result_dict['label_map'].append(predictions['label_map'])
+                result_dict['prob_list'].append(predictions['prob_list'])
+                predicted_token = predictions['label_map'][0][0]
+                if tok_sep(self.tokenizer) in predicted_token or \
+                        len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
                     break
                 output.append(predicted_token[0])
 
             output = "".join(self.tokenizer.convert_tokens_to_string(output))
-            return output, output_prob_dict
+            return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
         s1 = set(list1)
@@ -111,7 +120,7 @@ class BertOneByOne(nn.Module):
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, topk=3, filtersim=True, task=None):
+    def predict_beamsearch(self, input, topk=2, filtersim=True, task=None):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -129,14 +138,7 @@ class BertOneByOne(nn.Module):
                         for k, v in feature_dict.items():
                             feature_dict[k] = [v]
                         predictions = self.forward(feature_dict, eval=True)
-                        predictions = predictions[0][0]
-                        predictions = predictions[feature_dict['start']][0]
-                        logit_prob = softmax(predictions).data.tolist()
-                        prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-
-                        for k, v in sorted(prob_result.items(), key=lambda x: x[1], reverse=True)[:50]:
-                            if k != "#":
-                                k = k.replace("#", "")
+                        for k, v in predictions['label_prob_all'][0][:50]:
                             if len(tokens) > 0 and tokens[-1] == k or len(k) < 1:
                                 continue
                             candidate = [tokens + [k], score + -log(v)]
@@ -150,7 +152,9 @@ class BertOneByOne(nn.Module):
                 sequences = ordered[:topk]
                 stop = 0
                 for i in sequences:
-                    if tok_sep(self.tokenizer) in i[0]:
+                    if tok_sep(self.tokenizer) in i[0] or \
+                            len(i[0]) > 3 and i[0][-1] == i[0][-2] == i[0][-3] or \
+                            i[1] > 300:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break
@@ -158,6 +162,8 @@ class BertOneByOne(nn.Module):
             for i in range(len(sequences)):
                 if tok_sep(self.tokenizer) in sequences[i][0]:
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
-                sequences[i][0] = " ".join(sequences[i][0])
-            top = sequences[0][0]
-            return top, sequences
+                sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
+            result_dict = {
+                'label_map': sequences
+            }
+            return [sequences[0][0]], result_dict

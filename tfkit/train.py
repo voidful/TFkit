@@ -142,8 +142,6 @@ def main():
         start_epoch = int(package.get('epoch', 1))
 
     write_log("batch : " + str(arg.batch))
-    train_loss_results = dict()
-    eval_loss_results = dict()
     for epoch in range(start_epoch, start_epoch + arg.epoch):
         fname = os.path.join(arg.savedir, str(epoch))
 

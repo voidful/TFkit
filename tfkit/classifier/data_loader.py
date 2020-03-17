@@ -29,6 +29,7 @@ class loadClassifierDataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
@@ -76,9 +77,9 @@ def get_feature_from_data(tokenizer, maxlen, task_lables, task, input, target=No
     # tokenized_input = []
     # for i in list_in_windows(token_input_id, maxlen):
     #     tokenized_input.append(i)
-    row_dict['input'] = np.asarray(tokenized_input_id)
-    row_dict['mask'] = np.asarray(mask_id)
-    row_dict['target'] = np.asarray([-1])
+    row_dict['input'] = tokenized_input_id
+    row_dict['mask'] = mask_id
+    row_dict['target'] = [-1]
     if target is not None:
         if 'multi_target' in task:
             mlb = MultiLabelBinarizer(classes=task_lables)
@@ -86,6 +87,6 @@ def get_feature_from_data(tokenizer, maxlen, task_lables, task, input, target=No
             tokenize_label = tar
         else:
             tokenize_label = [task_lables[task].index(target[0])]
-        row_dict['target'] = np.asarray(tokenize_label)
+        row_dict['target'] = tokenize_label
 
     return row_dict

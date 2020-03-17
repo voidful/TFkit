@@ -27,14 +27,18 @@ class loadOneByOneDataset(data.Dataset):
                 tasks, task, input, target, negative_text = i
                 for j in range(1, len(target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                    " ".join(target[:j]),
-                                                    ntarget=negative_text)
-                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= maxlen:
+                                                    " ".join(target[:j]))
+                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
+                    if negative_text is not None:
+                        for neg_word in negative_text.split(" "):
+                            feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                                                            ntarget=neg_word)
+                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                                sample.append(feature)
 
-                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target),
-                                                ntarget=negative_text)
-                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= maxlen:
+                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target))
+                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
                 # # sentence level negative loss
@@ -42,10 +46,6 @@ class loadOneByOneDataset(data.Dataset):
                 #                                                      ntarget=negative_text)
                 # if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                 #     sample.append(feature)
-
-                # if "[SEP]" in target:
-                #     feature = data_loader.get_feature_from_data(tokenizer, maxlen, input, target, ntarget=negative_text,
-                #                                                 debug=True)
 
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -56,6 +56,7 @@ class loadOneByOneDataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
@@ -77,8 +78,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     row_dict = dict()
 
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    tokenized_previous = [x for x in tokenizer.tokenize(previous) if
-                          x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+    tokenized_previous = tokenizer.tokenize(previous)
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append('[MASK]')
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
@@ -86,35 +86,33 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     target_start = len(tokenized_input_id) - 1
     tokenized_input_id.extend([0] * (maxlen - len(tokenized_input_id)))
 
-    row_dict['target'] = np.asarray([-1] * maxlen)
-    row_dict['ntarget'] = np.asarray([-1] * maxlen)
+    row_dict['target'] = [-1] * maxlen
+    row_dict['ntarget'] = [-1] * maxlen
 
+    tokenized_target_id = None
     if target is not None:
-        tokenized_target = [x for x in tokenizer.tokenize(target) if
-                            x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_target = tokenizer.tokenize(target)
         if previous == target:
             tokenized_target += [tok_sep(tokenizer)]
         tokenized_target_id = [-1] * target_start
         tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[-1])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
-        row_dict['target'] = np.asarray(tokenized_target_id)
+        row_dict['target'] = tokenized_target_id
     if ntarget is not None:
-        tokenized_ntarget = [x for x in tokenizer.tokenize(ntarget) if
-                             x not in tokenizer.all_special_tokens or x == tokenizer.unk_token]
+        tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * target_start
-        ntarget_token = tokenized_ntarget if len(previous) < len(tokenized_ntarget) else ["[SEP]"]
-        ntarget_token_id = tokenizer.convert_tokens_to_ids(ntarget_token)[-1]
+        ntarget_token_id = tokenizer.convert_tokens_to_ids(tokenized_ntarget)[-1]
         tokenized_ntarget_id.append(ntarget_token_id)
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
-        if tokenized_ntarget_id != tokenized_target_id:
-            row_dict['ntarget'] = np.asarray(tokenized_ntarget_id)
+        if tokenized_target_id is None or tokenized_ntarget_id != tokenized_target_id:
+            row_dict['ntarget'] = tokenized_ntarget_id
 
     mask_id.extend([0] * (maxlen - len(mask_id)))
     type_id = [0] * len(tokenized_input)
     type_id.extend([1] * (maxlen - len(type_id)))
-    row_dict['input'] = np.asarray(tokenized_input_id)
-    row_dict['type'] = np.asarray(type_id)
-    row_dict['mask'] = np.asarray(mask_id)
+    row_dict['input'] = tokenized_input_id
+    row_dict['type'] = type_id
+    row_dict['mask'] = mask_id
     row_dict['start'] = target_start
 
     # if True:
@@ -126,8 +124,8 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     #         print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
     #     if ntarget is not None:
     #         print("POS", target_start, len(tokenized_ntarget))
-    #         print("STR", tokenized_target, tokenized_ntarget)
-    #         print("ANS", tokenized_target[target_start], tokenized_ntarget_id)
+    #         print("STR", tokenized_ntarget)
+    #         print("ANS", tokenized_ntarget_id)
     #         print(f"ntarget: {len(tokenized_ntarget_id)}, {row_dict['ntarget']} ")
 
     return row_dict

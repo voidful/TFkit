@@ -25,7 +25,8 @@ class loadQADataset(data.Dataset):
             for i in tqdm(get_data_from_file(fpath)):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, input, target, maxlen=maxlen)
-                if len(feature['input']) <= maxlen and 0 <= feature['target'][0] < maxlen and 0 <= feature['target'][1] < maxlen:
+                if len(feature['input']) <= maxlen and 0 <= feature['target'][0] < maxlen and 0 <= feature['target'][
+                    1] < maxlen:
                     samples.append(feature)
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -37,6 +38,7 @@ class loadQADataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
@@ -52,7 +54,7 @@ def get_data_from_file(fpath):
 
 def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator=" "):
     row_dict = dict()
-    row_dict['target'] = np.asarray([0, 0])
+    row_dict['target'] = [0, 0]
     tokenized_input_ori = tokenizer.tokenize(input)
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
@@ -73,13 +75,13 @@ def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator="
                 end += length - 1
 
         # print("ORI ANS:", ori_ans, "TOK ANS:", tokenized_input[start + 1:end + 1])
-        row_dict['target'] = np.asarray([start + 1, end + 1])  # cls +1
+        row_dict['target'] = [start + 1, end + 1]  # cls +1
 
     mask_id = [1] * len(input_id)
     mask_id.extend([0] * (maxlen - len(mask_id)))
-    row_dict['mask'] = np.asarray(mask_id)
+    row_dict['mask'] = mask_id
     input_id.extend([0] * (maxlen - len(input_id)))
-    row_dict['input'] = np.asarray(input_id)
+    row_dict['input'] = input_id
     row_dict['raw_input'] = tokenized_input
 
     return row_dict

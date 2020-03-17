@@ -1,5 +1,6 @@
 import sys
 import os
+from collections import OrderedDict
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -31,11 +32,9 @@ class BertOnce(nn.Module):
         inputs = batch_data['input']
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
-        types = batch_data['type']
         masks = batch_data['mask']
 
         tokens_tensor = torch.tensor(inputs).to(self.device)
-        type_tensors = torch.tensor(types).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
         loss_tensors = torch.tensor(targets).to(self.device)
         negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
@@ -43,9 +42,31 @@ class BertOnce(nn.Module):
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
-        outputs = (prediction_scores,)
 
-        if eval is False:
+        if eval:
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': [],
+                'prob_list': []
+            }
+            start = batch_data['start'][0]
+            end = False
+            while start < self.maxlen and not end:
+                predicted_index = torch.argmax(prediction_scores[0][start]).item()
+                predicted_token = self.tokenizer.decode([predicted_index])
+                logit_prob = softmax(prediction_scores[0][start]).data.tolist()
+                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+
+                result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
+                result_dict['label_prob_all'].append(dict(prob_result))
+                result_dict['label_map'].append(prob_result[0])
+
+                if tok_sep(self.tokenizer) in predicted_token:
+                    end = True
+                start += 1
+                outputs = result_dict
+        else:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
@@ -54,34 +75,16 @@ class BertOnce(nn.Module):
             negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
             masked_lm_loss += negative_loss
-            outputs = (masked_lm_loss,) + outputs
+            outputs = masked_lm_loss
 
         return outputs
 
     def predict(self, input, task=None):
         self.model.eval()
-        output_prob_dict = []
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input)
-            start = feature_dict['start']
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
             predictions = self.forward(feature_dict, eval=True)
-            predictions = predictions[0][0]
-            output = []
-            end = False
-            while start < self.maxlen:
-                predicted_index = torch.argmax(predictions[start]).item()
-                predicted_token = self.tokenizer.convert_ids_to_tokens([predicted_index])
-                logit_prob = softmax(predictions[start]).data.tolist()
-                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
-                output_prob_dict.append(prob_result)
-                if tok_sep(self.tokenizer) in predicted_token:
-                    end = True
-                if end is False:
-                    output.append(predicted_token[0])
-                start += 1
-
-        output = "".join(self.tokenizer.convert_tokens_to_string(output))
-        return output, output_prob_dict
+            output = "".join(self.tokenizer.convert_tokens_to_string([i[0] for i in predictions['label_map']]))
+            return [output], predictions

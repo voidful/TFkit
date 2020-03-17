@@ -49,9 +49,12 @@ class BertMtClassifier(nn.Module):
         targets = torch.tensor(batch_data['target']).to(self.device)
         masks = torch.tensor(batch_data['mask']).to(self.device)
 
+        result_dict = {
+            'label_prob_all': [],
+            'label_map': []
+        }
         result_logits = []
         result_labels = []
-        result_item = []
 
         for p, zin in enumerate(zip(tasks, inputs, masks)):
             task, input, mask = zin
@@ -63,29 +66,30 @@ class BertMtClassifier(nn.Module):
             classifier_output = self.classifier_list[task_id](pooled_output)[0, 0]
             reshaped_logits = classifier_output.view(-1, len(task_lables))  # 0 for cls position
             result_logits.append(reshaped_logits)
-            if 'multi_target' in task:
-                reshaped_logits = sigmoid(reshaped_logits)
-            else:
-                reshaped_logits = softmax(reshaped_logits)
-            logit_prob = reshaped_logits[0].data.tolist()
-            logit_label = dict(zip(task_lables, logit_prob))
-            result_item.append(logit_label)
-
             if eval is False:
                 target = targets[p]
                 result_labels.append(target)
+            else:
+                if 'multi_target' in task:
+                    reshaped_logits = sigmoid(reshaped_logits)
+                else:
+                    reshaped_logits = softmax(reshaped_logits)
+                logit_prob = reshaped_logits[0].data.tolist()
+                logit_label = dict(zip(task_lables, logit_prob))
+                result_dict['label_prob_all'].append({task: logit_label})
+                result_dict['label_map'].append({task: task_lables[logit_prob.index(max(logit_prob))]})
+
         if eval:
-            outputs = (result_item,)
+            outputs = result_dict
         else:
-            outputs = (result_labels,)
-        if eval is False:
             loss = 0
             for logits, labels, task in zip(result_logits, result_labels, tasks):
                 if 'multi_target' in task:
                     loss += self.loss_fct_mt(logits, labels)
                 else:
                     loss += self.loss_fct(logits, labels)
-            outputs = (loss,) + outputs
+            outputs = loss
+
         return outputs
 
     def predict(self, task, input, topk=1):
@@ -96,8 +100,10 @@ class BertMtClassifier(nn.Module):
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
-                result = result[0][0]
-                res = sorted(result, key=result.get, reverse=True)
-                return res[:topk], [result]
+                if topk < 2:
+                    return [i[task] for i in result['label_map'] if task in i], result
+                else:
+                    task_map = [i[task] for i in result['label_prob_all'] if task in i][0]
+                    return sorted(task_map, key=task_map.get,reverse=True)[:topk], result
             else:
-                return [""], []
+                return [""], {}

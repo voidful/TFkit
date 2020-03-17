@@ -8,6 +8,12 @@ import classifier
 import tag
 from tqdm import tqdm
 from utility.eval_metric import EvalMetric
+import csv
+import numpy as np
+import matplotlib
+
+matplotlib.use('Agg')
+from matplotlib import pyplot as plt
 
 
 def main():
@@ -63,6 +69,7 @@ def main():
     model = model.to(device)
     model.load_state_dict(package['model_state_dict'], strict=False)
 
+    prob_list = []
     eval_metric = EvalMetric()
     for i in tqdm(eval_dataset):
         tasks = i[0]
@@ -79,6 +86,10 @@ def main():
         if 'qa' in type:
             target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
 
+        # if isinstance(outprob, list):
+        #     prob_list.append(outprob[1])
+        #     outprob = outprob[0]
+
         if arg.print:
             print('===eval===')
             print("input: ", input)
@@ -90,6 +101,9 @@ def main():
             print('==========')
 
         eval_metric.add_record(result, target)
+
+    # plt.plot(np.mean(prob_list, axis=0))
+    # plt.savefig('prob_distribution.png')
 
     argtype = ""
     if arg.beamsearch:
