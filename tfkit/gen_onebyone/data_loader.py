@@ -32,10 +32,11 @@ class loadOneByOneDataset(data.Dataset):
                         sample.append(feature)
                     if negative_text is not None:
                         for neg_word in negative_text.split(" "):
-                            feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                            ntarget=neg_word)
-                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                                sample.append(feature)
+                            if len(neg_word) > 0:
+                                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                                                                ntarget=neg_word)
+                                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                                    sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target))
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
@@ -98,7 +99,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[-1])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = tokenized_target_id
-    if ntarget is not None:
+    if ntarget is not None and len(ntarget) > 1:
         tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * target_start
         ntarget_token_id = tokenizer.convert_tokens_to_ids(tokenized_ntarget)[-1]
