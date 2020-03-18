@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--valid", required=True, type=str)
     parser.add_argument("--batch", type=int, default=3)
     parser.add_argument("--type", type=str, choices=['once', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa'])
-    parser.add_argument("--metric", required=True, type=str, choices=['em', 'nlg', 'classification'])
+    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'classification'])
     parser.add_argument("--print", action='store_true')
     parser.add_argument("--outfile", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
@@ -77,42 +77,41 @@ def main():
         input = i[2]
         target = i[3]
         if arg.beamsearch:
-            result, possible = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
-            result = possible[arg.beamselect][0]
-            outprob = "NONE"
+            result, result_dict = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
+            result = result_dict[arg.beamselect][0]
+            result_dict = "NONE"
         else:
-            result, outprob = model.predict(task=task, input=input)
+            result, result_dict = model.predict(task=task, input=input)
 
         if 'qa' in type:
             target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
 
-        # if isinstance(outprob, list):
-        #     prob_list.append(outprob[1])
-        #     outprob = outprob[0]
+        if 'prob_list' in result_dict:
+            for plist in result_dict['prob_list']:
+                prob_list.extend(plist)
 
         if arg.print:
             print('===eval===')
             print("input: ", input)
             print("target: ", target)
             print("result: ", result)
-            print("outprob: ", outprob)
-            if arg.beamsearch:
-                print("possible: ", possible)
+            # print("result_dict: ", result_dict)
             print('==========')
 
-        eval_metric.add_record(result, target)
+        eval_metric.add_record(result[0], target)
 
-    # plt.plot(np.mean(prob_list, axis=0))
-    # plt.savefig('prob_distribution.png')
-
-    argtype = ""
-    if arg.beamsearch:
-        argtype = "_beam_" + str(arg.beamselect)
-    outfile_name = arg.model + argtype + ".out"
     if arg.outfile:
-        with open(outfile_name, "w", encoding='utf8') as f:
+        argtype = ""
+        if arg.beamsearch:
+            argtype = "_beam_" + str(arg.beamselect)
+        outfile_name = arg.model + argtype
+        plt.yscale('log', basey=2)
+        plt.plot(np.mean(prob_list, axis=0))
+        plt.savefig(outfile_name + '_prob_dist.png')
+        with open(outfile_name + ".out", "w", encoding='utf8') as f:
             for output in eval_metric.get_record():
                 f.write(output + "\n")
+        print("write file at:", outfile_name)
 
     for i in eval_metric.cal_score(arg.metric):
         print("TASK: ", i[0])

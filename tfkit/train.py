@@ -38,7 +38,7 @@ def train(model, iterator, arg, fname, epoch):
     t_loss = 0
     model.train()
     for i, batch in tqdm(enumerate(iterator)):
-        loss, _ = model(batch)
+        loss = model(batch)
         optim.zero_grad()
         loss.mean().backward()
         optim.step()
@@ -58,7 +58,7 @@ def eval(model, iterator, fname, epoch):
     t_loss = 0
     with torch.no_grad():
         for i, batch in enumerate(iterator):
-            loss, result = model(batch)
+            loss = model(batch)
             t_loss += loss.mean().item()
     avg_t_loss = t_loss / len(iterator)
     write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
