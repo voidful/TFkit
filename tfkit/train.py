@@ -78,6 +78,7 @@ def main():
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
                         choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa'])
+    parser.add_argument("--neg", type=str, choices=['token', 'sent', 'both'], help='gen onebyone unlikelihood loss')
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
@@ -100,7 +101,17 @@ def main():
         eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertTwice(model_config=arg.config, maxlen=arg.maxlen)
     elif "onebyone" in arg.model:
-        train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+        neg_token = False
+        neg_sent = False
+        if arg.neg == 'token':
+            neg_token = True
+        elif arg.neg == 'sent':
+            neg_sent = True
+        elif arg.neg == 'both':
+            neg_token = True
+            neg_sent = True
+        train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
+                                            neg_token=neg_token, neg_sent=neg_sent)
         eval_dataset = loadOneByOneDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertOneByOne(model_config=arg.config, maxlen=arg.maxlen)
     elif 'classify' in arg.model:

@@ -55,10 +55,10 @@ class TestLoss(unittest.TestCase):
 
 
 class TestEval(unittest.TestCase):
-    def testEM(self):
+    def testEMF1(self):
         eval = tfkit.utility.eval_metric.EvalMetric()
         eval.add_record("abc", "abb[SEP]acc[SEP]abc", task='default')
-        for s in eval.cal_score('em'):
+        for s in eval.cal_score('emf1'):
             print(s)
 
     def testNLG(self):

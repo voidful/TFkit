@@ -12,7 +12,7 @@ import gen_once
 
 
 class loadOneByOneDataset(data.Dataset):
-    def __init__(self, fpath, pretrained, maxlen=510, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=510, cache=False, neg_token=False, neg_sent=False):
         sample = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
@@ -30,7 +30,7 @@ class loadOneByOneDataset(data.Dataset):
                                                     " ".join(target[:j]))
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
-                    if negative_text is not None:
+                    if negative_text is not None and neg_token:
                         for neg_word in negative_text.split(" "):
                             if len(neg_word) > 0:
                                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
@@ -42,11 +42,11 @@ class loadOneByOneDataset(data.Dataset):
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
-                # # sentence level negative loss
-                # feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
-                #                                                      ntarget=negative_text)
-                # if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                #     sample.append(feature)
+                if negative_text is not None and neg_sent:
+                    # sentence level negative loss
+                    feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target), ntarget=negative_text)
+                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                        sample.append(feature)
 
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -99,7 +99,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[-1])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
         row_dict['target'] = tokenized_target_id
-    if ntarget is not None and len(ntarget) > 1:
+    if ntarget is not None:
         tokenized_ntarget = tokenizer.tokenize(ntarget)
         tokenized_ntarget_id = [-1] * target_start
         ntarget_token_id = tokenizer.convert_tokens_to_ids(tokenized_ntarget)[-1]
