@@ -18,7 +18,10 @@ class loadOneByOneDataset(data.Dataset):
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        cache_path = fpath + ".cache"
+        neg_info = ""
+        neg_info += "_negtoken" if neg_token else ""
+        neg_info += "_negsent" if neg_sent else ""
+        cache_path = fpath + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
@@ -44,7 +47,8 @@ class loadOneByOneDataset(data.Dataset):
 
                 if negative_text is not None and neg_sent:
                     # sentence level negative loss
-                    feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target), ntarget=negative_text)
+                    feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
+                                                                         ntarget=negative_text)
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
 
