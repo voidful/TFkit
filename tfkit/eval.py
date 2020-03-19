@@ -78,7 +78,7 @@ def main():
         target = i[3]
         if arg.beamsearch:
             result, result_dict = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
-            result = result_dict[arg.beamselect][0]
+            result = [result_dict['label_map'][arg.beamselect][0]]
             result_dict = "NONE"
         else:
             result, result_dict = model.predict(task=task, input=input)
