@@ -35,7 +35,7 @@ class loadOneByOneDataset(data.Dataset):
                         sample.append(feature)
                     if negative_text is not None and neg_token:
                         for neg_word in negative_text.split(" "):
-                            if len(neg_word) > 0:
+                            if len(neg_word.strip()) > 0:
                                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
                                                                 ntarget=neg_word)
                                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
