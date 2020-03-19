@@ -1,35 +1,51 @@
+import os
+import pickle
 import csv
 from collections import defaultdict
 
 import numpy as np
 from torch.utils import data
 from tqdm import tqdm
-from transformers import AutoTokenizer,BertTokenizer
+from transformers import AutoTokenizer, BertTokenizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from utility.tok import *
 
 
 class loadClassifierDataset(data.Dataset):
     def __init__(self, fpath, pretrained, maxlen=512, cache=False):
-        samples = []
+        sample = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        for i in tqdm(get_data_from_file(fpath)):
-            tasks, task, input, target = i
-            feature = get_feature_from_data(tokenizer, maxlen, tasks, task, input, target)
-            if len(feature['input']) <= maxlen:
-                samples.append(feature)
 
-        self.sample = samples
-        self.task = tasks
+        cache_path = fpath + ".cache"
+        if os.path.isfile(cache_path) and cache:
+            with open(cache_path, "rb") as cf:
+                outdata = pickle.load(cf)
+                sample = outdata['sample']
+                task_dict = outdata['task']
+        else:
+            task_dict = {}
+            for i in tqdm(get_data_from_file(fpath)):
+                all_task, task, input, target = i
+                task_dict.update(all_task)
+                feature = get_feature_from_data(tokenizer, maxlen, all_task, task, input, target)
+                if len(feature['input']) <= maxlen:
+                    sample.append(feature)
+            if cache:
+                with open(cache_path, 'wb') as cf:
+                    outdata = {'sample': sample, 'task': task_dict}
+                    pickle.dump(outdata, cf)
+
+        self.sample = sample
+        self.task = task_dict
 
     def __len__(self):
         return len(self.sample)
 
     def __getitem__(self, idx):
-        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items() if k != 'task')
         return self.sample[idx]
 
 
