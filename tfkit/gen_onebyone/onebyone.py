@@ -28,9 +28,6 @@ class BertOneByOne(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
-        self.total_update = 0
-        self.neg_loss = 0
-        self.normal_loss = 0
         print('Using device:', self.device)
         self.model.to(self.device)
 
@@ -72,7 +69,7 @@ class BertOneByOne(nn.Module):
                                               negativeloss_tensors.view(-1))
 
             masked_lm_loss += negative_loss
-            outputs = masked_lm_loss, negative_loss
+            outputs = masked_lm_loss
 
         return outputs
 
