@@ -28,7 +28,9 @@ class BertOneByOne(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
-
+        self.total_update = 0
+        self.neg_loss = 0
+        self.normal_loss = 0
         print('Using device:', self.device)
         self.model.to(self.device)
 
@@ -68,8 +70,9 @@ class BertOneByOne(nn.Module):
             negative_loss_fct = NegativeCElLoss().to(self.device)
             negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
+
             masked_lm_loss += negative_loss
-            outputs = masked_lm_loss
+            outputs = masked_lm_loss, negative_loss
 
         return outputs
 
@@ -92,13 +95,14 @@ class BertOneByOne(nn.Module):
                 result_dict['label_prob_all'].append(predictions['label_prob_all'])
                 result_dict['label_map'].append(predictions['label_map'])
                 result_dict['prob_list'].append(predictions['prob_list'])
+
                 predicted_token = predictions['label_map'][0][0]
                 if tok_sep(self.tokenizer) in predicted_token or \
                         len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
                     break
-                output.append(predicted_token[0])
+                output.append(predicted_token)
 
-            output = "".join(self.tokenizer.convert_tokens_to_string(output))
+            output = self.tokenizer.convert_tokens_to_string(output)
             return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
