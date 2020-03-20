@@ -71,10 +71,8 @@ class BertTagger(nn.Module):
             outputs = result_dict
         else:
             targets = batch_data["target"]
-            loss = 0
             target_tensor = torch.tensor(targets, dtype=torch.long).to(self.device)
-            for logit, label in zip(reshaped_logits, target_tensor):
-                loss += self.loss_fct(logit, label)
+            loss = self.loss_fct(reshaped_logits.view(-1, len(self.labels)), target_tensor.view(-1))
             outputs = loss
 
         return outputs
