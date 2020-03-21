@@ -23,7 +23,7 @@ class loadColTaggerDataset(data.Dataset):
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        cache_path = fpath + ".cache"
+        cache_path = fpath + pretrained + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 savedict = pickle.load(cf)
@@ -58,7 +58,7 @@ class loadRowTaggerDataset(data.Dataset):
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        cache_path = fpath + ".cache"
+        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 savedict = pickle.load(cf)
