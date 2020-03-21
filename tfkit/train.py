@@ -91,6 +91,11 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if not os.path.exists(arg.savedir): os.makedirs(arg.savedir)
 
+    write_log("TRAIN PARAMTER")
+    write_log("=======================")
+    write_log(vars(arg))
+    write_log("=======================")
+    
     arg.model = arg.model.lower()
     if "once" in arg.model:
         train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)

@@ -21,7 +21,7 @@ class loadOneByOneDataset(data.Dataset):
         neg_info = ""
         neg_info += "_negtoken" if neg_token else ""
         neg_info += "_negsent" if neg_sent else ""
-        cache_path = fpath + neg_info + ".cache"
+        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
@@ -37,7 +37,7 @@ class loadOneByOneDataset(data.Dataset):
                         for neg_word in negative_text.split(" "):
                             if len(neg_word.strip()) > 0:
                                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                                ntarget=neg_word)
+                                                                " ".join(target[:j]), ntarget=neg_word)
                                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                                     sample.append(feature)
 
