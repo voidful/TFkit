@@ -21,7 +21,7 @@ class loadOneByOneDataset(data.Dataset):
         neg_info = ""
         neg_info += "_negtoken" if neg_token else ""
         neg_info += "_negsent" if neg_sent else ""
-        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained + neg_info + ".cache"
+        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained.replace("/", "_") + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
