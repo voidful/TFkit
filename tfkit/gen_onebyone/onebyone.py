@@ -15,6 +15,8 @@ from torch.nn.functional import softmax
 from math import log
 from utility.loss import *
 from utility.tok import *
+import numpy as np
+import random
 
 
 class BertOneByOne(nn.Module):
@@ -73,10 +75,13 @@ class BertOneByOne(nn.Module):
 
         return outputs
 
-    def predict(self, input, task=None):
-        self.eval()
-        with torch.no_grad():
-            output = []
+    def predict(self, input, topP=1, topK=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
+        if beamsearch:
+            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim, task=None)
+        else:
+            self.eval()
+            with torch.no_grad():
+                output = []
             result_dict = {
                 'label_prob_all': [],
                 'label_map': [],
@@ -93,7 +98,15 @@ class BertOneByOne(nn.Module):
                 result_dict['label_map'].append(predictions['label_map'])
                 result_dict['prob_list'].append(predictions['prob_list'])
 
-                predicted_token = predictions['label_map'][0][0]
+                topP_list = [p for w, p in predictions['label_prob_all'][0]][:topP]
+                topK_list = np.cumsum(topP_list)
+                index_overK = [i for i, x in enumerate(topK_list) if x > topK]
+                index_overK = 0 if len(index_overK) < 1 else index_overK[0]
+                topK_list = list(topK_list[:index_overK + 1])
+                prob_norm = [float(i) / sum(topK_list) for i in topK_list]
+                sampling_index = topK_list.index(np.random.choice(topK_list, p=prob_norm))
+                predicted_token = predictions['label_prob_all'][0][sampling_index][0]
+
                 if tok_sep(self.tokenizer) in predicted_token or \
                         len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
                     break
@@ -121,7 +134,7 @@ class BertOneByOne(nn.Module):
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, topk=2, filtersim=True, task=None):
+    def predict_beamsearch(self, input, beamsize=3, filtersim=True, task=None):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -149,8 +162,8 @@ class BertOneByOne(nn.Module):
 
                 ordered = sorted(all_candidates, key=lambda tup: tup[1])
                 if filtersim:
-                    self.filterSimilar(ordered, topk)
-                sequences = ordered[:topk]
+                    self.filterSimilar(ordered, beamsize)
+                sequences = ordered[:beamsize]
                 stop = 0
                 for i in sequences:
                     if tok_sep(self.tokenizer) in i[0] or \
