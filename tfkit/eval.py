@@ -29,6 +29,8 @@ def main():
     parser.add_argument("--beamsize", type=int, default=3)
     parser.add_argument("--beamselect", type=int, default=0)
     parser.add_argument("--beamfiltersim", action='store_true')
+    parser.add_argument("--topP", type=int, default=1)
+    parser.add_argument("--topK", type=float, default=0.6)
     arg = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,7 +79,8 @@ def main():
         input = i[2]
         target = i[3]
         if arg.beamsearch:
-            result, result_dict = model.predict_beamsearch(input, topk=arg.beamsize, filtersim=arg.beamfiltersim)
+            result, result_dict = model.predict(input, beamsearch=True, beamsize=arg.beamsize,
+                                                filtersim=arg.beamfiltersim, topP=topP, topK=topK)
             result = [result_dict['label_map'][arg.beamselect][0]]
             result_dict = "NONE"
         else:
@@ -97,8 +100,14 @@ def main():
             print("result: ", result)
             # print("result_dict: ", result_dict)
             print('==========')
+        if 'classify' in type:
+            predicted = result
+        elif 'tag' in type:
+            predicted = [list(d.values())[0] for d in result_dict['label_map']]
+        else:
+            predicted = result[0] if len(result) > 0 else ''
 
-        eval_metric.add_record(result[0], target)
+        eval_metric.add_record(predicted, target)
 
     if arg.outfile:
         argtype = ""
