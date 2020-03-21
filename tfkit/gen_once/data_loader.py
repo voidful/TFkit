@@ -17,7 +17,7 @@ class loadOnceDataset(data.Dataset):
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained + ".cache"
+        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained.replace("/", "_") + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
