@@ -6,20 +6,28 @@ Read this in other languages: [正體中文(施工中👷)](https://github.com/v
 
 ## DEMO
 
+### albert multi-dataset QA model
+dataset：
+```bash
+nlprep --dataset multiqa --task qa --outdir ./multiqa/   
+tfkit-train --maxlen 512 --savedir ./multiqa_qa_model/ --train ./multiqa/train --valid ./multiqa/valid --model qa --config voidful/albert_chinese_small  --cache
+nlp2go --model ./multiqa_qa_model/3.pt --cli 
+```
+
 ### Distilbert NER model
 three line code train and host NER model [Colab](https://colab.research.google.com/drive/1x5DLBQ6ufRUfi1PPmHcXtYqTl_9krRWz)
 ```bash
 nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
 tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --valid ./clner_row/test --maxlen 512 --model tagRow --config distilbert-base-multilingual-cased 
-nlp2go --model ./checkpoints/3.pt --predictor biotag --cli     
+nlp2go --model ./checkpoints/3.pt  --cli     
 ```
 
 ### albert QA model
 three line code train and host QA model [Colab](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ)
 ```bash
-nlprep --dataset drcdqa --task qa --outdir ./drcdqa/
-tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./drcdqa/train --valid ./drcdqa/test --model qa --config voidful/albert_chinese_small  --cache
-nlp2go --model ./drcd_qa_model/3.pt --cli --predictor qa
+nlprep --dataset zhqa --task qa --outdir ./zhqa/   
+tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --valid ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
+nlp2go --model ./drcd_qa_model/3.pt --cli 
 ```
 
 ## Feature
@@ -117,7 +125,7 @@ Run evaluation on different benchmark
 arguments:
   --model       model for evaluate       
   --valid       validation data path        
-  --metric      metric for evaluate         ['em', 'nlg', 'classification']
+  --metric      metric for evaluate         ['emf1', 'nlg', 'classification']
   --config      pre-train model             bert-base-multilingual-cased
 
 optional arguments:
