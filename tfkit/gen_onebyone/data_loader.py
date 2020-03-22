@@ -37,7 +37,7 @@ class loadOneByOneDataset(data.Dataset):
                         for neg_word in negative_text.split(" "):
                             if len(neg_word.strip()) > 0:
                                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                                " ".join(target[:j]), ntarget=neg_word)
+                                                                ntarget=neg_word)
                                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                                     sample.append(feature)
 
