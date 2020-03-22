@@ -78,13 +78,20 @@ def main():
         task = i[1]
         input = i[2]
         target = i[3]
+
+        predict_param = {'input': input, 'task': task}
+        if arg.beamsearch and 'onebyone' in type:
+            predict_param['beamsearch'] = True
+            predict_param['beamsize'] = arg.beamsize
+            predict_param['filtersim'] = arg.beamfiltersim
+        elif 'onebyone' in type:
+            predict_param['topP'] = arg.topP
+            predict_param['topK'] = arg.topK
+
+        result, result_dict = model.predict(**predict_param)
+
         if arg.beamsearch:
-            result, result_dict = model.predict(input, beamsearch=True, beamsize=arg.beamsize,
-                                                filtersim=arg.beamfiltersim, topP=topP, topK=topK)
             result = [result_dict['label_map'][arg.beamselect][0]]
-            result_dict = "NONE"
-        else:
-            result, result_dict = model.predict(task=task, input=input)
 
         if 'qa' in type:
             target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
@@ -110,7 +117,7 @@ def main():
         eval_metric.add_record(predicted, target)
 
     if arg.outfile:
-        argtype = ""
+        argtype = "_dataset-" + arg.valid + "_"
         if arg.beamsearch:
             argtype = "_beam_" + str(arg.beamselect)
         outfile_name = arg.model + argtype
