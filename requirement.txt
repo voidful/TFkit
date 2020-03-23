@@ -3,3 +3,4 @@ tensorboardX
 torch
 sklearn
 nlp2
+matplotlib
