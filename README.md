@@ -125,14 +125,13 @@ Run evaluation on different benchmark
 arguments:
   --model       model for evaluate       
   --valid       validation data path        
-  --metric      metric for evaluate         ['emf1', 'nlg', 'classification']
-  --config      pre-train model             bert-base-multilingual-cased
+  --metric      metric for evaluate         ['emf1', 'nlg', 'classification']Ω
 
 optional arguments:
   -h, --help    show this help message and exit
   --batch       batch size
-  --topk        select top k result in classification task 
   --outprint    enable printing result in console
+  --outfile     enable writing prediction result to file
   --beamsearch  enable beamsearch for text generation task
 ```
 

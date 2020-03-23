@@ -34,24 +34,33 @@ class loadOneByOneDataset(data.Dataset):
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
                     if negative_text is not None and neg_token:
-                        neg_words = negative_text.split(" ")
-                        neg_word = "[SEP]" if len(neg_words) <= len(" ".join(target[:j - 1])) else neg_words[
-                            len(" ".join(target[:j - 1]))]
-                        feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                        ntarget=neg_word)
-                        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                            sample.append(feature)
+                        if "[SEP]" in negative_text:
+                            ntext_arr = negative_text.split("[SEP]")
+                        else:
+                            ntext_arr = [negative_text]
+                        for neg_text in ntext_arr:
+                            neg_words = neg_text.split(" ")
+                            neg_word = "[SEP]" if len(neg_words) <= len(" ".join(target[:j - 1])) else neg_words[
+                                len(" ".join(target[:j - 1]))]
+                            feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                                                            ntarget=neg_word)
+                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                                sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target))
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
                 if negative_text is not None and neg_sent:
-                    # sentence level negative loss
-                    feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
-                                                                         ntarget=negative_text)
-                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                        sample.append(feature)
+                    if "[SEP]" in negative_text:
+                        ntext_arr = negative_text.split("[SEP]")
+                    else:
+                        ntext_arr = [negative_text]
+                    for neg_text in ntext_arr:
+                        feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, " ".join(target),
+                                                                             ntarget=neg_text)
+                        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                            sample.append(feature)
 
             if cache:
                 with open(cache_path, 'wb') as cf:
