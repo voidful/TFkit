@@ -22,7 +22,7 @@ class BertOnce(nn.Module):
         else:
             self.tokenizer = AutoTokenizer.from_pretrained(model_config)
         self.pretrained = AutoModel.from_pretrained(model_config)
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
