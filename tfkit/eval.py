@@ -117,7 +117,7 @@ def main():
         eval_metric.add_record(predicted, target)
 
     if arg.outfile:
-        argtype = "_dataset-" + arg.valid + "_"
+        argtype = "_dataset-" + arg.valid.replace("/", "_")
         if arg.beamsearch:
             argtype = "_beam_" + str(arg.beamselect)
         outfile_name = arg.model + argtype
