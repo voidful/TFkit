@@ -77,7 +77,8 @@ def main():
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
-                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa'])
+                        choices=['once', 'twice', 'onebyone', 'onebyone-neg-token', 'onebyone-neg-sent',
+                                 'onebyone-neg-both', 'classify', 'tagRow', 'tagCol', 'qa'])
     parser.add_argument("--neg", type=str, choices=['token', 'sent', 'both'], help='gen onebyone unlikelihood loss')
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/bert-base-chinese')
@@ -91,11 +92,11 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     if not os.path.exists(arg.savedir): os.makedirs(arg.savedir)
 
-    write_log("TRAIN PARAMTER")
+    write_log("TRAIN PARAMETER")
     write_log("=======================")
     write_log(vars(arg))
     write_log("=======================")
-    
+
     arg.model = arg.model.lower()
     if "once" in arg.model:
         train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
@@ -106,13 +107,9 @@ def main():
         eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertTwice(model_config=arg.config, maxlen=arg.maxlen)
     elif "onebyone" in arg.model:
-        neg_token = False
-        neg_sent = False
-        if arg.neg == 'token':
-            neg_token = True
-        elif arg.neg == 'sent':
-            neg_sent = True
-        elif arg.neg == 'both':
+        neg_token = True if arg.neg == 'token' or 'token' in arg.model else False
+        neg_sent = True if arg.neg == 'sent' or 'sent' in arg.model else False
+        if arg.neg == 'both' or 'both' in arg.model:
             neg_token = True
             neg_sent = True
         train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
