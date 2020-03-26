@@ -73,12 +73,13 @@ class EvalMetric:
                 f1 = 0
                 for pos, predict in enumerate(task['predicted']):
                     target = task['target'][pos]
-                    equal = False
                     if _normalize_answer(predict) == _normalize_answer(target):
                         equal = True
-                    f1 += _f1_score(predict, target)
                     if equal:
                         em += 1
+                        f1 += 1
+                    else:
+                        f1 += _f1_score(predict, target)
                     total += 1
                 result = {"EM": em / total, "F1": f1 / total}
             if "nlg" in metric:
