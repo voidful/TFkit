@@ -42,7 +42,7 @@ class EvalMetric:
         self.tasks = defaultdict(lambda: defaultdict(list))
         self.max_candidate = max_candidate
 
-    def add_record(self, predicted, target, task='default'):
+    def add_record(self, input, predicted, target, task='default'):
         if "[SEP]" in target:
             target = target.split("[SEP]")
         else:
@@ -54,7 +54,7 @@ class EvalMetric:
                 targets.append(target[pos])
             else:
                 targets.append("")
-
+        self.tasks[task]['input'].append(input)
         self.tasks[task]['predicted'].append(predicted)
         self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else list(predicted))
         self.tasks[task]['targets'].append(targets)
@@ -62,7 +62,7 @@ class EvalMetric:
         self.tasks[task]['target_list'].append(target[0].split(" ") if " " in target[0] else list(target[0]))
 
     def get_record(self, task='default'):
-        return self.tasks[task]['predicted']
+        return self.tasks[task]
 
     def cal_score(self, metric):
         for name, task in self.tasks.items():
@@ -73,6 +73,7 @@ class EvalMetric:
                 f1 = 0
                 for pos, predict in enumerate(task['predicted']):
                     target = task['target'][pos]
+                    equal = False
                     if _normalize_answer(predict) == _normalize_answer(target):
                         equal = True
                     if equal:

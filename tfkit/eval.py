@@ -96,9 +96,9 @@ def main():
         if 'qa' in type:
             target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
 
-        if 'prob_list' in result_dict:
-            for plist in result_dict['prob_list']:
-                prob_list.extend(plist)
+        # if 'prob_list' in result_dict:
+        #     for plist in result_dict['prob_list']:
+        #         prob_list.extend(plist)
 
         if arg.print:
             print('===eval===')
@@ -114,19 +114,21 @@ def main():
         else:
             predicted = result[0] if len(result) > 0 else ''
 
-        eval_metric.add_record(predicted, target)
+        eval_metric.add_record(input, predicted, target)
 
     if arg.outfile:
-        argtype = "_dataset-" + arg.valid.replace("/", "_")
+        argtype = "_dataset-" + arg.valid.replace("/", "_").replace(".", "_")
         if arg.beamsearch:
             argtype = "_beam_" + str(arg.beamselect)
         outfile_name = arg.model + argtype
-        plt.yscale('log', basey=2)
-        plt.plot(np.mean(prob_list, axis=0))
-        plt.savefig(outfile_name + '_prob_dist.png')
-        with open(outfile_name + ".out", "w", encoding='utf8') as f:
-            for output in eval_metric.get_record():
-                f.write(output + "\n")
+        # plt.yscale('log', basey=2)
+        # plt.plot(np.mean(prob_list, axis=0))
+        # plt.savefig(outfile_name + '_prob_dist.png')
+        with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
+            writer = csv.writer(f)
+            records = eval_metric.get_record()
+            for i,p in zip(records['input'],records['predicted']):
+                writer.writerow([i,p])
         print("write file at:", outfile_name)
 
     for i in eval_metric.cal_score(arg.metric):
