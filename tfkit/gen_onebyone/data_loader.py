@@ -28,9 +28,10 @@ class loadOneByOneDataset(data.Dataset):
         else:
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
-                for j in range(1, len(target) + 1):
+                tokenized_target = tokenizer.tokenize(" ".join(target))
+                for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
-                                                    " ".join(target[:j]))
+                                                    tokenized_target[:j])
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
                     if negative_text is not None and neg_token:
@@ -47,7 +48,8 @@ class loadOneByOneDataset(data.Dataset):
                             if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                                 sample.append(feature)
 
-                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), " ".join(target))
+                tokenized_target += [tok_sep(tokenizer)]
+                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), tokenized_target)
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
@@ -89,7 +91,7 @@ def get_data_from_file(fpath):
             yield tasks, task, input, target, negative_text
 
 
-def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None):
+def get_feature_from_data(tokenizer, maxlen, input, previous, tokenized_target=None, ntarget=None):
     row_dict = dict()
 
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
@@ -105,10 +107,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
     row_dict['ntarget'] = [-1] * maxlen
 
     tokenized_target_id = None
-    if target is not None:
-        tokenized_target = tokenizer.tokenize(target)
-        if previous == target:
-            tokenized_target += [tok_sep(tokenizer)]
+    if tokenized_target is not None:
         tokenized_target_id = [-1] * target_start
         tokenized_target_id.append(tokenizer.convert_tokens_to_ids(tokenized_target)[-1])
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
