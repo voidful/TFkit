@@ -29,8 +29,9 @@ class loadOneByOneDataset(data.Dataset):
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
                 tokenized_target = tokenizer.tokenize(" ".join(target))
+                print("TT:", tokenized_target)
                 for j in range(1, len(tokenized_target) + 1):
-                    feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                    feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(tokenized_target[:j - 1]),
                                                     tokenized_target[:j])
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
@@ -41,15 +42,15 @@ class loadOneByOneDataset(data.Dataset):
                             ntext_arr = [negative_text]
                         for neg_text in ntext_arr:
                             neg_words = neg_text.split(" ")
-                            neg_word = "[SEP]" if len(neg_words) <= len(" ".join(target[:j - 1])) else neg_words[
-                                len(" ".join(target[:j - 1]))]
-                            feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target[:j - 1]),
+                            neg_word = "[SEP]" if len(neg_words) <= len(" ".join(tokenized_target[:j - 1])) else \
+                                neg_words[len(" ".join(tokenized_target[:j - 1]))]
+                            feature = get_feature_from_data(tokenizer, maxlen, input,
+                                                            " ".join(tokenized_target[:j - 1]),
                                                             ntarget=neg_word)
                             if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                                 sample.append(feature)
 
-                tokenized_target += [tok_sep(tokenizer)]
-                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), tokenized_target)
+                feature = get_feature_from_data(tokenizer, maxlen, input, " ".join(target), [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 

@@ -40,6 +40,7 @@ class TestDataLoader(unittest.TestCase):
             print(i)
             print(i['start'])
             print(i['target'][i['start']])
+            print("======")
             print(tokenizer.decode(i['input']))
             self.assertTrue(len(i['input']) <= 24)
             self.assertTrue(len(i['target']) <= 24)
