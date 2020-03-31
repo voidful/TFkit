@@ -30,6 +30,22 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) < 512)
 
     def testOnebyone(self):
+        tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+        for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
+            print(i)
+        for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-cased',
+                                                        maxlen=24):
+            print(len(i['input']))
+            print(len(i['target']))
+            print(i)
+            print(i['start'])
+            print(i['target'][i['start']])
+            print("======")
+            print(tokenizer.decode(i['input']))
+            self.assertTrue(len(i['input']) <= 24)
+            self.assertTrue(len(i['target']) <= 24)
+
+    def testOnebyone(self):
         tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
         for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
             print(i)
@@ -44,6 +60,7 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.decode(i['input']))
             self.assertTrue(len(i['input']) <= 24)
             self.assertTrue(len(i['target']) <= 24)
+
 
     def testClassifier(self):
         for i in tfkit.classifier.get_data_from_file('../demo_data/classification.csv'):

@@ -88,8 +88,7 @@ class BertOneByOne(nn.Module):
                 'prob_list': []
             }
             while True:
-
-                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(output))
+                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
                 if len(feature_dict['input']) > self.maxlen:
                     break
                 for k, v in feature_dict.items():
@@ -145,7 +144,7 @@ class BertOneByOne(nn.Module):
                 for seq in sequences:
                     if tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
-                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(tokens))
+                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens)
                         if len(feature_dict['input']) > self.maxlen:
                             exceed = True
                             all_candidates.append(seq)
