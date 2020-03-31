@@ -88,6 +88,7 @@ class BertOneByOne(nn.Module):
                 'prob_list': []
             }
             while True:
+
                 feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, " ".join(output))
                 if len(feature_dict['input']) > self.maxlen:
                     break

@@ -104,7 +104,8 @@ class TestDataLoader(unittest.TestCase):
         ntarget = "不 見 不 散"
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input, previous=previous, target=target,
+        feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input, previous=previous,
+                                                           tokenized_target=tokenizer.tokenize(" ".join(target)),
                                                            maxlen=512)
         for k, v in feature.items():
             feature[k] = [v, v]
