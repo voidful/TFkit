@@ -33,34 +33,15 @@ class TestDataLoader(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
             print(i)
-        for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-cased',
-                                                        maxlen=24):
-            print(len(i['input']))
-            print(len(i['target']))
-            print(i)
-            print(i['start'])
-            print(i['target'][i['start']])
-            print("======")
-            print(tokenizer.decode(i['input']))
-            self.assertTrue(len(i['input']) <= 24)
-            self.assertTrue(len(i['target']) <= 24)
-
-    def testOnebyone(self):
-        tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
-            print(i)
-        for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-chinese',
-                                                        maxlen=24):
-            print(len(i['input']))
-            print(len(i['target']))
-            print(i)
-            print(i['start'])
-            print(i['target'][i['start']])
-            print("======")
-            print(tokenizer.decode(i['input']))
-            self.assertTrue(len(i['input']) <= 24)
-            self.assertTrue(len(i['target']) <= 24)
-
+        for likelihood in ['onebyone-neg-token', 'onebyone-neg-sent', 'onebyone-pos-sent', 'onebyone-neg-both',
+                           'onebyone-both-sent']:
+            for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-cased',
+                                                            maxlen=24, likelihood=likelihood):
+                start_pos = i['start']
+                self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
+                self.assertTrue(i['target'][start_pos] != -1 or i['ntarget'][start_pos] != -1)
+                self.assertTrue(len(i['input']) == 24)
+                self.assertTrue(len(i['target']) == 24)
 
     def testClassifier(self):
         for i in tfkit.classifier.get_data_from_file('../demo_data/classification.csv'):

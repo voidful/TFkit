@@ -12,15 +12,14 @@ import gen_once
 
 
 class loadOneByOneDataset(data.Dataset):
-    def __init__(self, fpath, pretrained, maxlen=510, cache=False, neg_token=False, neg_sent=False):
+
+    def __init__(self, fpath, pretrained, maxlen=510, cache=False, likelihood=''):
         sample = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
-        neg_info = ""
-        neg_info += "_negtoken" if neg_token else ""
-        neg_info += "_negsent" if neg_sent else ""
+        neg_info = "_" + likelihood + "_"
         cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained.replace("/", "_") + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -34,7 +33,7 @@ class loadOneByOneDataset(data.Dataset):
                                                     tokenized_target[:j])
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
-                    if negative_text is not None and neg_token:
+                    if negative_text is not None and 'token' in likelihood:
                         if "[SEP]" in negative_text:
                             ntext_arr = negative_text.split("[SEP]")
                         else:
@@ -42,7 +41,7 @@ class loadOneByOneDataset(data.Dataset):
                         for neg_text in ntext_arr:
                             neg_words = neg_text.split(" ")
                             neg_word = "[SEP]" if len(neg_words) <= len(tokenized_target[:j - 1]) else \
-                                neg_words[len(" ".join(tokenized_target[:j - 1]))]
+                                neg_words[len(tokenized_target[:j - 1])]
                             feature = get_feature_from_data(tokenizer, maxlen, input,
                                                             tokenized_target[:j - 1],
                                                             ntarget=neg_word)
@@ -53,14 +52,22 @@ class loadOneByOneDataset(data.Dataset):
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
-                if negative_text is not None and neg_sent:
+                if negative_text is not None and ('sent' in likelihood or "neg-both" in likelihood):
                     if "[SEP]" in negative_text:
                         ntext_arr = negative_text.split("[SEP]")
                     else:
                         ntext_arr = [negative_text]
                     for neg_text in ntext_arr:
-                        feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input, tokenized_target,
-                                                                             ntarget=neg_text)
+                        if 'pos' in likelihood:
+                            feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                 " ".join(target))
+                        elif 'neg' in likelihood:
+                            feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                 ntarget=neg_text)
+                        elif 'both' in likelihood:
+                            feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                 " ".join(target),
+                                                                                 ntarget=neg_text)
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                             sample.append(feature)
 

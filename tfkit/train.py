@@ -77,9 +77,9 @@ def main():
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
-                        choices=['once', 'twice', 'onebyone', 'onebyone-neg-token', 'onebyone-neg-sent',
-                                 'onebyone-neg-both', 'classify', 'tagRow', 'tagCol', 'qa'])
-    parser.add_argument("--neg", type=str, choices=['token', 'sent', 'both'], help='gen onebyone unlikelihood loss')
+                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
+                                 'onebyone-neg-token', 'onebyone-neg-sent', 'onebyone-pos-sent',
+                                 'onebyone-neg-both', 'onebyone-both-sent'])
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/bert-base-chinese')
     parser.add_argument("--worker", type=int, default=8)
@@ -107,13 +107,8 @@ def main():
         eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertTwice(model_config=arg.config, maxlen=arg.maxlen)
     elif "onebyone" in arg.model:
-        neg_token = True if arg.neg == 'token' or 'token' in arg.model else False
-        neg_sent = True if arg.neg == 'sent' or 'sent' in arg.model else False
-        if arg.neg == 'both' or 'both' in arg.model:
-            neg_token = True
-            neg_sent = True
         train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
-                                            neg_token=neg_token, neg_sent=neg_sent)
+                                            likelihood=arg.model)
         eval_dataset = loadOneByOneDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
         model = BertOneByOne(model_config=arg.config, maxlen=arg.maxlen)
     elif 'classify' in arg.model:

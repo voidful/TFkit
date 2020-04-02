@@ -40,8 +40,6 @@ class BertOneByOne(nn.Module):
         masks = batch_data['mask']
 
         tokens_tensor = torch.tensor(inputs).to(self.device)
-        loss_tensors = torch.tensor(targets).to(self.device)
-        negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
         mask_tensors = torch.tensor(masks).to(self.device)
 
         outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
@@ -62,6 +60,8 @@ class BertOneByOne(nn.Module):
             result_dict['label_map'].append(prob_result[0])
             outputs = result_dict
         else:
+            loss_tensors = torch.tensor(targets).to(self.device)
+            negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
@@ -72,7 +72,6 @@ class BertOneByOne(nn.Module):
 
             masked_lm_loss += negative_loss
             outputs = masked_lm_loss
-
         return outputs
 
     def predict(self, input, topP=1, topK=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
