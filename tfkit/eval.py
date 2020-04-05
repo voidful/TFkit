@@ -127,8 +127,8 @@ def main():
         with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
             writer = csv.writer(f)
             records = eval_metric.get_record()
-            for i,p in zip(records['input'],records['predicted']):
-                writer.writerow([i,p])
+            for i, p in zip(records['input'], records['predicted']):
+                writer.writerow([i, p])
         print("write file at:", outfile_name)
 
     for i in eval_metric.cal_score(arg.metric):

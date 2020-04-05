@@ -72,15 +72,19 @@ class EvalMetric:
                 total = 0
                 f1 = 0
                 for pos, predict in enumerate(task['predicted']):
-                    target = task['target'][pos]
-                    equal = False
-                    if _normalize_answer(predict) == _normalize_answer(target):
-                        equal = True
-                    if equal:
-                        em += 1
-                        f1 += 1
-                    else:
-                        f1 += _f1_score(predict, target)
+                    em_list = [0]
+                    f1_list = [0]
+                    for target in task['targets'][pos]:
+                        equal = False
+                        if _normalize_answer(predict) == _normalize_answer(target):
+                            equal = True
+                        if equal:
+                            em_list.append(1)
+                            f1_list.append(1)
+                        else:
+                            f1_list.append(_f1_score(predict, target))
+                    em += max(em_list)
+                    f1 += max(f1_list)
                     total += 1
                 result = {"EM": em / total, "F1": f1 / total}
             if "nlg" in metric:
