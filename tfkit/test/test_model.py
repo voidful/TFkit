@@ -7,7 +7,7 @@ import tfkit
 from torch.utils import data
 
 
-class TestDataLoader(unittest.TestCase):
+class TestModel(unittest.TestCase):
 
     def testClassifier(self):
         input = "One hundred thirty-four patients suspected of having pancreas cancer successfully underwent gray scale ultrasound examination of the pancreas ."
@@ -123,5 +123,5 @@ class TestDataLoader(unittest.TestCase):
         print(result, len(result))
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
-        result, model_dict = model.predict_beamsearch(input=input)
-        print(result, len(result))
+        result, model_dict = model.predict(input=input, beamsearch=True, beamsize=3)
+        print("beamsaerch", result, len(result), model_dict)
