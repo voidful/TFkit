@@ -9,11 +9,6 @@ import tag
 from tqdm import tqdm
 from utility.eval_metric import EvalMetric
 import csv
-import numpy as np
-import matplotlib
-
-matplotlib.use('Agg')
-from matplotlib import pyplot as plt
 
 
 def main():
@@ -27,7 +22,6 @@ def main():
     parser.add_argument("--outfile", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
     parser.add_argument("--beamsize", type=int, default=3)
-    parser.add_argument("--beamselect", type=int, default=0)
     parser.add_argument("--beamfiltersim", action='store_true')
     parser.add_argument("--topP", type=int, default=1)
     parser.add_argument("--topK", type=float, default=0.6)
@@ -70,9 +64,11 @@ def main():
 
     model = model.to(device)
     model.load_state_dict(package['model_state_dict'], strict=False)
+    if not arg.beamsearch:
+        eval_metrics = [EvalMetric()]
+    else:
+        eval_metrics = [EvalMetric() for _ in range(arg.beamsize)]
 
-    prob_list = []
-    eval_metric = EvalMetric()
     for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
@@ -90,50 +86,44 @@ def main():
 
         result, result_dict = model.predict(**predict_param)
 
-        if arg.beamsearch:
-            result = [result_dict['label_map'][arg.beamselect][0]]
+        for eval_pos, eval_metric in enumerate(eval_metrics):
+            if 'onebyone' in type and arg.beamsearch:
+                predicted = result_dict['label_map'][eval_pos][0]
+            elif 'classify' in type:
+                predicted = result
+            elif 'tag' in type:
+                predicted = [list(d.values())[0] for d in result_dict['label_map']]
 
-        if 'qa' in type:
-            target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+            elif 'qa' in type:
+                target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+            else:
+                predicted = result[0] if len(result) > 0 else ''
 
-        # if 'prob_list' in result_dict:
-        #     for plist in result_dict['prob_list']:
-        #         prob_list.extend(plist)
+            if arg.print:
+                print('===eval===')
+                print("input: ", input)
+                print("target: ", target)
+                print("result: ", result)
+                print('==========')
 
-        if arg.print:
-            print('===eval===')
-            print("input: ", input)
-            print("target: ", target)
-            print("result: ", result)
-            # print("result_dict: ", result_dict)
-            print('==========')
-        if 'classify' in type:
-            predicted = result
-        elif 'tag' in type:
-            predicted = [list(d.values())[0] for d in result_dict['label_map']]
-        else:
-            predicted = result[0] if len(result) > 0 else ''
+            eval_metric.add_record(input, predicted, target)
 
-        eval_metric.add_record(input, predicted, target)
+    for eval_pos, eval_metric in enumerate(eval_metrics):
+        if arg.outfile:
+            argtype = "_dataset-" + arg.valid.replace("/", "_").replace(".", "_")
+            if arg.beamsearch:
+                argtype = "_beam_" + str(eval_pos)
+            outfile_name = arg.model + argtype
+            with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
+                writer = csv.writer(f)
+                records = eval_metric.get_record()
+                for i, p in zip(records['input'], records['predicted']):
+                    writer.writerow([i, p])
+            print("write file at:", outfile_name)
 
-    if arg.outfile:
-        argtype = "_dataset-" + arg.valid.replace("/", "_").replace(".", "_")
-        if arg.beamsearch:
-            argtype = "_beam_" + str(arg.beamselect)
-        outfile_name = arg.model + argtype
-        # plt.yscale('log', basey=2)
-        # plt.plot(np.mean(prob_list, axis=0))
-        # plt.savefig(outfile_name + '_prob_dist.png')
-        with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
-            writer = csv.writer(f)
-            records = eval_metric.get_record()
-            for i, p in zip(records['input'], records['predicted']):
-                writer.writerow([i, p])
-        print("write file at:", outfile_name)
-
-    for i in eval_metric.cal_score(arg.metric):
-        print("TASK: ", i[0])
-        print(i[1])
+        for i in eval_metric.cal_score(arg.metric):
+            print("TASK: ", i[0], eval_pos)
+            print(i[1])
 
 
 if __name__ == "__main__":
