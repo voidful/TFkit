@@ -87,15 +87,14 @@ def main():
         result, result_dict = model.predict(**predict_param)
 
         for eval_pos, eval_metric in enumerate(eval_metrics):
+            if 'qa' in type:
+                target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
             if 'onebyone' in type and arg.beamsearch:
                 predicted = result_dict['label_map'][eval_pos][0]
             elif 'classify' in type:
                 predicted = result
             elif 'tag' in type:
                 predicted = [list(d.values())[0] for d in result_dict['label_map']]
-
-            elif 'qa' in type:
-                target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
             else:
                 predicted = result[0] if len(result) > 0 else ''
 
