@@ -43,10 +43,11 @@ class EvalMetric:
         self.max_candidate = max_candidate
 
     def add_record(self, input, predicted, target, task='default'):
+        input = input.strip()
         if "[SEP]" in target:
-            target = target.split("[SEP]")
+            target = [t.strip() for t in target.split("[SEP]")]
         else:
-            target = [target]
+            target = [target.strip()]
 
         targets = []
         for pos in range(self.max_candidate):
@@ -92,7 +93,7 @@ class EvalMetric:
                     from nlgeval import NLGEval
                 except ImportError:
                     print("nlg-eval package not install, plz install it from https://github.com/Maluuba/nlg-eval")
-
+                    raise
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
                 result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['targets']))),  # transpose
                                                  hyp_list=task['predicted'])
