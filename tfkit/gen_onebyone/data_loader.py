@@ -27,6 +27,7 @@ class loadOneByOneDataset(data.Dataset):
         else:
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
+                input = input.strip()
                 tokenized_target = tokenizer.tokenize(" ".join(target))
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
@@ -39,7 +40,7 @@ class loadOneByOneDataset(data.Dataset):
                         else:
                             ntext_arr = [negative_text]
                         for neg_text in ntext_arr:
-                            neg_words = neg_text.split(" ")
+                            neg_words = [ntext.strip() for ntext in neg_text.split(" ")]
                             neg_word = "[SEP]" if len(neg_words) <= len(tokenized_target[:j - 1]) else \
                                 neg_words[len(tokenized_target[:j - 1])]
                             feature = get_feature_from_data(tokenizer, maxlen, input,
@@ -54,9 +55,9 @@ class loadOneByOneDataset(data.Dataset):
 
                 if negative_text is not None and ('sent' in likelihood or "neg-both" in likelihood):
                     if "[SEP]" in negative_text:
-                        ntext_arr = negative_text.split("[SEP]")
+                        ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                     else:
-                        ntext_arr = [negative_text]
+                        ntext_arr = [negative_text.strip()]
                     for neg_text in ntext_arr:
                         if 'pos' in likelihood:
                             feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
