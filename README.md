@@ -34,14 +34,14 @@ nlp2go --model ./drcd_qa_model/3.pt --cli
 - [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
 - [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
 - [nlp2go](https://github.com/voidful/nlp2go): create model hosting library for demo  
-- modularize data loading
-- easy to modify
-- special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
-- eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
 - multi-class multi-task multi-label classifier  
 - word/sentence level text generation  
-- support beamsarch on decoding
+- support greedy, beam-search & nucleus decoding 
 - token tagging
+- special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
+- eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
+- modularize data loading
+- easy to modify
 
 ## Benchmark
 #### DRCD Test
