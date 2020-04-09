@@ -28,7 +28,7 @@ setup(
         "nlp2"
     ],
     entry_points={
-        'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main']
+        'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']
     },
     python_requires=">=3.5.0",
     zip_safe=False,
