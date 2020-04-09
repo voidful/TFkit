@@ -47,12 +47,11 @@ nlp2go --model ./drcd_qa_model/3.pt --cli
 #### DRCD Test
 | model | EM | F1 | 
 | :----:|:----: |:----: |
-| <a href="voidful/albert_chinese_small">albert-small</a>	| 72.71% | 84.65% |
+| <a href="voidful/albert_chinese_small">albert-small</a>	| 74.45% | 86.08% |
 #### DRCD Dev
 | model | EM | F1 | 
 | :----:|:----: |:----: |
 | <a href="voidful/albert_chinese_small">albert-small</a>	| 73.70% | 85.33% |
-
 
 ## Flow Overview
 ![nlp kit flow](https://raw.githubusercontent.com/voidful/TFkit/master/img/flow.png)
