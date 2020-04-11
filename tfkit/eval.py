@@ -68,8 +68,7 @@ def main():
         eval_metrics = [EvalMetric()]
     else:
         eval_metrics = [EvalMetric() for _ in range(arg.beamsize)]
-
-    for i in tqdm(eval_dataset, total=len(list(eval_dataset))):
+    for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
         input = i[2]
@@ -85,7 +84,6 @@ def main():
             predict_param['topK'] = arg.topK
 
         result, result_dict = model.predict(**predict_param)
-
         for eval_pos, eval_metric in enumerate(eval_metrics):
             if 'qa' in type:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])

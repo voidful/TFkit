@@ -66,6 +66,7 @@ class EvalMetric:
         return self.tasks[task]
 
     def cal_score(self, metric):
+        print(self.tasks, self.tasks)
         for name, task in self.tasks.items():
             print("Task : " + name + " report ")
             if "emf1" in metric:
