@@ -1,5 +1,5 @@
 # 🤖 TFKit - Transformer Kit 🤗   
-NLP library for different downstream tasks, built on huggingface 🤗 project,   
+NLP library for different downstream purpose, built on top of huggingface 🤗 project,   
 for developing wide variety of nlp tasks.
 
 Read this in other languages: [正體中文(施工中👷)](https://github.com/voidful/TFkit/blob/master/README.zh.md).
