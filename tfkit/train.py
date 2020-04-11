@@ -37,7 +37,7 @@ def train(model, iterator, arg, fname, epoch):
     optim = optimizer(model, arg)
     t_loss = 0
     model.train()
-    for i, batch in tqdm(enumerate(iterator)):
+    for i, batch in tqdm(enumerate(iterator), total=len(iterator)):
         loss = model(batch)
         optim.zero_grad()
         loss.mean().backward()

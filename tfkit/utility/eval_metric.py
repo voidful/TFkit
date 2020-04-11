@@ -87,7 +87,7 @@ class EvalMetric:
                     em += max(em_list)
                     f1 += max(f1_list)
                     total += 1
-                result = {"EM": em / total, "F1": f1 / total}
+                result = {"EM": em / (total or not total), "F1": f1 / (total or not total)}
             if "nlg" in metric:
                 try:
                     from nlgeval import NLGEval
@@ -101,7 +101,8 @@ class EvalMetric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
                 mlb = MultiLabelBinarizer().fit(task['target_list'])
-                result = classification_report(mlb.transform(task['predicted_list']),
-                                               mlb.transform(task['target_list']),
-                                               target_names=list(mlb.classes_))
+                result = classification_report(
+                    mlb.transform(task['target_list']),
+                    mlb.transform(task['predicted_list']),
+                    target_names=list(mlb.classes_))
             yield (name, result)

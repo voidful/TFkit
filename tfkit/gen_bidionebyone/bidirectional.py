@@ -1,0 +1,182 @@
+import sys
+import os
+
+from tfkit.utility import tok_sep
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
+
+import torch
+import torch.nn as nn
+from transformers import *
+from gen_onebyone.data_loader import get_feature_from_data
+from itertools import combinations
+from torch.nn.functional import softmax
+from math import log
+from utility.loss import *
+from utility.tok import *
+import numpy as np
+import random
+
+
+class BiDiOneByOne(nn.Module):
+    def __init__(self, model_config, maxlen=512):
+        super().__init__()
+        if 'albert_chinese' in model_config:
+            self.tokenizer = BertTokenizer.from_pretrained(model_config)
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
+        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.maxlen = maxlen
+        print('Using device:', self.device)
+        self.model.to(self.device)
+
+    def forward(self, batch_data, eval=False):
+        inputs = batch_data['input']
+        targets = batch_data['target']
+        negative_targets = batch_data['ntarget']
+        masks = batch_data['mask']
+
+        tokens_tensor = torch.tensor(inputs).to(self.device)
+        mask_tensors = torch.tensor(masks).to(self.device)
+
+        outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
+        sequence_output = outputs[0]
+        prediction_scores = self.model(sequence_output)
+        if eval:
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': [],
+                'prob_list': []
+            }
+            start = batch_data['start'][0]
+            logit_prob = softmax(prediction_scores[0][start]).data.tolist()
+            prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+            prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+            result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
+            result_dict['label_prob_all'].append(prob_result)
+            result_dict['label_map'].append(prob_result[0])
+            outputs = result_dict
+        else:
+            loss_tensors = torch.tensor(targets).to(self.device)
+            negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
+            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                                      loss_tensors.view(-1))
+
+            negative_loss_fct = NegativeCElLoss().to(self.device)
+            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                                              negativeloss_tensors.view(-1))
+
+            masked_lm_loss += negative_loss
+            outputs = masked_lm_loss
+        return outputs
+
+    def predict(self, input, topP=1, topK=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
+        if beamsearch:
+            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim, task=None)
+        else:
+            self.eval()
+            with torch.no_grad():
+                output = []
+            result_dict = {
+                'label_prob_all': [],
+                'label_map': [],
+                'prob_list': []
+            }
+            while True:
+                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
+                if len(feature_dict['input']) > self.maxlen:
+                    break
+                for k, v in feature_dict.items():
+                    feature_dict[k] = [v]
+                predictions = self.forward(feature_dict, eval=True)
+                result_dict['label_prob_all'].append(predictions['label_prob_all'])
+                result_dict['label_map'].append(predictions['label_map'])
+                result_dict['prob_list'].append(predictions['prob_list'])
+
+                topP_list = [p for w, p in predictions['label_prob_all'][0]][:topP]
+                topK_list = np.cumsum(topP_list)
+                index_overK = [i for i, x in enumerate(topK_list) if x > topK]
+                index_overK = 0 if len(index_overK) < 1 else index_overK[0]
+                topK_list = list(topK_list[:index_overK + 1])
+                prob_norm = [float(i) / sum(topK_list) for i in topK_list]
+                sampling_index = topK_list.index(np.random.choice(topK_list, p=prob_norm))
+                predicted_token = predictions['label_prob_all'][0][sampling_index][0]
+
+                if tok_sep(self.tokenizer) in predicted_token or \
+                        len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
+                    break
+                output.append(predicted_token)
+
+            output = self.tokenizer.convert_tokens_to_string(output)
+            return [output], result_dict
+
+    def jaccard_similarity(self, list1, list2):
+        s1 = set(list1)
+        s2 = set(list2)
+        return len(s1.intersection(s2)) / len(s1.union(s2))
+
+    def isSimilar(self, s, t):
+        return self.jaccard_similarity(s, t) > 0.5
+
+    def filterSimilar(self, d, topk):
+        while True:
+            filteredOne = False
+            for s, t in combinations(d, 2):
+                if self.isSimilar(s[0], t[0]) and len(d) - 1 >= topk:
+                    d.remove(t)
+                    filteredOne = True
+                    break
+            if not filteredOne:
+                break
+
+    def predict_beamsearch(self, input, beamsize=3, filtersim=True, task=None):
+        self.eval()
+        sequences = [[[], 1.0]]
+        with torch.no_grad():
+            while True:
+                all_candidates = list()
+                exceed = False
+                for seq in sequences:
+                    if tok_sep(self.tokenizer) not in seq[0]:
+                        tokens, score = seq
+                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens)
+                        if len(feature_dict['input']) > self.maxlen:
+                            exceed = True
+                            all_candidates.append(seq)
+                            continue
+                        for k, v in feature_dict.items():
+                            feature_dict[k] = [v]
+                        predictions = self.forward(feature_dict, eval=True)
+                        for k, v in predictions['label_prob_all'][0][:50]:
+                            if len(tokens) > 0 and tokens[-1] == k or len(k) < 1:
+                                continue
+                            candidate = [tokens + [k], score + -log(v)]
+                            all_candidates.append(candidate)
+                    else:
+                        all_candidates.append(seq)
+
+                ordered = sorted(all_candidates, key=lambda tup: tup[1])
+                if filtersim:
+                    self.filterSimilar(ordered, beamsize)
+                sequences = ordered[:beamsize]
+                stop = 0
+                for i in sequences:
+                    if tok_sep(self.tokenizer) in i[0] or \
+                            len(i[0]) > 3 and i[0][-1] == i[0][-2] == i[0][-3] or \
+                            i[1] > 300:
+                        stop += 1
+                if stop == len(sequences) or exceed:
+                    break
+
+            for i in range(len(sequences)):
+                if tok_sep(self.tokenizer) in sequences[i][0]:
+                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
+                sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
+            result_dict = {
+                'label_map': sequences
+            }
+            return [sequences[0][0]], result_dict
