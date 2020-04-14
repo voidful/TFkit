@@ -11,8 +11,13 @@ class TestEval(unittest.TestCase):
 
     def testEvalOnGen(self):
         result = os.system(
-            'tfkit-eval --model ./cache/10.pt --valid ../demo_data/generate.csv --metric emf1 --print')
+            'tfkit-eval --model ./cache/10.pt --valid ../demo_data/generate.csv --metric classification --print')
         print(result)
         result = os.system(
             'tfkit-eval --model ./cache/10.pt --valid ../demo_data/generate.csv --metric emf1 --print --beamsearch --outfile')
+        print(result)
+
+    def testEvalClassify(self):
+        result = os.system(
+            'tfkit-eval --model ./cache/10.pt --valid ../demo_data/classification.csv --metric classification --print')
         print(result)
