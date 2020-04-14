@@ -41,34 +41,41 @@ class EvalMetric:
     def __init__(self, max_candidate=6):
         self.tasks = defaultdict(lambda: defaultdict(list))
         self.max_candidate = max_candidate
+        self.target_list = defaultdict(lambda: defaultdict(int))
 
     def add_record(self, input, predicted, target, task='default'):
         input = input.strip()
-        if "[SEP]" in target:
-            target = [t.strip() for t in target.split("[SEP]")]
-        else:
-            target = [target.strip()]
 
-        targets = []
-        for pos in range(self.max_candidate):
-            if len(target) > pos:
-                targets.append(target[pos])
+        if isinstance(target, str):
+            if "[SEP]" in target:
+                targets = [t.strip() for t in target.split("[SEP]")]
+                target = targets[0]
+                if self.max_candidate - len(targets) > 0:
+                    targets.extend([""] * (self.max_candidate - len(targets)))
             else:
-                targets.append("")
+                target = target.strip()
+                targets = [target]
+        else:
+            targets = target
+            target = target[0]
+
+        for t in targets:
+            self.target_list[task][t] += 1
+
         self.tasks[task]['input'].append(input)
         self.tasks[task]['predicted'].append(predicted)
+        self.tasks[task]['predicteds'].append([predicted])
         self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else list(predicted))
+        self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
-        self.tasks[task]['target'].append(target[0])
         self.tasks[task]['target_list'].append(target[0].split(" ") if " " in target[0] else list(target[0]))
 
     def get_record(self, task='default'):
         return self.tasks[task]
 
     def cal_score(self, metric):
-        print(self.tasks, self.tasks)
-        for name, task in self.tasks.items():
-            print("Task : " + name + " report ")
+        for task_name, task in self.tasks.items():
+            print("Task : " + task_name + " report ")
             if "emf1" in metric:
                 em = 0
                 total = 0
@@ -101,9 +108,9 @@ class EvalMetric:
             if "classification" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
-                mlb = MultiLabelBinarizer().fit(task['target_list'])
+                mlb = MultiLabelBinarizer().fit([list(self.target_list[task_name].keys())])
                 result = classification_report(
-                    mlb.transform(task['target_list']),
-                    mlb.transform(task['predicted_list']),
+                    mlb.transform(task['targets']),
+                    mlb.transform(task['predicteds']),
                     target_names=list(mlb.classes_))
-            yield (name, result)
+            yield (task_name, result)
