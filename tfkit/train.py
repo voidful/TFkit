@@ -1,4 +1,6 @@
 import argparse
+
+import numpy as np
 import tensorboardX as tensorboard
 from gen_once import *
 from gen_twice import *
@@ -67,6 +69,13 @@ def eval(model, iterator, fname, epoch):
     return avg_t_loss
 
 
+def set_seed(seed):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available() > 0:
+        torch.cuda.manual_seed_all(seed)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=20)
@@ -78,10 +87,10 @@ def main():
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
     parser.add_argument("--model", type=str, required=True,
                         choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
-                                 'onebyone-neg-token', 'onebyone-neg-sent', 'onebyone-pos-sent',
-                                 'onebyone-neg-both', 'onebyone-both-sent'])
+                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both', ])
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
-                        help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/bert-base-chinese')
+                        help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
+    parser.add_argument("--seed", type=int, default=609)
     parser.add_argument("--worker", type=int, default=8)
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
@@ -148,6 +157,8 @@ def main():
         package = torch.load(arg.resume, map_location=device)
         model.load_state_dict(package['model_state_dict'])
         start_epoch = int(package.get('epoch', 1))
+
+    set_seed(arg.seed)
 
     write_log("batch : " + str(arg.batch))
     for epoch in range(start_epoch, start_epoch + arg.epoch):

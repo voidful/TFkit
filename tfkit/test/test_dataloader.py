@@ -33,13 +33,16 @@ class TestDataLoader(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
             print(i)
-        for likelihood in ['onebyone-neg-token', 'onebyone-neg-sent', 'onebyone-pos-sent', 'onebyone-neg-both',
-                           'onebyone-both-sent']:
+        for likelihood in [ 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-cased',
                                                             maxlen=24, likelihood=likelihood):
+                print(likelihood, i)
                 start_pos = i['start']
                 self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
-                self.assertTrue(i['target'][start_pos] != -1 or i['ntarget'][start_pos] != -1)
+                if 'neg' in likelihood and i['target'][start_pos] == -1:
+                    self.assertTrue(i['ntarget'][start_pos] != -1)
+                else:
+                    self.assertTrue(i['target'][start_pos] != -1)
                 self.assertTrue(len(i['input']) == 24)
                 self.assertTrue(len(i['target']) == 24)
 
