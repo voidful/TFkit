@@ -31,29 +31,15 @@ class loadOneByOneDataset(data.Dataset):
                 tokenized_target = tokenizer.tokenize(" ".join(target))
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
-                                                    tokenized_target[:j])
+                                                        tokenized_target[:j])
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
-                    if negative_text is not None and 'token' in likelihood:
-                        if "[SEP]" in negative_text:
-                            ntext_arr = negative_text.split("[SEP]")
-                        else:
-                            ntext_arr = [negative_text]
-                        for neg_text in ntext_arr:
-                            neg_words = [ntext.strip() for ntext in neg_text.split(" ")]
-                            neg_word = "[SEP]" if len(neg_words) <= len(tokenized_target[:j - 1]) else \
-                                neg_words[len(tokenized_target[:j - 1])]
-                            feature = get_feature_from_data(tokenizer, maxlen, input,
-                                                            tokenized_target[:j - 1],
-                                                            ntarget=neg_word)
-                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                                sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
-                if negative_text is not None and ('sent' in likelihood or "neg-both" in likelihood):
+                if negative_text is not None:
                     if "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                     else:
