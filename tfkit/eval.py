@@ -105,16 +105,23 @@ def main():
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
         if arg.outfile:
-            argtype = "_dataset-" + arg.valid.replace("/", "_").replace(".", "_")
+            argtype = "_dataset_" + arg.valid.replace("/", "_").replace(".", "")
             if arg.beamsearch:
                 argtype = "_beam_" + str(eval_pos)
             outfile_name = arg.model + argtype
+
             with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
                 writer = csv.writer(f)
                 records = eval_metric.get_record()
                 for i, p in zip(records['input'], records['predicted']):
                     writer.writerow([i, p])
-            print("write file at:", outfile_name)
+            print("write result at:", outfile_name)
+
+            with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+                for i in eval_metric.cal_score(arg.metric):
+                    f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
+                    f.write(str(i[1]) + '\n')
+            print("write score at:", outfile_name)
 
         for i in eval_metric.cal_score(arg.metric):
             print("TASK: ", i[0], eval_pos)
