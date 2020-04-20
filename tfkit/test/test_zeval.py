@@ -19,5 +19,5 @@ class TestEval(unittest.TestCase):
 
     def testEvalClassify(self):
         result = os.system(
-            'tfkit-eval --model ./cache/10.pt --valid ../demo_data/classification.csv --metric classification --print')
+            'tfkit-eval --model ./cache/10.pt --valid ../demo_data/classification.csv --metric classification --print  --outfile')
         print(result)
