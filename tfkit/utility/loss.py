@@ -72,13 +72,13 @@ class NegativeCElLoss(nn.Module):
     def __init__(self):
         super(NegativeCElLoss, self).__init__()
         self.softmax = nn.Softmax()
+        self.alpha = 1
         self.nll = nn.NLLLoss(ignore_index=-1)
 
     def forward(self, input, target):
         nsoftmax = self.softmax(input)
         nsoftmax = torch.clamp((1.0 - nsoftmax), min=1e-32)
-        # nsoftmax = 1.0 - nsoftmax
-        return self.nll(torch.log(nsoftmax), target)
+        return self.nll(torch.log(nsoftmax) * self.alpha, target)
 
 
 class FocalSmoothingLoss(nn.Module):

@@ -33,7 +33,7 @@ class TestDataLoader(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
         for i in tfkit.gen_onebyone.get_data_from_file('../demo_data/generate.csv'):
             print(i)
-        for likelihood in [ 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
+        for likelihood in ['onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='bert-base-cased',
                                                             maxlen=24, likelihood=likelihood):
                 print(likelihood, i)

@@ -79,18 +79,40 @@ class TestEval(unittest.TestCase):
             self.assertTrue(s[1]['F1'] > 0)
 
     def testNLG(self):
+
+        eval = tfkit.utility.eval_metric.EvalMetric()
+        eval.add_record("input", "a b c", "a b c[SEP]a c c[SEP]", task='default')
+        for s in eval.cal_score('nlg'):
+            print(s)
+
         eval1 = tfkit.utility.eval_metric.EvalMetric(max_candidate=1)
-        eval1.add_record("input", "abc", "abc", task='default')
+        eval1.add_record("input", "abc", " abc ", task='default')
         for s1 in eval1.cal_score('nlg'):
             print(s1)
 
         eval3 = tfkit.utility.eval_metric.EvalMetric(max_candidate=3)
-        eval3.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
+        eval3.add_record("input", "abc ", "abb [SEP]acc[SEP] abc ", task='default')
         for s3 in eval3.cal_score('nlg'):
             print(s3)
 
         eval6 = tfkit.utility.eval_metric.EvalMetric(max_candidate=6)
-        eval6.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
+        eval6.add_record("input", "abc", "abb [SEP] acc [SEP]abc", task='default')
+        for s6 in eval6.cal_score('nlg'):
+            print(s6)
+        self.assertTrue(s1 == s3 == s6)
+
+        eval1 = tfkit.utility.eval_metric.EvalMetric(max_candidate=1)
+        eval1.add_record("input", "opq", "abc", task='default')
+        for s1 in eval1.cal_score('nlg'):
+            print(s1)
+
+        eval3 = tfkit.utility.eval_metric.EvalMetric(max_candidate=3)
+        eval3.add_record("input", "opq", "abb[SEP]acc[SEP]abc", task='default')
+        for s3 in eval3.cal_score('nlg'):
+            print(s3)
+
+        eval6 = tfkit.utility.eval_metric.EvalMetric(max_candidate=6)
+        eval6.add_record("input", "opq", "abb [SEP] acc[SEP]abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             print(s6)
         self.assertTrue(s1 == s3 == s6)

@@ -31,7 +31,25 @@ class loadOneByOneDataset(data.Dataset):
                 tokenized_target = tokenizer.tokenize(" ".join(target))
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
-                                                        tokenized_target[:j])
+                                                    tokenized_target[:j])
+                    if negative_text is not None and "-" in likelihood:
+                        if "[SEP]" in negative_text:
+                            ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
+                        else:
+                            ntext_arr = [negative_text.strip()]
+                        for neg_text in ntext_arr:
+                            if 'pos' in likelihood:
+                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                         " ".join(target))
+                            elif 'neg' in likelihood:
+                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                         ntarget=neg_text)
+                            elif 'both' in likelihood:
+                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                         " ".join(target),
+                                                                                         ntarget=neg_text)
+                            feature['ntarget'] = feature_neg['ntarget']
+
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
 
@@ -127,7 +145,7 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
     #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
     #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
     #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")
-    #     if target is not None:
+    #     if tokenized_target is not None:
     #         print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
     #     if ntarget is not None:
     #         print("POS", target_start, len(tokenized_ntarget))

@@ -104,6 +104,7 @@ class BertOneByOne(nn.Module):
                 topK_list = list(topK_list[:index_overK + 1])
                 prob_norm = [float(i) / sum(topK_list) for i in topK_list]
                 sampling_index = topK_list.index(np.random.choice(topK_list, p=prob_norm))
+
                 predicted_token = predictions['label_prob_all'][0][sampling_index][0]
 
                 if tok_sep(self.tokenizer) in predicted_token or \

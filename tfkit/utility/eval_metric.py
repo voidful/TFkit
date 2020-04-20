@@ -50,14 +50,15 @@ class EvalMetric:
             if "[SEP]" in target:
                 targets = [t.strip() for t in target.split("[SEP]")]
                 target = targets[0]
-                if self.max_candidate - len(targets) > 0:
-                    targets.extend([""] * (self.max_candidate - len(targets)))
             else:
                 target = target.strip()
                 targets = [target]
         else:
             targets = target
             target = target[0]
+
+        if self.max_candidate - len(targets) > 0:
+            targets.extend([""] * (self.max_candidate - len(targets)))
 
         for t in targets:
             self.target_list[task][t] += 1
