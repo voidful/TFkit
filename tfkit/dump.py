@@ -32,17 +32,17 @@ def main():
     print('==========')
 
     if "once" in type:
-        model = gen_once.BertOnce(model_config=config, maxlen=maxlen)
+        model = gen_once.Once(model_config=config, maxlen=maxlen)
     elif "twice" in type:
-        model = gen_twice.BertTwice(model_config=config, maxlen=maxlen)
+        model = gen_twice.Twice(model_config=config, maxlen=maxlen)
     elif "onebyone" in type:
-        model = gen_onebyone.BertOneByOne(model_config=config, maxlen=maxlen)
+        model = gen_onebyone.OneByOne(model_config=config, maxlen=maxlen)
     elif 'classify' in type:
-        model = classifier.BertMtClassifier(package['task'], model_config=config)
+        model = classifier.MtClassifier(package['task'], model_config=config)
     elif 'tag' in type:
-        model = tag.BertTagger(package['label'], model_config=config, maxlen=maxlen)
+        model = tag.Tagger(package['label'], model_config=config, maxlen=maxlen)
     elif 'qa' in type:
-        model = qa.BertQA(model_config=config, maxlen=maxlen)
+        model = qa.QA(model_config=config, maxlen=maxlen)
 
     model = model.to(device)
     model.load_state_dict(package['model_state_dict'], strict=False)

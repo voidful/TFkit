@@ -12,17 +12,14 @@ from classifier.data_loader import get_feature_from_data
 from utility.loss import *
 
 
-class BertMtClassifier(nn.Module):
+class MtClassifier(nn.Module):
 
-    def __init__(self, tasks_detail, model_config, maxlen=512, dropout=0.1):
+    def __init__(self, tasks_detail, tokenizer, pretrained, maxlen=512, dropout=0.1):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        if 'albert_chinese' in model_config:
-            self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
-        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.tokenizer = tokenizer
+        self.pretrained = pretrained
 
         self.dropout = nn.Dropout(dropout)
         self.loss_fct = FocalLoss()
@@ -104,6 +101,6 @@ class BertMtClassifier(nn.Module):
                     return [i[task] for i in result['label_map'] if task in i], result
                 else:
                     task_map = [i[task] for i in result['label_prob_all'] if task in i][0]
-                    return sorted(task_map, key=task_map.get,reverse=True)[:topk], result
+                    return sorted(task_map, key=task_map.get, reverse=True)[:topk], result
             else:
                 return [""], {}

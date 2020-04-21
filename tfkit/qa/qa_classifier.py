@@ -12,17 +12,14 @@ from qa.data_loader import get_feature_from_data
 from utility.loss import *
 
 
-class BertQA(nn.Module):
+class QA(nn.Module):
 
-    def __init__(self, model_config, maxlen=512, dropout=0.1):
+    def __init__(self, tokenizer, pretrained, maxlen=128, dropout=0.1):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        if 'albert_chinese' in model_config:
-            self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
-        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.tokenizer = tokenizer
+        self.pretrained = pretrained
         self.maxlen = maxlen
 
         self.dropout = nn.Dropout(dropout)
