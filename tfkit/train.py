@@ -1,5 +1,5 @@
 import argparse
-
+from transformers import *
 import numpy as np
 import tensorboardX as tensorboard
 from gen_once import *
@@ -11,6 +11,7 @@ from qa import *
 from torch.utils import data
 from tqdm import tqdm
 from utility.optim import *
+from itertools import zip_longest
 
 
 def write_log(*args):
@@ -28,41 +29,68 @@ def optimizer(model, arg):
         {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.01},
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.0}
     ]
-    # optimizer = torch.optim.Adamax(optimizer_parameters, lr=arg.lr)
-    # optimizer = torch.optim.Adamax(model.parameters(), lr=arg.lr)
     optimizer = AdamW(optimizer_parameters, lr=arg.lr)
     return optimizer
 
 
-def train(model, iterator, arg, fname, epoch):
-    model = nn.DataParallel(model)
-    optim = optimizer(model, arg)
+def train(models_list, train_dataset, arg, fname, epoch):
+    optims = []
+    models = []
+    for i, m in enumerate(models_list):
+        model = nn.DataParallel(m)
+        model.train()
+        models.append(model)
+        optims.append(optimizer(m, arg))
+
+    i = 0
+    total_l = 0
     t_loss = 0
-    model.train()
-    for i, batch in tqdm(enumerate(iterator), total=len(iterator)):
-        loss = model(batch)
-        optim.zero_grad()
-        loss.mean().backward()
-        optim.step()
-        t_loss += loss.mean().item()
 
-        if arg.tensorboard:
-            writer.add_scalar("loss/step", loss.mean().item(), epoch)
-        if i % 100 == 0 and i != 0:  # monitoring
-            write_log(f"step: {i}, loss: {t_loss / (i + 1)}, total: {len(iterator)}")
+    iters = [iter(ds) for ds in train_dataset]
+    end = False
+    while not end:
+        for model, optim, batch in zip(models, optims, iters):
+            train_batch = next(batch, None)
+            if train_batch is not None:
+                loss = model(train_batch)
+                optim.zero_grad()
+                loss.mean().backward()
+                optim.step()
+                t_loss += loss.mean().item()
+                if arg.tensorboard:
+                    writer.add_scalar("loss/step", loss.mean().item(), epoch)
 
-    write_log(f"step: {len(iterator)}, loss: {t_loss / len(iterator)}, total: {len(iterator)}")
-    return t_loss / len(iterator)
+                if i % 100 == 0 and i != 0:  # monitoring
+                    write_log(f"step: {i}, loss: {t_loss / (i + 1)}")
+                i += 1
+                total_l += 1
+            else:
+                end = True
+
+    write_log(f"step: {total_l}, loss: {t_loss / total_l if total_l > 0 else 0}, total: {total_l}")
+    return t_loss / total_l
 
 
-def eval(model, iterator, fname, epoch):
-    model.eval()
+def eval(models, test_dataset, fname, epoch):
     t_loss = 0
+    t_length = 0
+    for m in models:
+        m.eval()
+
     with torch.no_grad():
-        for i, batch in enumerate(iterator):
-            loss = model(batch)
-            t_loss += loss.mean().item()
-    avg_t_loss = t_loss / len(iterator)
+        iters = [iter(ds) for ds in test_dataset]
+        end = False
+        while not end:
+            for model, batch in zip(models, iters):
+                test_batch = next(batch, None)
+                if test_batch is not None:
+                    loss = model(test_batch)
+                    t_loss += loss.mean().item()
+                    t_length += 1
+                else:
+                    end = True
+
+    avg_t_loss = t_loss / t_length if t_length > 0 else 0
     write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
     if arg.tensorboard:
         writer.add_scalar("eval_loss/step", avg_t_loss, epoch)
@@ -85,7 +113,7 @@ def main():
     parser.add_argument("--savedir", type=str, default="checkpoints/")
     parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
     parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
-    parser.add_argument("--model", type=str, required=True,
+    parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
                                  'onebyone-neg', 'onebyone-pos', 'onebyone-both', ])
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
@@ -106,56 +134,75 @@ def main():
     write_log(vars(arg))
     write_log("=======================")
 
-    arg.model = arg.model.lower()
-    if "once" in arg.model:
-        train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        model = BertOnce(model_config=arg.config, maxlen=arg.maxlen)
-    if "twice" in arg.model:
-        train_dataset = loadOnceDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        eval_dataset = loadOnceDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        model = BertTwice(model_config=arg.config, maxlen=arg.maxlen)
-    elif "onebyone" in arg.model:
-        train_dataset = loadOneByOneDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
-                                            likelihood=arg.model)
-        eval_dataset = loadOneByOneDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        model = BertOneByOne(model_config=arg.config, maxlen=arg.maxlen)
-    elif 'classify' in arg.model:
-        train_dataset = loadClassifierDataset(arg.train[0], pretrained=arg.config, cache=arg.cache)
-        eval_dataset = loadClassifierDataset(arg.valid[0], pretrained=arg.config, cache=arg.cache)
-        model = BertMtClassifier(train_dataset.task, arg.config)
-    elif 'tag' in arg.model:
-        if "row" in arg.model:
-            train_dataset = loadRowTaggerDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen,
-                                                 cache=arg.cache)
-            eval_dataset = loadRowTaggerDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        elif "col" in arg.model:
-            train_dataset = loadColTaggerDataset(arg.train[0], pretrained=arg.config, maxlen=arg.maxlen,
-                                                 cache=arg.cache)
-            eval_dataset = loadColTaggerDataset(arg.valid[0], pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-        model = BertTagger(train_dataset.label, arg.config, maxlen=arg.maxlen)
-    elif 'qa' in arg.model:
-        train_dataset = loadQADataset(arg.train[0], pretrained=arg.config, cache=arg.cache)
-        eval_dataset = loadQADataset(arg.valid[0], pretrained=arg.config, cache=arg.cache)
-        model = BertQA(model_config=arg.config, maxlen=arg.maxlen)
+    # load pre-train model
+    if 'albert_chinese' in arg.config:
+        tokenizer = BertTokenizer.from_pretrained(arg.config)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(arg.config)
+    pretrained = AutoModel.from_pretrained(arg.config)
 
-    train_iter = data.DataLoader(dataset=train_dataset,
-                                 batch_size=arg.batch,
-                                 shuffle=True,
-                                 num_workers=arg.worker)
-    eval_iter = data.DataLoader(dataset=eval_dataset,
-                                batch_size=arg.batch,
-                                shuffle=False,
-                                num_workers=arg.worker)
+    models = []
+    train_dataset = []
+    test_dataset = []
+    for model_type, train_file, valid_file in zip_longest(arg.model, arg.train, arg.valid, fillvalue=""):
+        model_type = model_type.lower()
+        if "once" in model_type:
+            train_ds = loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+            test_ds = loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+            model = Once(tokenizer, pretrained, maxlen=arg.maxlen)
+        elif "twice" in model_type:
+            train_ds = loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+            test_ds = loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+            model = Twice(tokenizer, pretrained, maxlen=arg.maxlen)
+        elif "onebyone" in model_type:
+            train_ds = loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
+                                           likelihood=model_type)
+            test_ds = loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
+            model = OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
+        elif 'classify' in model_type:
+            train_ds = loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = MtClassifier(train_ds.task, tokenizer, pretrained)
+        elif 'tag' in model_type:
+            if "row" in model_type:
+                train_ds = loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                cache=arg.cache)
+                test_ds = loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                               cache=arg.cache)
+            elif "col" in model_type:
+                train_ds = loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                cache=arg.cache)
+                test_ds = loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                               cache=arg.cache)
+            model = Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
+        elif 'qa' in model_type:
+            train_ds = loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = QA(tokenizer, pretrained, maxlen=arg.maxlen)
+        train_dataset.append(data.DataLoader(dataset=train_ds,
+                                             batch_size=arg.batch,
+                                             shuffle=True,
+                                             num_workers=arg.worker))
+        test_dataset.append(data.DataLoader(dataset=test_ds,
+                                            batch_size=arg.batch,
+                                            shuffle=False,
+                                            num_workers=arg.worker))
+        models.append(model)
+
     if arg.tensorboard:
         global writer
-        writer = tensorboard.SummaryWriter()
+    writer = tensorboard.SummaryWriter()
 
-    model = model.to(device)
     start_epoch = 1
+
     if arg.resume:
         package = torch.load(arg.resume, map_location=device)
-        model.load_state_dict(package['model_state_dict'])
+        if 'model_state_dict' in package:
+            model.load_state_dict(package['model_state_dict'])
+            models.append(model)
+        else:
+            for state_dict in package['models']:
+                models.append(model.load_state_dict(state_dict))
         start_epoch = int(package.get('epoch', 1))
 
     set_seed(arg.seed)
@@ -165,28 +212,31 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(model, train_iter, arg, fname, epoch)
+        train_avg_loss = train(models, train_dataset, arg, fname, epoch)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
-            'model_state_dict': model.state_dict(),
+            'models': [m.state_dict() for m in models],
             'model_config': arg.config,
             'type': arg.model,
-            'maxlen': model.maxlen
+            'maxlen': arg.maxlen,
+            'epoch': epoch
         }
         if 'classify' in arg.model:
-            save_model['task'] = train_dataset.task
+            ind = arg.model.index('classify')
+            save_model['task'] = models[ind].tasks_detail
         elif 'tag' in arg.model:
-            save_model['label'] = model.labels
+            ind = arg.model.index('tag')
+            save_model['label'] = models[ind].labels
         torch.save(save_model, f"{fname}.pt")
         write_log(f"weights were saved to {fname}.pt")
 
         write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = eval(model, eval_iter, fname, epoch)
+        eval_avg_loss = eval(models, test_dataset, fname, epoch)
 
         if arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)
-            writer.add_scalar("eval_loss/epoch", eval_avg_loss, epoch)
+        writer.add_scalar("eval_loss/epoch", eval_avg_loss, epoch)
 
 
 if __name__ == "__main__":

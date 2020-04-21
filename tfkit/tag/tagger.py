@@ -14,17 +14,14 @@ from utility.loss import *
 from tag.data_loader import get_feature_from_data
 
 
-class BertTagger(nn.Module):
+class Tagger(nn.Module):
 
-    def __init__(self, labels, model_config, maxlen=512, dropout=0.2):
+    def __init__(self, labels, tokenizer, pretrained, maxlen=512, dropout=0.2):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        if 'albert_chinese' in model_config:
-            self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
-        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.tokenizer = tokenizer
+        self.pretrained = pretrained
         self.dropout = nn.Dropout(dropout)
         self.tagger = nn.Linear(self.pretrained.config.hidden_size, len(labels))
         self.labels = labels

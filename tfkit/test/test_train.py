@@ -11,15 +11,20 @@ class TestTrain(unittest.TestCase):
 
     def testGenOneByOne(self):
         result = os.system(
-            'tfkit-train --train ../demo_data/generate.csv --valid ../demo_data/generate.csv --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
-        print(result == 0)
+            'tfkit-train --batch 2 --train ../demo_data/generate.csv --valid ../demo_data/generate.csv --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
+        self.assertTrue(result == 0)
 
     def testGenWithSentLoss(self):
         result = os.system(
             'tfkit-train --train ../demo_data/generate.csv --valid ../demo_data/generate.csv --model onebyone-pos --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
-        print(result == 0)
+        self.assertTrue(result == 0)
 
     def testClassify(self):
         result = os.system(
-            'tfkit-train --train ../demo_data/classification.csv --valid ../demo_data/classification.csv --model classify --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
-        print(result == 0)
+            'tfkit-train --lr 1e-4 --train ../demo_data/classification.csv --valid ../demo_data/classification.csv --model classify --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
+        self.assertTrue(result == 0)
+
+    def testMultiClass(self):
+        result = os.system(
+            'tfkit-train --train ../demo_data/classification.csv ../demo_data/generate.csv --valid ../demo_data/classification.csv ../demo_data/generate.csv --model classify onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
+        self.assertTrue(result == 0)

@@ -14,14 +14,11 @@ from utility.loss import *
 from utility.tok import *
 
 
-class BertOnce(nn.Module):
-    def __init__(self, model_config, maxlen=128):
+class Once(nn.Module):
+    def __init__(self,  tokenizer, pretrained, maxlen=512):
         super().__init__()
-        if 'albert_chinese' in model_config:
-            self.tokenizer = BertTokenizer.from_pretrained(model_config)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(model_config)
-        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.tokenizer = tokenizer
+        self.pretrained = pretrained
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'

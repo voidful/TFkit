@@ -13,11 +13,11 @@ from utility.loss import *
 from utility.tok import *
 
 
-class BertTwice(nn.Module):
-    def __init__(self, model_config, maxlen=128):
+class Twice(nn.Module):
+    def __init__(self,  tokenizer, pretrained, maxlen=512):
         super().__init__()
-        self.tokenizer = AutoTokenizer.from_pretrained(model_config)
-        self.pretrained = AutoModel.from_pretrained(model_config)
+        self.tokenizer = tokenizer
+        self.pretrained = pretrained
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.vocab_size)
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
