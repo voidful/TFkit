@@ -8,6 +8,7 @@ from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoTokenizer, BertTokenizer
 from utility.tok import *
+from random import choice
 
 
 class loadQADataset(data.Dataset):
@@ -33,6 +34,10 @@ class loadQADataset(data.Dataset):
                     pickle.dump(samples, cf)
 
         self.sample = samples
+
+    def increase_with_sampling(self, total):
+        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        self.sample.extend(inc_samp)
 
     def __len__(self):
         return len(self.sample)

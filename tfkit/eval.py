@@ -82,6 +82,7 @@ def main():
             eval_metrics = [EvalMetric()]
         else:
             eval_metrics = [EvalMetric() for _ in range(arg.beamsize)]
+
         for i in tqdm(eval_dataset):
             tasks = i[0]
             task = i[1]

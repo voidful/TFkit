@@ -2,6 +2,7 @@ import csv
 import os
 import pickle
 from collections import defaultdict
+from random import choice
 
 import numpy as np
 from torch.utils import data
@@ -32,6 +33,10 @@ class loadOnceDataset(data.Dataset):
                     pickle.dump(sample, cf)
 
         self.sample = sample
+
+    def increase_with_sampling(self, total):
+        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        self.sample.extend(inc_samp)
 
     def __len__(self):
         return len(self.sample)

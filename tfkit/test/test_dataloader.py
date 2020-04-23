@@ -70,3 +70,18 @@ class TestDataLoader(unittest.TestCase):
             print(i['raw_input'][int(i['target'][0]):int(i['target'][1])])
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
+
+    def testLen(self):
+        ds = tfkit.qa.loadQADataset('../demo_data/qa.csv',
+                                    pretrained='bert-base-chinese',
+                                    maxlen=512)
+        print(ds.__len__())
+        ds.increase_with_sampling(20)
+        self.assertTrue(ds.__len__() == 20)
+
+        ds = tfkit.qa.loadQADataset('../demo_data/qa.csv',
+                                    pretrained='bert-base-chinese',
+                                    maxlen=512)
+        print(ds.__len__())
+        ds.increase_with_sampling(12)
+        self.assertTrue(ds.__len__() == 14)

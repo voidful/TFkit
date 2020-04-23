@@ -21,3 +21,8 @@ class TestEval(unittest.TestCase):
         result = os.system(
             'tfkit-eval --model ./cache/10.pt --valid ../demo_data/classification.csv --metric classification --print  --outfile')
         self.assertTrue(result == 0)
+
+    def testEvalQA(self):
+        result = os.system(
+            'tfkit-eval --model ./cache/model/albert_small_zh_mrc.pt --valid ./cache/test_qa/drcd-dev --metric emf1 --outfile')
+        self.assertTrue(result == 0)

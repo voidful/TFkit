@@ -1,5 +1,6 @@
 import sys
 import os
+from random import choice
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -42,6 +43,10 @@ class loadColTaggerDataset(data.Dataset):
         self.sample = samples
         self.label = labels
 
+    def increase_with_sampling(self, total):
+        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        self.sample.extend(inc_samp)
+
     def __len__(self):
         return len(self.sample)
 
@@ -76,6 +81,10 @@ class loadRowTaggerDataset(data.Dataset):
                     pickle.dump({'samples': samples, 'labels': labels}, cf)
         self.sample = samples
         self.label = labels
+
+    def increase_with_sampling(self, total):
+        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        self.sample.extend(inc_samp)
 
     def __len__(self):
         return len(self.sample)
