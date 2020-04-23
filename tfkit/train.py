@@ -144,6 +144,8 @@ def main():
     models = []
     train_dataset = []
     test_dataset = []
+    train_ds_maxlen = 0
+    test_ds_maxlen = 0
     for model_type, train_file, valid_file in zip_longest(arg.model, arg.train, arg.valid, fillvalue=""):
         model_type = model_type.lower()
         if "once" in model_type:
@@ -179,15 +181,27 @@ def main():
             train_ds = loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
             test_ds = loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
             model = QA(tokenizer, pretrained, maxlen=arg.maxlen)
-        train_dataset.append(data.DataLoader(dataset=train_ds,
-                                             batch_size=arg.batch,
-                                             shuffle=True,
-                                             num_workers=arg.worker))
-        test_dataset.append(data.DataLoader(dataset=test_ds,
-                                            batch_size=arg.batch,
-                                            shuffle=False,
-                                            num_workers=arg.worker))
+
+        train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
+        test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
+        train_dataset.append(train_ds)
+        test_dataset.append(test_ds)
         models.append(model)
+
+    # balance sample for multi-task
+    for ds in train_dataset:
+        ds.increase_with_sampling(train_ds_maxlen)
+    for ds in test_dataset:
+        ds.increase_with_sampling(test_ds_maxlen)
+
+    train_dataset = [data.DataLoader(dataset=ds,
+                                     batch_size=arg.batch,
+                                     shuffle=True,
+                                     num_workers=arg.worker) for ds in train_dataset]
+    test_dataset = [data.DataLoader(dataset=ds,
+                                    batch_size=arg.batch,
+                                    shuffle=True,
+                                    num_workers=arg.worker) for ds in test_dataset]
 
     if arg.tensorboard:
         global writer

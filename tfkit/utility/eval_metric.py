@@ -69,7 +69,7 @@ class EvalMetric:
         self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else list(predicted))
         self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
-        self.tasks[task]['target_list'].append(target[0].split(" ") if " " in target[0] else list(target[0]))
+        self.tasks[task]['target_list'].append(target.split(" ") if " " in target else list(target))
 
     def get_record(self, task='default'):
         return self.tasks[task]

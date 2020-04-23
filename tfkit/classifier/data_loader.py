@@ -2,6 +2,7 @@ import os
 import pickle
 import csv
 from collections import defaultdict
+from random import choice
 
 import numpy as np
 from torch.utils import data
@@ -40,6 +41,10 @@ class loadClassifierDataset(data.Dataset):
 
         self.sample = sample
         self.task = task_dict
+
+    def increase_with_sampling(self, total):
+        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        self.sample.extend(inc_samp)
 
     def __len__(self):
         return len(self.sample)
