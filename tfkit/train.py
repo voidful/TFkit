@@ -9,7 +9,7 @@ from classifier import *
 from tag import *
 from qa import *
 from torch.utils import data
-from tqdm import tqdm
+from tqdm.contrib import tzip
 from utility.optim import *
 from itertools import zip_longest
 
@@ -21,7 +21,7 @@ def write_log(*args):
     print(line)
 
 
-def optimizer(model, arg):
+def optimizer(model, lr):
     param_optimizer = list(model.named_parameters())
     param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
     no_decay = ['bias', 'gamma', 'beta', 'LayerNorm.bias', 'LayerNorm.weight']
@@ -29,27 +29,27 @@ def optimizer(model, arg):
         {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.01},
         {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.0}
     ]
-    optimizer = AdamW(optimizer_parameters, lr=arg.lr)
+    optimizer = AdamW(optimizer_parameters, lr=lr)
     return optimizer
 
 
-def train(models_list, train_dataset, arg, fname, epoch, total_data):
+def train(models_list, train_dataset, arg, fname, epoch):
     optims = []
     models = []
     for i, m in enumerate(models_list):
         model = nn.DataParallel(m)
         model.train()
         models.append(model)
-        optims.append(optimizer(m, arg))
+        optims.append(optimizer(m, arg.lr[i]))
 
-    i = 0
-    total_l = 0
+    total_iter = 0
     t_loss = 0
 
     iters = [iter(ds) for ds in train_dataset]
     end = False
     while not end:
-        for model, optim, batch in zip(models, optims, iters):
+        i = 0
+        for model, optim, batch in tzip(models, optims, iters):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
@@ -61,17 +61,18 @@ def train(models_list, train_dataset, arg, fname, epoch, total_data):
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
 
                 if i % 100 == 0 and i != 0:  # monitoring
-                    write_log(f"step: {total_l}, loss: {t_loss / (i + 1)}, total: {total_data}")
+                    write_log(
+                        f"model: {model.module.__class__.__name__}, step: {i}, loss: {t_loss / (i + 1)}")
                 i += 1
-                total_l += 1
+                total_iter += 1
             else:
                 end = True
 
-    write_log(f"step: {total_l}, loss: {t_loss / total_l if total_l > 0 else 0}, total: {total_l}")
+    write_log(f"step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
     return t_loss / total_l
 
 
-def eval(models, test_dataset, fname, epoch, total_data):
+def eval(models, test_dataset, fname, epoch):
     t_loss = 0
     t_length = 0
     for m in models:
@@ -81,7 +82,7 @@ def eval(models, test_dataset, fname, epoch, total_data):
         iters = [iter(ds) for ds in test_dataset]
         end = False
         while not end:
-            for model, batch in zip(models, iters):
+            for model, batch in tzip(models, iters):
                 test_batch = next(batch, None)
                 if test_batch is not None:
                     loss = model(test_batch)
@@ -107,7 +108,7 @@ def set_seed(seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=20)
-    parser.add_argument("--lr", type=float, default=5e-5)
+    parser.add_argument("--lr", type=float, nargs='+', default=5e-5)
     parser.add_argument("--epoch", type=int, default=10)
     parser.add_argument("--maxlen", type=int, default=368)
     parser.add_argument("--savedir", type=str, default="checkpoints/")
@@ -227,7 +228,7 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_ds_maxlen)
+        train_avg_loss = train(models, train_dataset, arg, fname, epoch)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
@@ -248,7 +249,7 @@ def main():
         write_log(f"weights were saved to {fname}.pt")
 
         write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = eval(models, test_dataset, fname, epoch, test_ds_maxlen)
+        eval_avg_loss = eval(models, test_dataset, fname, epoch)
 
         if arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)
