@@ -61,8 +61,8 @@ def train(models_list, train_dataset, arg, fname, epoch, total_data):
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
 
                 if i % 100 == 0 and i != 0:  # monitoring
-                    write_log(f"step: {total_l}, loss: {t_loss / (i + 1)}, total: {i / total_data}")
-                i += len(batch)
+                    write_log(f"step: {total_l}, loss: {t_loss / (i + 1)}, total: {total_data}")
+                i += 1
                 total_l += 1
             else:
                 end = True

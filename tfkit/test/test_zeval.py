@@ -26,3 +26,8 @@ class TestEval(unittest.TestCase):
         result = os.system(
             'tfkit-eval --model ./cache/model/albert_small_zh_mrc.pt --valid ./cache/test_qa/drcd-dev --metric emf1 --outfile')
         self.assertTrue(result == 0)
+
+    def testEvalTAG(self):
+        result = os.system(
+            'tfkit-eval --model ./cache/model/albert_small_zh_ner.pt --valid ../demo_data/tag_row.csv --metric classification --outfile')
+        self.assertTrue(result == 0)
