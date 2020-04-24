@@ -42,7 +42,7 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
         model = nn.DataParallel(m)
         model.train()
         models.append(model)
-        optims.append(optimizer(m, arg.lr[i]))
+        optims.append(optimizer(m, arg.lr[i] if i < len(arg.lr) else arg.lr[0]))
 
     total_iter = 0
     t_loss = 0
@@ -51,7 +51,6 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
     end = False
     pbar = tqdm()
     while not end:
-        i = 0
         for model, optim, batch in zip(models, optims, iters):
             train_batch = next(batch, None)
             if train_batch is not None:
@@ -62,14 +61,13 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
                 t_loss += loss.mean().item()
                 if arg.tensorboard:
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
-                if i % 100 == 0 and i != 0:  # monitoring
+                if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     write_log(
-                        f"model: {model.module.__class__.__name__}, step: {i}, loss: {t_loss / (i + 1)}")
-                pbar.update(1)
-                i += 1
-                total_iter += 1
+                        f"model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}")
             else:
                 end = True
+        pbar.update(1)
+        total_iter += 1
     pbar.close()
     write_log(f"step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
     return t_loss / total_iter

@@ -26,5 +26,5 @@ class TestTrain(unittest.TestCase):
 
     def testMultiClass(self):
         result = os.system(
-            'tfkit-train --train ../demo_data/classification.csv ../demo_data/generate.csv --lr 5e-5 4e-4 --valid ../demo_data/classification.csv ../demo_data/generate.csv --model classify onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
+            'tfkit-train --batch 1 --train ../demo_data/classification.csv ../demo_data/generate.csv --lr 5e-5 --valid ../demo_data/classification.csv ../demo_data/generate.csv --model classify onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 20')
         self.assertTrue(result == 0)

@@ -114,7 +114,6 @@ def main():
                     print("input: ", input)
                     print("target: ", target)
                     print("predicted: ", predicted)
-                    print("result: ", result)
                     print('==========')
 
                 eval_metric.add_record(input, predicted, target)
