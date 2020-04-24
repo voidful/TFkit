@@ -32,10 +32,10 @@ class QA(nn.Module):
         self.loss_fct = self.loss_fct.to(self.device)
 
     def forward(self, batch_data, eval=False):
-        inputs = torch.tensor(batch_data['input']).to(self.device)
-        masks = torch.tensor(batch_data['mask']).to(self.device)
+        inputs = torch.as_tensor(batch_data['input']).to(self.device)
+        masks = torch.as_tensor(batch_data['mask']).to(self.device)
 
-        targets = torch.tensor(batch_data['target']).to(self.device)
+        targets = torch.as_tensor(batch_data['target']).to(self.device)
         start_positions, end_positions = targets.split(1, dim=1)
         start_positions = start_positions.squeeze(1)
         end_positions = end_positions.squeeze(1)
@@ -51,8 +51,8 @@ class QA(nn.Module):
                 'label_prob_all': [],
                 'label_map': []
             }
-            reshaped_start_logits = softmax(start_logits)
-            reshaped_end_logits = softmax(end_logits)
+            reshaped_start_logits = softmax(start_logits,dim=1)
+            reshaped_end_logits = softmax(end_logits,dim=1)
             start_prob = reshaped_start_logits.data.tolist()[0]
             end_prob = reshaped_end_logits.data.tolist()[0]
             result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob))})

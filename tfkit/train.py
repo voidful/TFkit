@@ -33,7 +33,7 @@ def optimizer(model, arg):
     return optimizer
 
 
-def train(models_list, train_dataset, arg, fname, epoch):
+def train(models_list, train_dataset, arg, fname, epoch, total_batch):
     optims = []
     models = []
     for i, m in enumerate(models_list):
@@ -61,7 +61,7 @@ def train(models_list, train_dataset, arg, fname, epoch):
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
 
                 if i % 100 == 0 and i != 0:  # monitoring
-                    write_log(f"step: {i}, loss: {t_loss / (i + 1)}")
+                    write_log(f"step: {i}, loss: {t_loss / (i + 1)}, total: {total_batch}")
                 i += 1
                 total_l += 1
             else:
@@ -71,7 +71,7 @@ def train(models_list, train_dataset, arg, fname, epoch):
     return t_loss / total_l
 
 
-def eval(models, test_dataset, fname, epoch):
+def eval(models, test_dataset, fname, epoch, total_batch):
     t_loss = 0
     t_length = 0
     for m in models:
@@ -91,7 +91,7 @@ def eval(models, test_dataset, fname, epoch):
                     end = True
 
     avg_t_loss = t_loss / t_length if t_length > 0 else 0
-    write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
+    write_log(f"model: {fname}, Total Loss: {avg_t_loss}, total: {total_batch}")
     if arg.tensorboard:
         writer.add_scalar("eval_loss/step", avg_t_loss, epoch)
     return avg_t_loss
@@ -227,7 +227,8 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(models, train_dataset, arg, fname, epoch)
+        train_total_batch = train_ds_maxlen / arg.batch
+        train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_total_batch)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
@@ -237,17 +238,18 @@ def main():
             'maxlen': arg.maxlen,
             'epoch': epoch
         }
-        if 'classify' in arg.model:
+        if any("classify" in m for m in arg.model):
             ind = arg.model.index('classify')
             save_model['task'] = models[ind].tasks_detail
-        elif 'tag' in arg.model:
+        if any("tag" in m for m in arg.model):
             ind = arg.model.index('tag')
             save_model['label'] = models[ind].labels
         torch.save(save_model, f"{fname}.pt")
         write_log(f"weights were saved to {fname}.pt")
 
         write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = eval(models, test_dataset, fname, epoch)
+        eval_total_batch = test_ds_maxlen / arg.batch
+        eval_avg_loss = eval(models, test_dataset, fname, epoch, eval_total_batch)
 
         if arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)

@@ -32,11 +32,11 @@ class Twice(nn.Module):
         masks = batch_data['mask']
         start = batch_data['start']
 
-        tokens_tensor = torch.tensor(inputs).to(self.device)
-        type_tensors = torch.tensor(types).to(self.device)
-        mask_tensors = torch.tensor(masks).to(self.device)
-        loss_tensors = torch.tensor(targets).to(self.device)
-        negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs).to(self.device)
+        type_tensors = torch.as_tensor(types).to(self.device)
+        mask_tensors = torch.as_tensor(masks).to(self.device)
+        loss_tensors = torch.as_tensor(targets).to(self.device)
+        negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
 
         output_once = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         prediction_scores_once = self.model(output_once[0])
@@ -58,7 +58,7 @@ class Twice(nn.Module):
             if len(feature_dict['input']) > self.maxlen:
                 prediction_score_twice = prediction_scores_once
                 break
-            output_twice = self.pretrained(torch.tensor([feature_dict['input']]).to(self.device), attention_mask=torch.tensor(torch.tensor([feature_dict['mask']]).to(self.device)).to(self.device))
+            output_twice = self.pretrained(torch.as_tensor([feature_dict['input']]).to(self.device), attention_mask=torch.as_tensor(torch.as_tensor([feature_dict['mask']]).to(self.device)).to(self.device))
             prediction_score_twice.append(self.model(output_twice[0]))
         if isinstance(prediction_score_twice, list):
             prediction_score_twice = torch.cat(prediction_score_twice,dim=0)
@@ -89,7 +89,7 @@ class Twice(nn.Module):
             start = feature_dict['start']
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
-            feature_dict['start'] = torch.tensor(feature_dict['start']).to(self.device)
+            feature_dict['start'] = torch.as_tensor(feature_dict['start']).to(self.device)
             predictions = self.forward(feature_dict, eval=True)
             predictions = predictions[0][0]
             output = ""
