@@ -113,6 +113,7 @@ def main():
                     print('===eval===')
                     print("input: ", input)
                     print("target: ", target)
+                    print("predicted: ", predicted)
                     print("result: ", result)
                     print('==========')
 
