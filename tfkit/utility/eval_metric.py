@@ -45,7 +45,6 @@ class EvalMetric:
 
     def add_record(self, input, predicted, target, task='default'):
         input = input.strip()
-
         if isinstance(target, str):
             if "[SEP]" in target:
                 targets = [t.strip() for t in target.split("[SEP]")]
@@ -109,9 +108,10 @@ class EvalMetric:
             if "classification" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
-                mlb = MultiLabelBinarizer().fit([list(self.target_list[task_name].keys())])
+                mlb = MultiLabelBinarizer().fit(
+                    [t.split(" ") if " " in t else list(t) for t in self.target_list[task_name].keys()])
                 result = classification_report(
-                    mlb.transform(task['targets']),
-                    mlb.transform(task['predicteds']),
+                    mlb.transform(task['target_list']),
+                    mlb.transform(task['predicted_list']),
                     target_names=list(mlb.classes_))
             yield (task_name, result)

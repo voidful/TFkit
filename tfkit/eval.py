@@ -105,7 +105,7 @@ def main():
                 if 'onebyone' in type and arg.beamsearch:
                     predicted = result_dict['label_map'][eval_pos][0]
                 elif 'tag' in type:
-                    predicted = [list(d.values())[0] for d in result_dict['label_map']]
+                    predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
                 else:
                     predicted = result[0] if len(result) > 0 else ''
 
