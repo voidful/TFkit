@@ -78,6 +78,13 @@ class TestEval(unittest.TestCase):
             self.assertTrue(s[1]['EM'] == 0)
             self.assertTrue(s[1]['F1'] > 0)
 
+        eval = tfkit.utility.eval_metric.EvalMetric()
+        eval.add_record("input", "", "a b b[SEP]a c c[SEP]", task='default')
+        for s in eval.cal_score('emf1'):
+            print(s)
+            self.assertTrue(s[1]['EM'] == 0)
+            self.assertTrue(s[1]['F1'] == 0)
+
     def testNLG(self):
 
         eval = tfkit.utility.eval_metric.EvalMetric()

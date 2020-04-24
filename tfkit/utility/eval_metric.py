@@ -86,7 +86,7 @@ class EvalMetric:
                     f1_list = [0]
                     for target in task['targets'][pos]:
                         equal = False
-                        if _normalize_answer(predict) == _normalize_answer(target):
+                        if _normalize_answer(predict) == _normalize_answer(target) and len(predict) > 0:
                             equal = True
                         if equal:
                             em_list.append(1)

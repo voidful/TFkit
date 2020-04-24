@@ -15,7 +15,7 @@ from utility.tok import *
 
 
 class Once(nn.Module):
-    def __init__(self,  tokenizer, pretrained, maxlen=512):
+    def __init__(self, tokenizer, pretrained, maxlen=512):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
@@ -31,10 +31,10 @@ class Once(nn.Module):
         negative_targets = batch_data['ntarget']
         masks = batch_data['mask']
 
-        tokens_tensor = torch.tensor(inputs).to(self.device)
-        mask_tensors = torch.tensor(masks).to(self.device)
-        loss_tensors = torch.tensor(targets).to(self.device)
-        negativeloss_tensors = torch.tensor(negative_targets).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs).to(self.device)
+        mask_tensors = torch.as_tensor(masks).to(self.device)
+        loss_tensors = torch.as_tensor(targets).to(self.device)
+        negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
 
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
@@ -51,7 +51,7 @@ class Once(nn.Module):
             while start < self.maxlen and not end:
                 predicted_index = torch.argmax(prediction_scores[0][start]).item()
                 predicted_token = self.tokenizer.decode([predicted_index])
-                logit_prob = softmax(prediction_scores[0][start]).data.tolist()
+                logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
                 prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
                 prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
 

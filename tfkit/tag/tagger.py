@@ -38,8 +38,8 @@ class Tagger(nn.Module):
         masks = batch_data["mask"]
 
         # bert embedding
-        token_tensor = torch.tensor(inputs, dtype=torch.long).to(self.device)
-        mask_tensors = torch.tensor(masks).to(self.device)
+        token_tensor = torch.as_tensor(inputs, dtype=torch.long).to(self.device)
+        mask_tensors = torch.as_tensor(masks).to(self.device)
         bert_output = self.pretrained(token_tensor, attention_mask=mask_tensors)
         res = bert_output[0]
         pooled_output = self.dropout(res)
@@ -51,7 +51,7 @@ class Tagger(nn.Module):
                 'label_map': []
             }
 
-            ilogit = softmax(reshaped_logits[0])
+            ilogit = softmax(reshaped_logits[0], dim=1)
             result_labels = ilogit.data.tolist()
             result_items = []
             for pos_logit_prob in result_labels:
@@ -68,7 +68,7 @@ class Tagger(nn.Module):
             outputs = result_dict
         else:
             targets = batch_data["target"]
-            target_tensor = torch.tensor(targets, dtype=torch.long).to(self.device)
+            target_tensor = torch.as_tensor(targets, dtype=torch.long).to(self.device)
             loss = self.loss_fct(reshaped_logits.view(-1, len(self.labels)), target_tensor.view(-1))
             outputs = loss
 

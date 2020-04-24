@@ -38,7 +38,7 @@ class BCEGWLoss(nn.Module):
 class GWLoss(nn.Module):
     def __init__(self):
         super(GWLoss, self).__init__()
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.nll = nn.NLLLoss(ignore_index=-1)
 
     def gaussian(self, x, mean=0.5, variance=0.25):
@@ -58,7 +58,7 @@ class FocalLoss(nn.Module):
     def __init__(self, gamma=2):
         super(FocalLoss, self).__init__()
         self.gamma = gamma
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.nll = nn.NLLLoss(ignore_index=-1)
 
     def forward(self, input, target):
@@ -71,7 +71,7 @@ class FocalLoss(nn.Module):
 class NegativeCElLoss(nn.Module):
     def __init__(self):
         super(NegativeCElLoss, self).__init__()
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.alpha = 1
         self.nll = nn.NLLLoss(ignore_index=-1)
 
@@ -86,7 +86,7 @@ class FocalSmoothingLoss(nn.Module):
         super(FocalSmoothingLoss, self).__init__()
         self.gamma = gamma
         self.eps = eps
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.nll = nn.NLLLoss(ignore_index=-1)
 
     def forward(self, input, target):
@@ -100,7 +100,7 @@ class FocalSmoothingLoss(nn.Module):
 class LabelSmoothingCrossEntropy(nn.Module):
     def __init__(self, eps: float = 0.1, reduction='mean'):
         super(LabelSmoothingCrossEntropy, self).__init__()
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.eps, self.reduction = eps, reduction
 
     def forward(self, output, target):

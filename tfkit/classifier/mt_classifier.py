@@ -42,9 +42,9 @@ class MtClassifier(nn.Module):
 
     def forward(self, batch_data, eval=False):
         tasks = batch_data['task']
-        inputs = torch.tensor(batch_data['input']).to(self.device)
-        targets = torch.tensor(batch_data['target']).to(self.device)
-        masks = torch.tensor(batch_data['mask']).to(self.device)
+        inputs = torch.as_tensor(batch_data['input']).to(self.device)
+        targets = torch.as_tensor(batch_data['target']).to(self.device)
+        masks = torch.as_tensor(batch_data['mask']).to(self.device)
 
         result_dict = {
             'label_prob_all': [],
@@ -70,7 +70,7 @@ class MtClassifier(nn.Module):
                 if 'multi_target' in task:
                     reshaped_logits = sigmoid(reshaped_logits)
                 else:
-                    reshaped_logits = softmax(reshaped_logits)
+                    reshaped_logits = softmax(reshaped_logits,dim=1)
                 logit_prob = reshaped_logits[0].data.tolist()
                 logit_label = dict(zip(task_lables, logit_prob))
                 result_dict['label_prob_all'].append({task: logit_label})

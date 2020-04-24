@@ -29,7 +29,13 @@ nlprep --dataset zhqa --task qa --outdir ./zhqa/
 tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --valid ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
 nlp2go --model ./drcd_qa_model/3.pt --cli 
 ```
-
+### multi-task 
+```bash
+nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
+nlprep --dataset zhqa --task qa --outdir ./zhqa/ 
+tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --valid ./clner_row/test ./zhqa/drcd-test --model tagRow qa --config voidful/albert_chinese_small
+nlp2go --model ./mt-qaner/3.pt --cli 
+```
 ## Feature
 - [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
 - [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
