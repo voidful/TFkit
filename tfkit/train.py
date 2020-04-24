@@ -1,4 +1,6 @@
 import argparse
+
+from tqdm import tqdm
 from transformers import *
 import numpy as np
 import tensorboardX as tensorboard
@@ -33,7 +35,7 @@ def optimizer(model, lr):
     return optimizer
 
 
-def train(models_list, train_dataset, arg, fname, epoch):
+def train(models_list, train_dataset, arg, fname, epoch, maxlen):
     optims = []
     models = []
     for i, m in enumerate(models_list):
@@ -47,9 +49,10 @@ def train(models_list, train_dataset, arg, fname, epoch):
 
     iters = [iter(ds) for ds in train_dataset]
     end = False
+    pbar = tqdm()
     while not end:
         i = 0
-        for model, optim, batch in tzip(models, optims, iters):
+        for model, optim, batch in zip(models, optims, iters):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
@@ -59,17 +62,17 @@ def train(models_list, train_dataset, arg, fname, epoch):
                 t_loss += loss.mean().item()
                 if arg.tensorboard:
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
-
                 if i % 100 == 0 and i != 0:  # monitoring
                     write_log(
                         f"model: {model.module.__class__.__name__}, step: {i}, loss: {t_loss / (i + 1)}")
+                pbar.update(1)
                 i += 1
                 total_iter += 1
             else:
                 end = True
-
+    pbar.close()
     write_log(f"step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
-    return t_loss / total_l
+    return t_loss / total_iter
 
 
 def eval(models, test_dataset, fname, epoch):
@@ -81,15 +84,18 @@ def eval(models, test_dataset, fname, epoch):
     with torch.no_grad():
         iters = [iter(ds) for ds in test_dataset]
         end = False
+        pbar = tqdm()
         while not end:
-            for model, batch in tzip(models, iters):
+            for model, batch in zip(models, iters):
                 test_batch = next(batch, None)
                 if test_batch is not None:
                     loss = model(test_batch)
                     t_loss += loss.mean().item()
                     t_length += 1
+                    pbar.update(1)
                 else:
                     end = True
+        pbar.close()
 
     avg_t_loss = t_loss / t_length if t_length > 0 else 0
     write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
@@ -228,7 +234,7 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(models, train_dataset, arg, fname, epoch)
+        train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_ds_maxlen)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
