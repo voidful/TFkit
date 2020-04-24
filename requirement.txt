@@ -1,6 +1,7 @@
-transformers==2.5.1
+transformers>=2.5.1
 tensorboardX
 torch
 sklearn
 nlp2
 matplotlib
+tqdm>=4.45.0
