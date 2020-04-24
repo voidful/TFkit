@@ -35,6 +35,7 @@ nlp2go --model ./drcd_qa_model/3.pt --cli
 - [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
 - [nlp2go](https://github.com/voidful/nlp2go): create model hosting library for demo  
 - multi-class multi-task multi-label classifier  
+- Multi-Task on ALL model
 - word/sentence level text generation  
 - support greedy, beam-search & nucleus decoding 
 - token tagging

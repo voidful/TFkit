@@ -182,6 +182,7 @@ def main():
             test_ds = loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
             model = QA(tokenizer, pretrained, maxlen=arg.maxlen)
 
+        model = model.to(device)
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
         test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
         train_dataset.append(train_ds)
