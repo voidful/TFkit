@@ -1,20 +1,15 @@
 import argparse
 
+import torch
+from torch import nn
 from tqdm import tqdm
 from transformers import *
 import numpy as np
 import tensorboardX as tensorboard
-from gen_once import *
-from gen_twice import *
-from gen_onebyone import *
-from classifier import *
-from tag import *
-from qa import *
 from torch.utils import data
-from tqdm.contrib import tzip
-from utility.optim import *
 from itertools import zip_longest
-
+import os
+import tfkit
 
 def write_log(*args):
     line = ' '.join([str(a) for a in args])
@@ -112,12 +107,13 @@ def set_seed(seed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", type=int, default=20)
-    parser.add_argument("--lr", type=float, nargs='+', default=5e-5)
+    parser.add_argument("--lr", type=float, nargs='+', default=[5e-5])
     parser.add_argument("--epoch", type=int, default=10)
     parser.add_argument("--maxlen", type=int, default=368)
     parser.add_argument("--savedir", type=str, default="checkpoints/")
-    parser.add_argument("--train", type=str, nargs='+', default="train.csv", required=True)
-    parser.add_argument("--valid", type=str, nargs='+', default="valid.csv", required=True)
+    parser.add_argument("--add_tokens", action='store_true', help="add new token if not exist")
+    parser.add_argument("--train", type=str, nargs='+', required=True)
+    parser.add_argument("--valid", type=str, nargs='+', required=True)
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
                                  'onebyone-neg', 'onebyone-pos', 'onebyone-both', ])
@@ -154,38 +150,44 @@ def main():
     for model_type, train_file, valid_file in zip_longest(arg.model, arg.train, arg.valid, fillvalue=""):
         model_type = model_type.lower()
         if "once" in model_type:
-            train_ds = loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-            test_ds = loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-            model = Once(tokenizer, pretrained, maxlen=arg.maxlen)
+            train_ds = tfkit.gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                      cache=arg.cache)
+            test_ds = tfkit.gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                     cache=arg.cache)
+            model = tfkit.gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "twice" in model_type:
-            train_ds = loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-            test_ds = loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-            model = Twice(tokenizer, pretrained, maxlen=arg.maxlen)
+            train_ds = tfkit.gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                      cache=arg.cache)
+            test_ds = tfkit.gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                     cache=arg.cache)
+            model = tfkit.gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "onebyone" in model_type:
-            train_ds = loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache,
-                                           likelihood=model_type)
-            test_ds = loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen, cache=arg.cache)
-            model = OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
+            train_ds = tfkit.gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                              cache=arg.cache,
+                                                              likelihood=model_type)
+            test_ds = tfkit.gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                             cache=arg.cache)
+            model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'classify' in model_type:
-            train_ds = loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
-            model = MtClassifier(train_ds.task, tokenizer, pretrained)
+            train_ds = tfkit.classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = tfkit.classifier.loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = tfkit.classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
         elif 'tag' in model_type:
             if "row" in model_type:
-                train_ds = loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                cache=arg.cache)
-                test_ds = loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                               cache=arg.cache)
+                train_ds = tfkit.tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                          cache=arg.cache)
+                test_ds = tfkit.tag.loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                         cache=arg.cache)
             elif "col" in model_type:
-                train_ds = loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                cache=arg.cache)
-                test_ds = loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                               cache=arg.cache)
-            model = Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
+                train_ds = tfkit.tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                          cache=arg.cache)
+                test_ds = tfkit.tag.loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                                                         cache=arg.cache)
+            model = tfkit.tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'qa' in model_type:
-            train_ds = loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
-            model = QA(tokenizer, pretrained, maxlen=arg.maxlen)
+            train_ds = tfkit.qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = tfkit.qa.loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = tfkit.qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
 
         model = model.to(device)
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
