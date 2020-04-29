@@ -135,9 +135,6 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
         if tokenized_target_id is None or tokenized_ntarget_id != tokenized_target_id:
             row_dict['ntarget'] = tokenized_ntarget_id
 
-    if row_dict['target'][target_start] == row_dict['ntarget'][target_start]:
-        row_dict['ntarget'][target_start] = -1
-
     mask_id.extend([0] * (maxlen - len(mask_id)))
     type_id = [0] * len(tokenized_input)
     type_id.extend([1] * (maxlen - len(type_id)))
