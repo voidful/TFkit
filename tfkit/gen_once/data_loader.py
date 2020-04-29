@@ -86,9 +86,6 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
         row_dict['ntarget'] = tokenized_ntarget_id
 
-    if row_dict['target'][target_start] == row_dict['ntarget'][target_start]:
-        row_dict['ntarget'][target_start] = -1
-
     tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
     mask_id.extend([0] * (maxlen - len(mask_id)))
     type_id.extend([1] * (maxlen - len(type_id)))

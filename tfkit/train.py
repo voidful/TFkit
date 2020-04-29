@@ -1,4 +1,5 @@
 import argparse
+import random
 
 import torch
 from torch import nn
@@ -10,6 +11,7 @@ from torch.utils import data
 from itertools import zip_longest
 import os
 import tfkit
+
 
 def write_log(*args):
     line = ' '.join([str(a) for a in args])
@@ -43,8 +45,9 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
     t_loss = 0
 
     iters = [iter(ds) for ds in train_dataset]
+    total_iter_length = len(iters[0])
     end = False
-    pbar = tqdm()
+    pbar = tqdm(total=total_iter_length)
     while not end:
         for model, optim, batch in zip(models, optims, iters):
             train_batch = next(batch, None)
@@ -58,7 +61,7 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     write_log(
-                        f"model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}")
+                        f"model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
             else:
                 end = True
         pbar.update(1)
@@ -77,7 +80,8 @@ def eval(models, test_dataset, fname, epoch):
     with torch.no_grad():
         iters = [iter(ds) for ds in test_dataset]
         end = False
-        pbar = tqdm()
+        total_iter_length = len(iters[0])
+        pbar = tqdm(total=total_iter_length)
         while not end:
             for model, batch in zip(models, iters):
                 test_batch = next(batch, None)
@@ -98,8 +102,13 @@ def eval(models, test_dataset, fname, epoch):
 
 
 def set_seed(seed):
+    os.environ['PYTHONHASHSEED'] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    random.seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
+    torch.cuda.manual_seed(seed)
     if torch.cuda.is_available() > 0:
         torch.cuda.manual_seed_all(seed)
 
