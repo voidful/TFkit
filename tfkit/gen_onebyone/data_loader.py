@@ -33,48 +33,46 @@ class loadOneByOneDataset(data.Dataset):
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
                                                     tokenized_target[:j])
-                    if negative_text is not None and "-" in likelihood:
+                    if negative_text is not None and ("neg" in likelihood or 'both' in likelihood):
                         if "[SEP]" in negative_text:
                             ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                         else:
                             ntext_arr = [negative_text.strip()]
                         for neg_text in ntext_arr:
-                            if 'pos' in likelihood:
-                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
-                                                                                         " ".join(target))
-                            elif 'neg' in likelihood:
-                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
-                                                                                         ntarget=neg_text)
-                            elif 'both' in likelihood:
-                                feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
-                                                                                         " ".join(target),
-                                                                                         ntarget=neg_text)
+                            feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                     ntarget=neg_text)
                             feature['ntarget'] = feature_neg['ntarget']
 
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                        if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
+                            feature['ntarget'][feature['start']] = -1
                         sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
 
-                if negative_text is not None:
+                if 'pos' in likelihood:
+                    feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                         " ".join(target))
+                    sample.append(feature)
+                elif negative_text is not None:
                     if "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                     else:
                         ntext_arr = [negative_text.strip()]
                     for neg_text in ntext_arr:
-                        if 'pos' in likelihood:
-                            feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
-                                                                                 " ".join(target))
-                        elif 'neg' in likelihood:
+                        if 'neg' in likelihood:
                             feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                  ntarget=neg_text)
                         elif 'both' in likelihood:
                             feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                  " ".join(target),
                                                                                  ntarget=neg_text)
+
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                            if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
+                                feature['ntarget'][feature['start']] = -1
                             sample.append(feature)
 
             if cache:
@@ -101,8 +99,8 @@ def get_data_from_file(fpath):
     with open(fpath, encoding='utf') as csvfile:
         for i in tqdm(list(csv.reader(csvfile))):
             source_text = i[0]
-            target_text = i[1].split(" ")
-            negative_text = i[2] if len(i) > 2 else None
+            target_text = i[1].strip().split(" ")
+            negative_text = i[2].strip() if len(i) > 2 else None
             input = source_text
             target = target_text
             yield tasks, task, input, target, negative_text
@@ -136,6 +134,9 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
         tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
         if tokenized_target_id is None or tokenized_ntarget_id != tokenized_target_id:
             row_dict['ntarget'] = tokenized_ntarget_id
+
+    if row_dict['target'][target_start] == row_dict['ntarget'][target_start]:
+        row_dict['ntarget'][target_start] = -1
 
     mask_id.extend([0] * (maxlen - len(mask_id)))
     type_id = [0] * len(tokenized_input)
