@@ -126,6 +126,7 @@ def main():
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
                                  'onebyone-neg', 'onebyone-pos', 'onebyone-both', ])
+    parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
     parser.add_argument("--seed", type=int, default=609)
@@ -246,9 +247,11 @@ def main():
         train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_ds_maxlen)
 
         write_log(f"=========save at epoch={epoch}=========")
+        tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
         save_model = {
             'models': [m.state_dict() for m in models],
             'model_config': arg.config,
+            'tags': tag,
             'type': arg.model,
             'maxlen': arg.maxlen,
             'epoch': epoch
