@@ -10,7 +10,12 @@ import tensorboardX as tensorboard
 from torch.utils import data
 from itertools import zip_longest
 import os
-import tfkit
+import gen_once
+import gen_twice
+import gen_onebyone
+import classifier
+import tag
+import qa
 
 
 def write_log(*args):
@@ -160,44 +165,44 @@ def main():
     for model_type, train_file, valid_file in zip_longest(arg.model, arg.train, arg.valid, fillvalue=""):
         model_type = model_type.lower()
         if "once" in model_type:
-            train_ds = tfkit.gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                       cache=arg.cache)
-            test_ds = tfkit.gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                      cache=arg.cache)
-            model = tfkit.gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
+            model = gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "twice" in model_type:
-            train_ds = tfkit.gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                       cache=arg.cache)
-            test_ds = tfkit.gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                      cache=arg.cache)
-            model = tfkit.gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
+            model = gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "onebyone" in model_type:
-            train_ds = tfkit.gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                               cache=arg.cache,
                                                               likelihood=model_type)
-            test_ds = tfkit.gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                              cache=arg.cache)
-            model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
+            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'classify' in model_type:
-            train_ds = tfkit.classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = tfkit.classifier.loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
-            model = tfkit.classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
+            train_ds = classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = classifier.loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
         elif 'tag' in model_type:
             if "row" in model_type:
-                train_ds = tfkit.tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                train_ds = tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                           cache=arg.cache)
-                test_ds = tfkit.tag.loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                          cache=arg.cache)
             elif "col" in model_type:
-                train_ds = tfkit.tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                train_ds = tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                           cache=arg.cache)
-                test_ds = tfkit.tag.loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                          cache=arg.cache)
-            model = tfkit.tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
+            model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'qa' in model_type:
-            train_ds = tfkit.qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = tfkit.qa.loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
-            model = tfkit.qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
+            train_ds = qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = qa.loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            model = qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
 
         model = model.to(device)
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
@@ -247,11 +252,10 @@ def main():
         train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_ds_maxlen)
 
         write_log(f"=========save at epoch={epoch}=========")
-        tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
         save_model = {
             'models': [m.state_dict() for m in models],
             'model_config': arg.config,
-            'tags': tag,
+            'tags': arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)],
             'type': arg.model,
             'maxlen': arg.maxlen,
             'epoch': epoch
