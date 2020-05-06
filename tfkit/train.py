@@ -166,22 +166,22 @@ def main():
         model_type = model_type.lower()
         if "once" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                      cache=arg.cache)
+                                                cache=arg.cache)
             test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                     cache=arg.cache)
+                                               cache=arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "twice" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                      cache=arg.cache)
+                                                cache=arg.cache)
             test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                     cache=arg.cache)
+                                               cache=arg.cache)
             model = gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "onebyone" in model_type:
             train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                              cache=arg.cache,
-                                                              likelihood=model_type)
+                                                        cache=arg.cache,
+                                                        likelihood=model_type)
             test_ds = gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                             cache=arg.cache)
+                                                       cache=arg.cache)
             model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'classify' in model_type:
             train_ds = classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
@@ -190,14 +190,14 @@ def main():
         elif 'tag' in model_type:
             if "row" in model_type:
                 train_ds = tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                          cache=arg.cache)
+                                                    cache=arg.cache)
                 test_ds = tag.loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                         cache=arg.cache)
+                                                   cache=arg.cache)
             elif "col" in model_type:
                 train_ds = tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                          cache=arg.cache)
+                                                    cache=arg.cache)
                 test_ds = tag.loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
-                                                         cache=arg.cache)
+                                                   cache=arg.cache)
             model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'qa' in model_type:
             train_ds = qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
@@ -233,13 +233,14 @@ def main():
     start_epoch = 1
 
     if arg.resume:
+        print("Loading back:", arg.resume)
         package = torch.load(arg.resume, map_location=device)
         if 'model_state_dict' in package:
-            model.load_state_dict(package['model_state_dict'])
-            models.append(model)
+            models[0].load_state_dict(package['model_state_dict'])
         else:
-            for state_dict in package['models']:
-                models.append(model.load_state_dict(state_dict))
+            for model_tag, state_dict in zip(package['tags'], package['models']):
+                tag_ind = package['tags'].index(model_tag)
+                models[tag_ind].load_state_dict(state_dict)
         start_epoch = int(package.get('epoch', 1))
 
     set_seed(arg.seed)

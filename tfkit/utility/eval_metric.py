@@ -108,8 +108,8 @@ class EvalMetric:
             if "classification" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
-                mlb = MultiLabelBinarizer().fit(
-                    [t.split(" ") if " " in t else [t] for t in self.target_list[task_name].keys()])
+                target_key = [t.split(" ") if " " in t else [t] for t in self.target_list[task_name].keys()]
+                mlb = MultiLabelBinarizer().fit([k for k in target_key if len(k) > 0])
                 result = classification_report(
                     mlb.transform(task['target_list']),
                     mlb.transform(task['predicted_list']),
