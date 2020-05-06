@@ -37,7 +37,7 @@ def optimizer(model, lr):
     return optimizer
 
 
-def train(models_list, train_dataset, arg, fname, epoch, maxlen):
+def train(models_list, train_dataset, models_tag, arg, epoch):
     optims = []
     models = []
     for i, m in enumerate(models_list):
@@ -54,7 +54,7 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
     end = False
     pbar = tqdm(total=total_iter_length)
     while not end:
-        for model, optim, batch in zip(models, optims, iters):
+        for model, optim, mtag, batch in zip(models, optims, models_tag, iters):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
@@ -66,7 +66,7 @@ def train(models_list, train_dataset, arg, fname, epoch, maxlen):
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     write_log(
-                        f"model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
+                        f"tag: {mtag}, model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
             else:
                 end = True
         pbar.update(1)
@@ -147,7 +147,7 @@ def main():
 
     write_log("TRAIN PARAMETER")
     write_log("=======================")
-    write_log(vars(arg))
+    [write_log(var, ':', vars(arg)[var]) for var in vars(arg)]
     write_log("=======================")
 
     # load pre-train model
@@ -158,6 +158,7 @@ def main():
     pretrained = AutoModel.from_pretrained(arg.config)
 
     models = []
+    models_tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
     train_dataset = []
     test_dataset = []
     train_ds_maxlen = 0
@@ -250,13 +251,13 @@ def main():
         fname = os.path.join(arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(models, train_dataset, arg, fname, epoch, train_ds_maxlen)
+        train_avg_loss = train(models, train_dataset, models_tag, arg, epoch)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
             'models': [m.state_dict() for m in models],
             'model_config': arg.config,
-            'tags': arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)],
+            'tags': models_tag,
             'type': arg.model,
             'maxlen': arg.maxlen,
             'epoch': epoch
