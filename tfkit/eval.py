@@ -45,10 +45,15 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(config)
     pretrained = AutoModel.from_pretrained(config)
 
-    if arg.tag not in models_tag:
+    if arg.tag is not None and arg.tag not in models_tag:
         print("tag must select from models tag: ", models_tag)
+        raise ValueError("tag must select from models tag")
 
-    tag_ind = models_tag.index(arg.tag)
+    if arg.tag is None:
+        tag_ind = 0
+    else:
+        tag_ind = models_tag.index(arg.tag)
+
     valid = arg.valid[0]
     model_state = models_state[tag_ind]
     model_type = model_types[tag_ind]
