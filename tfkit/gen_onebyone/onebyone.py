@@ -49,7 +49,7 @@ class OneByOne(nn.Module):
                 'prob_list': []
             }
             start = batch_data['start'][0]
-            logit_prob = softmax(prediction_scores[0][start],dim=0).data.tolist()
+            logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
             prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
             prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
             result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
@@ -110,6 +110,7 @@ class OneByOne(nn.Module):
                 output.append(predicted_token)
 
             output = self.tokenizer.convert_tokens_to_string(output)
+            output = output.replace(" n ", "n ")
             return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
@@ -174,6 +175,7 @@ class OneByOne(nn.Module):
                 if tok_sep(self.tokenizer) in sequences[i][0]:
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
                 sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
+                sequences[i][0] = sequences[i][0].replace(" n ", "n ")
             result_dict = {
                 'label_map': sequences
             }

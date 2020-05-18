@@ -91,9 +91,9 @@ def main():
     model = model.to(device)
 
     if not arg.beamsearch:
-        eval_metrics = [EvalMetric()]
+        eval_metrics = [EvalMetric(tokenizer)]
     else:
-        eval_metrics = [EvalMetric() for _ in range(arg.beamsize)]
+        eval_metrics = [EvalMetric(tokenizer) for _ in range(arg.beamsize)]
 
     for i in tqdm(eval_dataset):
         tasks = i[0]
