@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import unittest
 import tfkit
-
+from transformers import *
 
 class TestLoss(unittest.TestCase):
     outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
@@ -132,7 +132,8 @@ class TestEval(unittest.TestCase):
         self.assertTrue(s1 == s3 == s6)
 
     def testClassify(self):
-        eval = tfkit.utility.eval_metric.EvalMetric()
+        tokenizer = AutoModel.from_pretrained('bert_base_cased')
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
         for s in eval.cal_score('classification'):
             print(s[0])

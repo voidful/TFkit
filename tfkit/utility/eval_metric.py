@@ -38,10 +38,14 @@ def _f1_score(prediction, ground_truth):
 
 class EvalMetric:
 
-    def __init__(self, max_candidate=6):
+    def __init__(self, tokenizer, max_candidate=6):
         self.tasks = defaultdict(lambda: defaultdict(list))
         self.max_candidate = max_candidate
+        self.tokenizer = tokenizer
         self.target_list = defaultdict(lambda: defaultdict(int))
+
+    def tokenize_text(self, text):
+        return self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
 
     def add_record(self, input, predicted, target, task='default'):
         input = input.strip()
@@ -63,10 +67,10 @@ class EvalMetric:
             self.target_list[task][t] += 1
 
         self.tasks[task]['input'].append(input)
-        self.tasks[task]['predicted'].append(predicted)
+        self.tasks[task]['predicted'].append(self.tokenize_text(predicted))
         self.tasks[task]['predicteds'].append([predicted])
         self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else [predicted])
-        self.tasks[task]['target'].append(target)
+        self.tasks[task]['target'].append(self.tokenize_text(target))
         self.tasks[task]['targets'].append(targets)
         self.tasks[task]['target_list'].append(target.split(" ") if " " in target else [target])
 
