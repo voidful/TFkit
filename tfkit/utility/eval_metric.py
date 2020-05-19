@@ -48,13 +48,14 @@ class EvalMetric:
         return self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
 
     def add_record(self, input, predicted, target, task='default'):
-        input = input.strip()
+        input = self.tokenize_text(input.strip())
+        predicted = self.tokenize_text(predicted)
         if isinstance(target, str):
             if "[SEP]" in target:
-                targets = [t.strip() for t in target.split("[SEP]")]
-                target = targets[0]
+                targets = [self.tokenize_text(t.strip()) for t in target.split("[SEP]")]
+                target = self.tokenize_text(targets[0])
             else:
-                target = target.strip()
+                target = self.tokenize_text(target.strip())
                 targets = [target]
         else:
             targets = target
@@ -67,10 +68,10 @@ class EvalMetric:
             self.target_list[task][t] += 1
 
         self.tasks[task]['input'].append(input)
-        self.tasks[task]['predicted'].append(self.tokenize_text(predicted))
+        self.tasks[task]['predicted'].append(predicted)
         self.tasks[task]['predicteds'].append([predicted])
         self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else [predicted])
-        self.tasks[task]['target'].append(self.tokenize_text(target))
+        self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
         self.tasks[task]['target_list'].append(target.split(" ") if " " in target else [target])
 
