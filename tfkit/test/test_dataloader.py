@@ -22,10 +22,13 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) < 512)
 
     def testOnce(self):
+        tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
         for i in tfkit.gen_once.get_data_from_file('../demo_data/generate.csv'):
             print(i)
         for i in tfkit.gen_once.loadOnceDataset('../demo_data/generate.csv', pretrained='bert-base-chinese',
                                                 maxlen=128):
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
