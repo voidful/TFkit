@@ -110,7 +110,6 @@ class OneByOne(nn.Module):
                 output.append(predicted_token)
 
             output = self.tokenizer.convert_tokens_to_string(output)
-            output = output.replace(" n ", "n ")
             return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
@@ -175,7 +174,6 @@ class OneByOne(nn.Module):
                 if tok_sep(self.tokenizer) in sequences[i][0]:
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
                 sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
-                sequences[i][0] = sequences[i][0].replace(" n ", "n ")
             result_dict = {
                 'label_map': sequences
             }
