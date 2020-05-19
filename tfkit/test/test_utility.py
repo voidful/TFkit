@@ -132,7 +132,7 @@ class TestEval(unittest.TestCase):
         self.assertTrue(s1 == s3 == s6)
 
     def testClassify(self):
-        tokenizer = AutoModel.from_pretrained('bert_base_cased')
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
         for s in eval.cal_score('classification'):
