@@ -177,4 +177,4 @@ class OneByOne(nn.Module):
             result_dict = {
                 'label_map': sequences
             }
-            return [sequences[0]], result_dict
+            return [i[0] for i in sequences], result_dict
