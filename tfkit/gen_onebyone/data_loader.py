@@ -20,6 +20,7 @@ class loadOneByOneDataset(data.Dataset):
             tokenizer = BertTokenizer.from_pretrained(pretrained)
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained)
+
         neg_info = "_" + likelihood + "_"
         cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained.replace("/", "_") + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
@@ -56,6 +57,7 @@ class loadOneByOneDataset(data.Dataset):
                     feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                          " ".join(target))
                     sample.append(feature)
+                    sample.append(feature)
                 elif negative_text is not None:
                     if "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
@@ -73,6 +75,7 @@ class loadOneByOneDataset(data.Dataset):
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                             if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
                                 feature['ntarget'][feature['start']] = -1
+                            sample.append(feature)
                             sample.append(feature)
 
             if cache:
@@ -111,7 +114,7 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
 
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     tokenized_input.extend(tokenized_previous)
-    tokenized_input.append('[MASK]')
+    tokenized_input.append(tok_mask(tokenizer))
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     mask_id = [1] * len(tokenized_input)
     target_start = len(tokenized_input_id) - 1

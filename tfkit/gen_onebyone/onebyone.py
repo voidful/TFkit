@@ -50,7 +50,7 @@ class OneByOne(nn.Module):
             }
             start = batch_data['start'][0]
             logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
-            prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+            prob_result = {self.tokenizer.convert_ids_to_tokens(id): prob for id, prob in enumerate(logit_prob)}
             prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
             result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
             result_dict['label_prob_all'].append(prob_result)

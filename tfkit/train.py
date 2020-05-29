@@ -157,6 +157,11 @@ def main():
         tokenizer = AutoTokenizer.from_pretrained(arg.config)
     pretrained = AutoModel.from_pretrained(arg.config)
 
+    special_tokens_dict = {'cls_token': '[CLS]', 'sep_token': '[SEP]'}
+    num_added_toks = tokenizer.add_special_tokens(special_tokens_dict)
+    print('We have added', num_added_toks, 'tokens')
+    pretrained.resize_token_embeddings(len(tokenizer))
+
     models = []
     models_tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
     train_dataset = []

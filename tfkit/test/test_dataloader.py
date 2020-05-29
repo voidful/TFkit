@@ -1,6 +1,6 @@
 import unittest
 
-from transformers import BertTokenizer
+from transformers import BertTokenizer, AutoTokenizer
 
 import tfkit
 
@@ -51,6 +51,18 @@ class TestDataLoader(unittest.TestCase):
                     self.assertTrue(i['target'][start_pos] != -1)
                 self.assertTrue(len(i['input']) == maxlen)
                 self.assertTrue(len(i['target']) == maxlen)
+
+    def testGPT(self):
+        tokenizer = AutoTokenizer.from_pretrained('openai-gpt')
+        maxlen = 512
+        for likelihood in ['onebyone', 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
+            output = []
+            for i in tfkit.gen_onebyone.loadOneByOneDataset('../demo_data/generate.csv', pretrained='openai-gpt',
+                                                            maxlen=maxlen, likelihood=likelihood):
+                start_pos = i['start']
+                output.append(tokenizer.convert_ids_to_tokens(i['target'])[start_pos])
+                print(output)
+            print(tokenizer.convert_tokens_to_string(output) + "\n")
 
     def testClassifier(self):
         for i in tfkit.classifier.get_data_from_file('../demo_data/classification.csv'):
