@@ -1,4 +1,10 @@
-# 🤖 TFKit - Transformer Kit 🤗   
+<h1 align="center"> 🤖 TFKit - Transformer Kit 🤗 </h1> 
+<p align="center">
+    <a href="https://pypi.org/project/tfkit/">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
+    </a>
+</p>
+<br/>
 這是一個模組化的NLP工具包，用於fine-tune預訓練的transformer模型。   
 這個工具包重整 🤗huggingface 的project而來，支援更多功能:
 

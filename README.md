@@ -1,4 +1,4 @@
-# 🤖 TFKit - Transformer Kit 🤗   
+<h1 align="center"> 🤖 TFKit - Transformer Kit 🤗 </h1> 
 <p align="center">
     <a href="https://pypi.org/project/tfkit/">
         <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
