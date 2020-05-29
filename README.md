@@ -1,4 +1,11 @@
 # 🤖 TFKit - Transformer Kit 🤗   
+<p align="center">
+    <a href="https://pypi.org/project/tfkit/">
+        <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
+    </a>
+</p>
+<br/>
+
 NLP library for different downstream purpose, built on top of huggingface 🤗 project,   
 for developing wide variety of nlp tasks.
 
