@@ -39,15 +39,20 @@ class loadOneByOneDataset(data.Dataset):
                             ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                         else:
                             ntext_arr = [negative_text.strip()]
+
                         for neg_text in ntext_arr:
                             feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                      ntarget=neg_text)
                             feature['ntarget'] = feature_neg['ntarget']
-
-                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                        if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
-                            feature['ntarget'][feature['start']] = -1
-                        sample.append(feature)
+                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                                if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
+                                    feature['ntarget'][feature['start']] = -1
+                                sample.append(feature)
+                    else:
+                        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                            if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
+                                feature['ntarget'][feature['start']] = -1
+                            sample.append(feature)
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
@@ -56,8 +61,7 @@ class loadOneByOneDataset(data.Dataset):
                 if 'pos' in likelihood:
                     feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                          " ".join(target))
-                    sample.append(feature)
-                    sample.append(feature)
+                    sample.extend([feature] * 2)
                 elif negative_text is not None:
                     if "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
@@ -75,8 +79,7 @@ class loadOneByOneDataset(data.Dataset):
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                             if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
                                 feature['ntarget'][feature['start']] = -1
-                            sample.append(feature)
-                            sample.append(feature)
+                            sample.extend([feature] * 2)
 
             if cache:
                 with open(cache_path, 'wb') as cf:
