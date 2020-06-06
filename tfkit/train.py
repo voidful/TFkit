@@ -242,7 +242,7 @@ def main():
             for model_tag, state_dict in zip(package['tags'], package['models']):
                 tag_ind = package['tags'].index(model_tag)
                 models[tag_ind].load_state_dict(state_dict)
-        start_epoch = int(package.get('epoch', 1))
+        start_epoch = int(package.get('epoch', 1)) + 1
 
     set_seed(arg.seed)
 
