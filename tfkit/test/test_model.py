@@ -102,6 +102,30 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
 
+    def testTwice(self):
+        input = "See you next time"
+        target = "下 次 見"
+
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
+
+        feature = tfkit.gen_twice.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512)
+        for k, v in feature.items():
+            feature[k] = [v, v]
+        model = tfkit.gen_twice.Twice(tokenizer, pretrained)
+
+        print(model(feature))
+        self.assertTrue(isinstance(model(feature), Tensor))
+        model_dict = model(feature, eval=True)
+        self.assertTrue('label_prob_all' in model_dict)
+        self.assertTrue('label_map' in model_dict)
+        result, model_dict = model.predict(input=input)
+        self.assertTrue('label_prob_all' in model_dict)
+        self.assertTrue('label_map' in model_dict)
+        print(result, len(result))
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
     def testOnebyone(self):
         input = "See you next time"
         previous = "下 次"
