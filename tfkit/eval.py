@@ -56,7 +56,7 @@ def main():
 
     valid = arg.valid[0]
     model_state = models_state[tag_ind]
-    model_type = model_types[tag_ind]
+    model_type = model_types[tag_ind].lower()
 
     print("===model info===")
     print("maxlen", maxlen)
