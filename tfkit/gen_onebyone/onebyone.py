@@ -98,7 +98,7 @@ class OneByOne(nn.Module):
                 topK_list = np.cumsum(topP_list)
                 index_overK = [i for i, x in enumerate(topK_list) if x > topK]
                 index_overK = 0 if len(index_overK) < 1 else index_overK[0]
-                topK_list = list(topK_list[:index_overK + 1])
+                topK_list = list(topP_list[:index_overK + 1])
                 prob_norm = [float(i) / sum(topK_list) for i in topK_list]
                 sampling_index = topK_list.index(np.random.choice(topK_list, p=prob_norm))
 
