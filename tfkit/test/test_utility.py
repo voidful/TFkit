@@ -138,3 +138,16 @@ class TestEval(unittest.TestCase):
         for s in eval.cal_score('classification'):
             print(s[0])
             print(s[1])
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "你 好", "我 好[SEP]你 好 嗎[SEP]好 嗎", task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "1 3 2", "1 2 3", task='default')
+        eval.add_record("input", "1 3 2", "1 3 3", task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
