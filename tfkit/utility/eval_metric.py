@@ -73,6 +73,7 @@ class EvalMetric:
         self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
 
+
     def get_record(self, task='default'):
         return self.tasks[task]
 
@@ -88,7 +89,8 @@ class EvalMetric:
                     f1_list = [0]
                     for target in task['targets'][pos]:
                         equal = False
-                        if _normalize_answer(predict) == _normalize_answer(target) and len(predict) > 0:
+                        if _normalize_answer(predict) == _normalize_answer(target) and len(
+                                _normalize_answer(predict)) > 0:
                             equal = True
                         if equal:
                             em_list.append(1)
