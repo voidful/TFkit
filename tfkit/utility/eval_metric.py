@@ -70,10 +70,8 @@ class EvalMetric:
         self.tasks[task]['input'].append(input)
         self.tasks[task]['predicted'].append(predicted)
         self.tasks[task]['predicteds'].append([predicted])
-        self.tasks[task]['predicted_list'].append(predicted.split(" ") if " " in predicted else [predicted])
         self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
-        self.tasks[task]['target_list'].append(target.split(" ") if " " in target else [target])
 
     def get_record(self, task='default'):
         return self.tasks[task]
@@ -113,10 +111,10 @@ class EvalMetric:
             if "classification" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
-                target_key = [t.split(" ") if " " in t else [t] for t in self.target_list[task_name].keys()]
-                mlb = MultiLabelBinarizer().fit([k for k in target_key if len(k) > 0])
+                target_key = [t for t in self.target_list[task_name].keys() if len(t) > 0]
+                mlb = MultiLabelBinarizer().fit([target_key])
                 result = classification_report(
-                    mlb.transform(task['target_list']),
-                    mlb.transform(task['predicted_list']),
+                    mlb.transform(task['targets']),
+                    mlb.transform(task['predicteds']),
                     target_names=list(mlb.classes_))
             yield (task_name, result)
