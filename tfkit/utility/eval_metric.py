@@ -8,7 +8,10 @@ def _normalize_answer(s):
     """Lower text and remove punctuation, articles and extra whitespace."""
 
     def remove_articles(text):
-        return re.sub(r'\b(a|an|the)\b', ' ', text)
+        if len(text) > 1:
+            return re.sub(r'\b(a|an|the)\b', ' ', text)
+        else:
+            return text
 
     def white_space_fix(text):
         return ' '.join(text.split())

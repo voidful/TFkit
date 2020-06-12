@@ -94,11 +94,32 @@ class TestEval(unittest.TestCase):
             self.assertTrue(s[1]['F1'] == 0)
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "a", "c", task='default')
+        eval.add_record("input", "a", ["a"], task='default')
+        for s in eval.cal_score('emf1'):
+            print(s)
+            self.assertTrue(s[1]['EM'] == 1)
+            self.assertTrue(s[1]['F1'] == 1)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "a", ["b"], task='default')
         for s in eval.cal_score('emf1'):
             print(s)
             self.assertTrue(s[1]['EM'] == 0)
             self.assertTrue(s[1]['F1'] == 0)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "b", ["a"], task='default')
+        for s in eval.cal_score('emf1'):
+            print(s)
+            self.assertTrue(s[1]['EM'] == 0)
+            self.assertTrue(s[1]['F1'] == 0)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "b", ["b"], task='default')
+        for s in eval.cal_score('emf1'):
+            print(s)
+            self.assertTrue(s[1]['EM'] == 1)
+            self.assertTrue(s[1]['F1'] == 1)
 
 
 
