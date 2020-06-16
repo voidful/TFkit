@@ -76,7 +76,6 @@ class EvalMetric:
         self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
 
-
     def get_record(self, task='default'):
         return self.tasks[task]
 
@@ -113,7 +112,7 @@ class EvalMetric:
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
                 result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['targets']))),  # transpose
                                                  hyp_list=task['predicted'])
-            if "classification" in metric:
+            if "clas" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
                 target_key = [t for t in self.target_list[task_name].keys() if len(t) > 0]
