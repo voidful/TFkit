@@ -37,7 +37,7 @@ def main():
         model = gen_twice.Twice(model_config=config, maxlen=maxlen)
     elif "onebyone" in type:
         model = gen_onebyone.OneByOne(model_config=config, maxlen=maxlen)
-    elif 'classify' in type:
+    elif 'clas' in type:
         model = classifier.MtClassifier(package['task'], model_config=config)
     elif 'tag' in type:
         model = tag.Tagger(package['label'], model_config=config, maxlen=maxlen)

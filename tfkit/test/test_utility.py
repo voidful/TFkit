@@ -11,6 +11,7 @@ import unittest
 import tfkit
 from transformers import *
 
+
 class TestLoss(unittest.TestCase):
     outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
     targets = torch.Tensor([1, 1]).long()
@@ -19,13 +20,31 @@ class TestLoss(unittest.TestCase):
 
     def testLabelSmoothingCrossEntropy(self):
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
-        custom_criterion = tfkit.utility.loss.LabelSmoothingCrossEntropy(eps=0.0)
-        self.assertAlmostEqual(criterion(self.outputs, self.targets).item(),
-                               custom_criterion(self.outputs, self.targets).item())
-        self.assertAlmostEqual(criterion(self.outputs, self.alln_targets).item(),
-                               custom_criterion(self.outputs, self.alln_targets).item())
-        self.assertAlmostEqual(criterion(self.outputs, self.onen_targets).item(),
-                               custom_criterion(self.outputs, self.onen_targets).item())
+        custom_criterion = tfkit.utility.loss.LabelSmoothingLoss(3, ignore_index=-1)
+
+        print(criterion(self.outputs, self.targets).item(),
+              custom_criterion(self.outputs, self.targets).item())
+        self.assertTrue(criterion(self.outputs, self.targets).item() <
+                        custom_criterion(self.outputs, self.targets).item())
+        print(criterion(self.outputs, self.alln_targets).item(),
+              custom_criterion(self.outputs, self.alln_targets).item())
+        self.assertTrue(criterion(self.outputs, self.alln_targets).item() ==
+                        custom_criterion(self.outputs, self.alln_targets).item())
+        print(criterion(self.outputs, self.onen_targets).item(),
+              custom_criterion(self.outputs, self.onen_targets).item())
+        self.assertTrue(criterion(self.outputs, self.onen_targets).item() <
+                        custom_criterion(self.outputs, self.onen_targets).item())
+
+    def testDiceLoss(self):
+        criterion = nn.CrossEntropyLoss(ignore_index=-1)
+        custom_criterion = tfkit.utility.loss.DiceLoss(ignore_index=-1)
+        print(criterion(self.outputs, self.targets).item(), custom_criterion(self.outputs, self.targets))
+        print(criterion(self.outputs, self.onen_targets).item(), custom_criterion(self.outputs, self.onen_targets))
+        print(criterion(self.outputs, self.alln_targets).item(), custom_criterion(self.outputs, self.alln_targets))
+
+        self.assertTrue(0.8 < custom_criterion(self.outputs, self.targets).item() < 1)
+        self.assertTrue(0.99 < custom_criterion(self.outputs, self.alln_targets).item() <= 1)
+        self.assertTrue(0.8 < custom_criterion(self.outputs, self.onen_targets).item() < 1)
 
     def testNegativeCElLoss(self):
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
@@ -50,13 +69,6 @@ class TestLoss(unittest.TestCase):
                                custom_criterion(self.outputs, self.onen_targets).item())
 
         custom_criterion = tfkit.utility.loss.FocalLoss(gamma=1)
-        self.assertTrue(criterion(self.outputs, self.targets) > custom_criterion(self.outputs, self.targets))
-        self.assertTrue(criterion(self.outputs, self.alln_targets) == custom_criterion(self.outputs, self.alln_targets))
-        self.assertTrue(criterion(self.outputs, self.onen_targets) > custom_criterion(self.outputs, self.onen_targets))
-
-    def testGWLoss(self):
-        criterion = nn.CrossEntropyLoss(ignore_index=-1)
-        custom_criterion = tfkit.utility.loss.GWLoss()
         self.assertTrue(criterion(self.outputs, self.targets) > custom_criterion(self.outputs, self.targets))
         self.assertTrue(criterion(self.outputs, self.alln_targets) == custom_criterion(self.outputs, self.alln_targets))
         self.assertTrue(criterion(self.outputs, self.onen_targets) > custom_criterion(self.outputs, self.onen_targets))
@@ -121,8 +133,6 @@ class TestEval(unittest.TestCase):
             self.assertTrue(s[1]['EM'] == 1)
             self.assertTrue(s[1]['F1'] == 1)
 
-
-
     def testNLG(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
@@ -130,33 +140,33 @@ class TestEval(unittest.TestCase):
         for s in eval.cal_score('nlg'):
             print(s)
 
-        eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=1)
+        eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=1)
         eval1.add_record("input", "abc", " abc ", task='default')
         for s1 in eval1.cal_score('nlg'):
             print(s1)
 
-        eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=3)
+        eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=3)
         eval3.add_record("input", "abc ", "abb [SEP]acc[SEP] abc ", task='default')
         for s3 in eval3.cal_score('nlg'):
             print(s3)
 
-        eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=6)
+        eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=6)
         eval6.add_record("input", "abc", "abb [SEP] acc [SEP]abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             print(s6)
         self.assertTrue(s1 == s3 == s6)
 
-        eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=1)
+        eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=1)
         eval1.add_record("input", "opq", "abc", task='default')
         for s1 in eval1.cal_score('nlg'):
             print(s1)
 
-        eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=3)
+        eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=3)
         eval3.add_record("input", "opq", "abb[SEP]acc[SEP]abc", task='default')
         for s3 in eval3.cal_score('nlg'):
             print(s3)
 
-        eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer,max_candidate=6)
+        eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=6)
         eval6.add_record("input", "opq", "abb [SEP] acc[SEP]abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             print(s6)

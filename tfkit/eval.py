@@ -15,12 +15,11 @@ import csv
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, type=str)
-    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'classification'])
+    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'])
     parser.add_argument("--valid", required=True, type=str, nargs='+')
     parser.add_argument("--tag", type=str)
     parser.add_argument("--batch", type=int, default=5)
     parser.add_argument("--print", action='store_true')
-    parser.add_argument("--outfile", action='store_true')
     parser.add_argument("--beamsearch", action='store_true')
     parser.add_argument("--beamsize", type=int, default=3)
     parser.add_argument("--beamfiltersim", action='store_true')
@@ -74,7 +73,7 @@ def main():
     elif "onebyone" in model_type:
         eval_dataset = gen_once.get_data_from_file(valid)
         model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
-    elif 'classify' in model_type:
+    elif 'clas' in model_type:
         eval_dataset = classifier.get_data_from_file(valid)
         model = classifier.MtClassifier(package['task'], tokenizer, pretrained)
     elif 'tag' in model_type:
@@ -131,24 +130,24 @@ def main():
             eval_metric.add_record(input, predicted, target)
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
-        if arg.outfile:
-            argtype = "_dataset_" + valid.replace("/", "_").replace(".", "")
-            if arg.beamsearch:
-                argtype = "_beam_" + str(eval_pos)
-            outfile_name = arg.model + argtype
 
-            with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
-                writer = csv.writer(f)
-                records = eval_metric.get_record()
-                for i, p in zip(records['input'], records['predicted']):
-                    writer.writerow([i, p])
-            print("write result at:", outfile_name)
+        argtype = "_dataset_" + valid.replace("/", "_").replace(".", "")
+        if arg.beamsearch:
+            argtype = "_beam_" + str(eval_pos)
+        outfile_name = arg.model + argtype
 
-            with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
-                for i in eval_metric.cal_score(arg.metric):
-                    f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
-                    f.write(str(i[1]) + '\n')
-            print("write score at:", outfile_name)
+        with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
+            writer = csv.writer(f)
+            records = eval_metric.get_record()
+            for i, p in zip(records['input'], records['predicted']):
+                writer.writerow([i, p])
+        print("write result at:", outfile_name)
+
+        with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+            for i in eval_metric.cal_score(arg.metric):
+                f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
+                f.write(str(i[1]) + '\n')
+        print("write score at:", outfile_name)
 
         for i in eval_metric.cal_score(arg.metric):
             print("TASK: ", i[0], eval_pos)
