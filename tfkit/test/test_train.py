@@ -21,10 +21,10 @@ class TestTrain(unittest.TestCase):
 
     def testClassify(self):
         result = os.system(
-            'tfkit-train --lr 1e-4  --train ../demo_data/classification.csv --valid ../demo_data/classification.csv --model classify --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+            'tfkit-train --lr 1e-4  --train ../demo_data/classification.csv --valid ../demo_data/classification.csv --model clas --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)
 
     def testMultiClass(self):
         result = os.system(
-            'tfkit-train --batch 3 --train ../demo_data/classification.csv ../demo_data/generate.csv --lr 5e-5 --valid ../demo_data/classification.csv ../demo_data/generate.csv --model classify onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+            'tfkit-train --batch 3 --train ../demo_data/classification.csv ../demo_data/generate.csv --lr 5e-5 --valid ../demo_data/classification.csv ../demo_data/generate.csv --model clas onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)

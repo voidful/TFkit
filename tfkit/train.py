@@ -129,8 +129,9 @@ def main():
     parser.add_argument("--train", type=str, nargs='+', required=True)
     parser.add_argument("--valid", type=str, nargs='+', required=True)
     parser.add_argument("--model", type=str, required=True, nargs='+',
-                        choices=['once', 'twice', 'onebyone', 'classify', 'tagRow', 'tagCol', 'qa',
-                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both', ])
+                        choices=['once', 'twice', 'onebyone', 'clas', 'tagRow', 'tagCol', 'qa',
+                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both'])
+    parser.add_argument("--lossdrop", action='store_true', help="loss dropping for text generation")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
@@ -183,8 +184,8 @@ def main():
                                                         likelihood=model_type)
             test_ds = gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                        cache=arg.cache)
-            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen)
-        elif 'classify' in model_type:
+            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen, lossdrop=arg.lossdrop)
+        elif 'clas' in model_type:
             train_ds = classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
             test_ds = classifier.loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
             model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
@@ -266,7 +267,7 @@ def main():
         for ind, m in enumerate(arg.model):
             if 'tag' in m:
                 save_model['label'] = models[ind].labels
-            if "classify" in m:
+            if "clas" in m:
                 save_model['task'] = models[ind].tasks_detail
 
         torch.save(save_model, f"{fname}.pt")
