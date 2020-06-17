@@ -54,13 +54,16 @@ def train(models_list, train_dataset, models_tag, arg, epoch):
     end = False
     pbar = tqdm(total=total_iter_length)
     while not end:
-        for model, optim, mtag, batch in zip(models, optims, models_tag, iters):
+        for i, (model, optim, mtag, batch) in enumerate(zip(models, optims, models_tag, iters)):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
-                optim.zero_grad()
+                loss = loss / arg.grad_accum
                 loss.mean().backward()
-                optim.step()
+                if (i + 1) % arg.grad_accum == 0:
+                    optim.step()  #
+                    model.zero_grad()
+
                 t_loss += loss.mean().item()
                 if arg.tensorboard:
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
@@ -137,6 +140,7 @@ def main():
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
     parser.add_argument("--seed", type=int, default=609)
     parser.add_argument("--worker", type=int, default=8)
+    parser.add_argument("--grad_accum", type=int, default=1)
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='Caching training data')
