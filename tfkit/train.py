@@ -54,16 +54,15 @@ def train(models_list, train_dataset, models_tag, arg, epoch):
     end = False
     pbar = tqdm(total=total_iter_length)
     while not end:
-        for i, (model, optim, mtag, batch) in enumerate(zip(models, optims, models_tag, iters)):
+        for (model, optim, mtag, batch) in zip(models, optims, models_tag, iters):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
                 loss = loss / arg.grad_accum
                 loss.mean().backward()
-                if (i + 1) % arg.grad_accum == 0:
-                    optim.step()  #
+                if (total_iter + 1) % arg.grad_accum == 0:
+                    optim.step()
                     model.zero_grad()
-
                 t_loss += loss.mean().item()
                 if arg.tensorboard:
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
