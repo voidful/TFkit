@@ -69,12 +69,11 @@ class OneByOne(nn.Module):
 
             masked_lm_loss += negative_loss
             masked_lm_loss = masked_lm_loss.view(-1, len(targets))  # view by batch size
-            masked_lm_loss = masked_lm_loss.mean(dim=0)
+            masked_lm_loss = masked_lm_loss.sum(dim=0)
             if self.lossdrop:
                 mask = self.dropper(masked_lm_loss)
                 masked_lm_loss *= mask
             masked_lm_loss = masked_lm_loss.mean()
-
             outputs = masked_lm_loss
         return outputs
 
