@@ -140,8 +140,8 @@ def main():
             writer = csv.writer(f)
             records = eval_metric.get_record()
             writer.writerow(['input', 'predicted', 'targets'])
-            for i, p in zip(records['input'], records['predicted'], "[SEP]".join(records['targets'])):
-                writer.writerow([i, p])
+            for i, p, t in zip(records['input'], records['predicted'], records['targets']):
+                writer.writerow([i, p, "[SEP]".join([onet for onet in t if len(onet) > 0])])
         print("write result at:", outfile_name)
 
         with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
