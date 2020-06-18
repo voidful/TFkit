@@ -30,7 +30,7 @@ class TestEval(unittest.TestCase):
 
     def testEvalClassify(self):
         result = os.system(
-            'tfkit-eval --model ./cache/10.pt --tag clas --valid ../demo_data/classification.csv --metric clas --print  ')
+            'tfkit-eval --model ./cache/1.pt --valid ../demo_data/classification.csv --metric clas')
         self.assertTrue(result == 0)
 
     def testEvalQA(self):
