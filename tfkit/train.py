@@ -250,7 +250,7 @@ def main():
 
     set_seed(arg.seed)
 
-    write_log("batch : " + str(arg.batch))
+    write_log("training batch : " + str(arg.batch * arg.grad_accum))
     for epoch in range(start_epoch, start_epoch + arg.epoch):
         fname = os.path.join(arg.savedir, str(epoch))
 
