@@ -139,7 +139,8 @@ def main():
         with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
             writer = csv.writer(f)
             records = eval_metric.get_record()
-            for i, p in zip(records['input'], records['predicted']):
+            writer.writerow(['input', 'predicted', 'targets'])
+            for i, p in zip(records['input'], records['predicted'], "[SEP]".join(records['targets'])):
                 writer.writerow([i, p])
         print("write result at:", outfile_name)
 
