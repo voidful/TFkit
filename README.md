@@ -1,15 +1,38 @@
-<h1 align="center"> 🤖 TFKit - Transformer Kit 🤗 </h1> 
+<p  align="center">
+    <br>
+    <img src="https://raw.githubusercontent.com/voidful/TFkit/master/doc/img/tfkit.png" width="400"/>
+    <br>
+<p>
+<br/>
 <p align="center">
     <a href="https://pypi.org/project/tfkit/">
         <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
     </a>
+    <a href="https://github.com/voidful/TFkit">
+        <img alt="Download" src="https://img.shields.io/pypi/dm/tfkit">
+    </a>
+    <a href="https://github.com/voidful/TFkit">
+        <img alt="Size" src="https://img.shields.io/github/repo-size/voidful/tfkit">
+    </a>
 </p>
 <br/>
 
-NLP library for different downstream purpose, built on top of huggingface 🤗 project,   
-for developing wide variety of nlp tasks.
-
 Read this in other languages: [正體中文(施工中👷)](https://github.com/voidful/TFkit/blob/master/README.zh.md).
+
+## Feature
+- [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
+- [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
+- [nlp2go](https://github.com/voidful/nlp2go): create model hosting library for demo  
+- multi-class multi-task multi-label classifier  
+- Multi-Task on ALL model
+- word/sentence level text generation  
+- support greedy, beam-search & nucleus decoding 
+- token tagging
+- special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
+- eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
+- modularize data loading
+- easy to modify
+
 
 ## DEMO
 
@@ -43,19 +66,6 @@ nlprep --dataset zhqa --task qa --outdir ./zhqa/
 tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --valid ./clner_row/test ./zhqa/drcd-test --model tagRow qa --config voidful/albert_chinese_small
 nlp2go --model ./mt-qaner/3.pt --cli 
 ```
-## Feature
-- [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
-- [NLPrep](https://github.com/voidful/NLPrep): create a data preprocessing library on many task   
-- [nlp2go](https://github.com/voidful/nlp2go): create model hosting library for demo  
-- multi-class multi-task multi-label classifier  
-- Multi-Task on ALL model
-- word/sentence level text generation  
-- support greedy, beam-search & nucleus decoding 
-- token tagging
-- special loss function for handling different cases: FocalLoss/ FocalBCELoss/ NegativeCrossEntropyLoss/ SmoothCrossEntropyLoss  
-- eval on different benchmark - EM / F1 / BLEU / METEOR / ROUGE / CIDEr / Classification Report / ...
-- modularize data loading
-- easy to modify
 
 ## Benchmark
 #### DRCD Test
