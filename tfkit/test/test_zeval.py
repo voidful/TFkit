@@ -2,6 +2,8 @@ import unittest
 
 import os
 
+import pytest
+
 
 class TestEval(unittest.TestCase):
 
@@ -9,6 +11,7 @@ class TestEval(unittest.TestCase):
         result = os.system('tfkit-eval -h')
         self.assertTrue(result == 0)
 
+    @pytest.mark.skip()
     def testEvalGen(self):
         result = os.system(
             'tfkit-eval --tag generate_0 --model ./cache/10.pt --valid ../demo_data/generate.csv --metric emf1 --print --beamsearch --tag onebyone_1')
@@ -20,6 +23,7 @@ class TestEval(unittest.TestCase):
             'tfkit-eval --tag onebyone_1 --model ./cache/10.pt --valid ../demo_data/classification.csv --metric clas --print --tag onebyone_1')
         self.assertTrue(result == 0)
 
+    @pytest.mark.skip()
     def testEvalOnGen(self):
         result = os.system(
             'tfkit-eval --model ./cache/10.pt --valid ../demo_data/generate.csv --metric clas --print --tag onebyone_1')
@@ -28,16 +32,19 @@ class TestEval(unittest.TestCase):
             'tfkit-eval --model ./cache/10.pt --valid ../demo_data/generate.csv --metric emf1 --print --beamsearch --tag onebyone_1')
         self.assertTrue(result == 0)
 
+    @pytest.mark.skip()
     def testEvalClassify(self):
         result = os.system(
             'tfkit-eval --model ./cache/1.pt --valid ../demo_data/classification.csv --metric clas')
         self.assertTrue(result == 0)
 
+    @pytest.mark.skip()
     def testEvalQA(self):
         result = os.system(
             'tfkit-eval --model ./cache/model/albert_small_zh_mrc.pt --valid ./cache/test_qa/drcd-dev --metric emf1 ')
         self.assertTrue(result == 0)
 
+    @pytest.mark.skip()
     def testEvalTAG(self):
         result = os.system(
             'tfkit-eval --model ./cache/model/albert_small_zh_ner.pt --valid ../demo_data/tag_row.csv --metric clas ')
