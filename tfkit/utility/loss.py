@@ -31,7 +31,7 @@ class BCEGWLoss(nn.Module):
     def forward(self, input, target):
         BCE_loss = F.binary_cross_entropy_with_logits(input, target, reduction='none')
         BCE_loss = BCE_loss.view(-1)
-        pt = sigmoid(BCE_loss)  # prevents nans when probability 0
+        pt = F.sigmoid(BCE_loss)  # prevents nans when probability 0
         loss = (self.gaussian(pt, variance=0.1 * math.exp(1), mean=0.5) - 0.1 * pt) * BCE_loss
         return loss.mean()
 

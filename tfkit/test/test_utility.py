@@ -3,6 +3,7 @@ import os
 
 import torch
 from torch import nn
+from torch.autograd import Variable
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -13,50 +14,44 @@ from transformers import *
 
 
 class TestLoss(unittest.TestCase):
-    outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
-    targets = torch.Tensor([1, 1]).long()
-    alln_targets = torch.Tensor([-1, -1]).long()
-    onen_targets = torch.Tensor([1, -1]).long()
+    outputs = Variable(torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]]), requires_grad=False)
+    targets = Variable(torch.Tensor([1, 1]).long(), requires_grad=False)
+    alln_targets = Variable(torch.Tensor([-1, -1]).long(), requires_grad=False)
+    onen_targets = Variable(torch.Tensor([1, -1]).long(), requires_grad=False)
 
     def testLabelSmoothingCrossEntropy(self):
+        outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
+        targets = torch.Tensor([1, 1]).long()
+        alln_targets = torch.Tensor([-1, -1]).long()
+        onen_targets = torch.Tensor([1, -1]).long()
+
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
         custom_criterion = tfkit.utility.loss.LabelSmoothingLoss(3, ignore_index=-1)
 
-        print(criterion(self.outputs, self.targets).item(),
-              custom_criterion(self.outputs, self.targets).item())
-        self.assertTrue(criterion(self.outputs, self.targets).item() <
-                        custom_criterion(self.outputs, self.targets).item())
-        print(criterion(self.outputs, self.alln_targets).item(),
-              custom_criterion(self.outputs, self.alln_targets).item())
-        self.assertTrue(criterion(self.outputs, self.alln_targets).item() ==
-                        custom_criterion(self.outputs, self.alln_targets).item())
-        print(criterion(self.outputs, self.onen_targets).item(),
-              custom_criterion(self.outputs, self.onen_targets).item())
-        self.assertTrue(criterion(self.outputs, self.onen_targets).item() <
-                        custom_criterion(self.outputs, self.onen_targets).item())
+        self.assertTrue(criterion(outputs, targets).item() <
+                        custom_criterion(outputs, targets).item())
+        self.assertTrue((criterion(outputs, alln_targets).item() == custom_criterion(outputs, alln_targets).item()))
+        self.assertTrue(criterion(outputs, onen_targets).item() <
+                        custom_criterion(outputs, onen_targets).item())
 
     def testDiceLoss(self):
-        criterion = nn.CrossEntropyLoss(ignore_index=-1)
         custom_criterion = tfkit.utility.loss.DiceLoss(ignore_index=-1)
-        print(criterion(self.outputs, self.targets).item(), custom_criterion(self.outputs, self.targets))
-        print(criterion(self.outputs, self.onen_targets).item(), custom_criterion(self.outputs, self.onen_targets))
-        print(criterion(self.outputs, self.alln_targets).item(), custom_criterion(self.outputs, self.alln_targets))
-
         self.assertTrue(0.8 < custom_criterion(self.outputs, self.targets).item() < 1)
         self.assertTrue(0.99 < custom_criterion(self.outputs, self.alln_targets).item() <= 1)
         self.assertTrue(0.8 < custom_criterion(self.outputs, self.onen_targets).item() < 1)
 
     def testNegativeCElLoss(self):
+        outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
+        targets = torch.Tensor([1, 1]).long()
+        alln_targets = torch.Tensor([-1, -1]).long()
+        onen_targets = torch.Tensor([1, -1]).long()
+
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
         custom_criterion = tfkit.utility.loss.NegativeCElLoss()
-        print(criterion(self.outputs, self.targets).item(), custom_criterion(self.outputs, self.targets).item())
-        print(criterion(self.outputs, self.targets).item(), custom_criterion(self.outputs, self.onen_targets).item())
         self.assertTrue(
-            criterion(self.outputs, self.targets).item() < custom_criterion(self.outputs, self.targets).item())
-        self.assertTrue(criterion(self.outputs, self.alln_targets).item() == custom_criterion(self.outputs,
-                                                                                              self.alln_targets).item())
-        self.assertTrue(criterion(self.outputs, self.onen_targets).item() < custom_criterion(self.outputs,
-                                                                                             self.onen_targets).item())
+            criterion(outputs, targets).item() < custom_criterion(outputs, self.targets).item())
+        self.assertTrue(criterion(outputs, alln_targets).item() == custom_criterion(outputs, alln_targets).item())
+        self.assertTrue(criterion(outputs, onen_targets).item() < custom_criterion(outputs, onen_targets).item())
 
     def testFocalLoss(self):
         criterion = nn.CrossEntropyLoss(ignore_index=-1)
@@ -70,7 +65,8 @@ class TestLoss(unittest.TestCase):
 
         custom_criterion = tfkit.utility.loss.FocalLoss(gamma=1)
         self.assertTrue(criterion(self.outputs, self.targets) > custom_criterion(self.outputs, self.targets))
-        self.assertTrue(criterion(self.outputs, self.alln_targets) == custom_criterion(self.outputs, self.alln_targets))
+        self.assertTrue(criterion(self.outputs, self.alln_targets).item() - custom_criterion(self.outputs,
+                                                                                             self.alln_targets).item() < 1)
         self.assertTrue(criterion(self.outputs, self.onen_targets) > custom_criterion(self.outputs, self.onen_targets))
 
 
