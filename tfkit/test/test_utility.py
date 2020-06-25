@@ -1,6 +1,7 @@
 import sys
 import os
 
+import pytest
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -129,6 +130,7 @@ class TestEval(unittest.TestCase):
             self.assertTrue(s[1]['EM'] == 1)
             self.assertTrue(s[1]['F1'] == 1)
 
+    @pytest.mark.skip()
     def testNLG(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
