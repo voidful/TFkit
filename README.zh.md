@@ -1,12 +1,27 @@
-<h1 align="center"> 🤖 TFKit - Transformer Kit 🤗 </h1> 
+<p  align="center">
+    <br>
+    <img src="https://raw.githubusercontent.com/voidful/TFkit/master/doc/img/tfkit.png" width="400"/>
+    <br>
+<p>
+<br/>
 <p align="center">
+    <a href="https://github.com/voidful/tfkit/releases/">
+        <img alt="Release" src="https://img.shields.io/github/v/release/voidful/tfkit">
+    </a>
     <a href="https://pypi.org/project/tfkit/">
         <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
     </a>
+    <a href="https://github.com/voidful/tfkit">
+        <img alt="Download" src="https://img.shields.io/pypi/dm/tfkit">
+    </a>
+    <a href="https://github.com/voidful/tfkit">
+        <img alt="Build" src="https://img.shields.io/github/workflow/status/voidful/tfkit/Python package">
+    </a>
+    <a href="https://github.com/voidful/tfkit">
+        <img alt="Last Commit" src="https://img.shields.io/github/last-commit/voidful/tfkit">
+    </a>
 </p>
 <br/>
-這是一個模組化的NLP工具包，用於fine-tune預訓練的transformer模型。   
-這個工具包重整 🤗huggingface 的project而來，支援更多功能:
 
 ## 功能
 - 支持 Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 各種模型，隨心換 [全部支持的模型](https://huggingface.co/models)   

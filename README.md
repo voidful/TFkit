@@ -5,19 +5,25 @@
 <p>
 <br/>
 <p align="center">
+    <a href="https://github.com/voidful/tfkit/releases/">
+        <img alt="Release" src="https://img.shields.io/github/v/release/voidful/tfkit">
+    </a>
     <a href="https://pypi.org/project/tfkit/">
         <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
     </a>
-    <a href="https://github.com/voidful/TFkit">
+    <a href="https://github.com/voidful/tfkit">
         <img alt="Download" src="https://img.shields.io/pypi/dm/tfkit">
     </a>
-    <a href="https://github.com/voidful/TFkit">
-        <img alt="Size" src="https://img.shields.io/github/repo-size/voidful/tfkit">
+    <a href="https://github.com/voidful/tfkit">
+        <img alt="Build" src="https://img.shields.io/github/workflow/status/voidful/tfkit/Python package">
+    </a>
+    <a href="https://github.com/voidful/tfkit">
+        <img alt="Last Commit" src="https://img.shields.io/github/last-commit/voidful/tfkit">
     </a>
 </p>
 <br/>
 
-Read this in other languages: [正體中文(施工中👷)](https://github.com/voidful/TFkit/blob/master/README.zh.md).
+Read this in other languages: [中文](https://github.com/voidful/TFkit/blob/master/README.zh.md).
 
 ## Feature
 - [Model list](https://huggingface.co/models): support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert 
