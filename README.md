@@ -5,9 +5,6 @@
 <p>
 <br/>
 <p align="center">
-    <a href="https://github.com/voidful/tfkit/releases/">
-        <img alt="Release" src="https://img.shields.io/github/v/release/voidful/tfkit">
-    </a>
     <a href="https://pypi.org/project/tfkit/">
         <img alt="PyPI" src="https://img.shields.io/pypi/v/tfkit">
     </a>

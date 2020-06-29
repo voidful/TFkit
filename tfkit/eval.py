@@ -1,3 +1,5 @@
+import inspect
+
 from transformers import *
 import argparse
 import torch
@@ -10,6 +12,113 @@ import tag
 from tqdm import tqdm
 from utility.eval_metric import EvalMetric
 import csv
+import inquirer
+
+
+def load_model(model_path, model_type=None, model_dataset=None):
+    """load model from dumped file"""
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    torchpack = torch.load(model_path, map_location=device)
+
+    print("===model info===")
+    [print(key, ':', torchpack[key]) for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key]
+    print('==========')
+
+    if 'tags' in torchpack and torchpack['tags'] > 1:
+        if model_type is None:
+            print("Pick which models to use in multi-task models")
+            inquirer_res = inquirer.prompt(
+                [inquirer.List('model_type', message="Select model", choices=torchpack['tags'])])
+            model_type = inquirer_res['model_type']
+        type_ind = torchpack['tags'].index(model_type)
+    else:
+        type_ind = 0
+
+    print("loading model from dumped file")
+    # get all loading parameter
+    maxlen = torchpack['maxlen']
+    config = torchpack['model_config'] if 'model_config' in torchpack else torchpack['bert']
+    model_types = [torchpack['type']] if not isinstance(torchpack['type'], list) else torchpack['type']
+    models_state = torchpack['models'] if 'models' in torchpack else [torchpack['model_state_dict']]
+    type = model_types[type_ind] if model_type is None else model_type
+
+    # load model
+    if 'albert_chinese' in config:
+        tokenizer = BertTokenizer.from_pretrained(config)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(config)
+    pretrained = AutoModel.from_pretrained(config)
+
+    if "once" in type:
+        eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
+        model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
+    elif "twice" in type:
+        eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
+        model = gen_twice.Twice(tokenizer, pretrained, maxlen=maxlen)
+    elif "onebyone" in type:
+        eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
+        model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
+    elif 'classify' in type or 'clas' in type:
+        eval_dataset = classifier.get_data_from_file(model_dataset) if model_dataset else None
+        model = classifier.MtClassifier(torchpack['task'], tokenizer, pretrained)
+    elif 'tag' in type:
+        if model_dataset and "row" in type:
+            eval_dataset = tag.get_data_from_file_row(model_dataset)
+        elif model_dataset and "col" in type:
+            eval_dataset = tag.get_data_from_file_col(model_dataset)
+        else:
+            eval_dataset = None
+        model = tag.Tagger(torchpack['label'], tokenizer, pretrained, maxlen=maxlen)
+    elif 'qa' in type:
+        eval_dataset = qa.get_data_from_file(model_dataset) if model_dataset else None
+        model = qa.QA(tokenizer, pretrained, maxlen=maxlen)
+
+    model = model.to(device)
+    model.load_state_dict(models_state[type_ind], strict=False)
+
+    print("finish loading")
+    if model_dataset:
+        return model, eval_dataset
+    else:
+        return model
+
+
+def load_predict_parameter(model, use_default=False):
+    """use inquirer panel to let user input model parameter or just use default value"""
+
+    print("Input parameter for predict function")
+    arg_len = len(inspect.getfullargspec(model.predict).args)
+    def_len = len(inspect.getfullargspec(model.predict).defaults)
+    arg_w_def = zip(inspect.getfullargspec(model.predict).args[arg_len - def_len:],
+                    inspect.getfullargspec(model.predict).defaults)
+
+    inquirer_list = []
+    for k, v in arg_w_def:
+        if v is not None:
+            if callable(v):
+                msg = k
+                inquirer_list.append(inquirer.List(k, message=msg, choices=v(model)))
+            elif isinstance(v, list):
+                msg = k
+                inquirer_list.append(inquirer.List(k, message=msg, choices=v))
+            elif isinstance(v, bool):
+                msg = k
+                inquirer_list.append(inquirer.List(k, message=msg, choices=[True, False]))
+            else:
+                if isinstance(v, float) and 0 < v < 1:  # probability
+                    msg = k + " (between 0-1)"
+                elif isinstance(v, float) or isinstance(v, int):  # number
+                    msg = k + " (number)"
+                else:
+                    msg = k
+                inquirer_list.append(inquirer.Text(k, message=msg, default=v))
+    predict_parameter = inquirer.prompt(inquirer_list)
+
+    if use_default:
+        return dict(arg_w_def)
+    else:
+        return predict_parameter
 
 
 def main():
@@ -27,96 +136,32 @@ def main():
     parser.add_argument("--topK", type=float, default=0.6)
     arg = parser.parse_args()
 
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    package = torch.load(arg.model, map_location=device)
-
-    maxlen = package['maxlen']
-    config = package['model_config'] if 'model_config' in package else package['bert']
-    model_types = package['type']
-    model_types = [model_types] if not isinstance(model_types, list) else model_types
-    models_state = package['models'] if 'models' in package else [package['model_state_dict']]
-    models_tag = package['tags'] if 'tags' in package else model_types
-
-    # load pre-train model
-    if 'albert_chinese' in config:
-        tokenizer = BertTokenizer.from_pretrained(config)
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(config)
-    pretrained = AutoModel.from_pretrained(config)
-
-    if arg.tag is not None and arg.tag not in models_tag:
-        print("tag must select from models tag: ", models_tag)
-        raise ValueError("tag must select from models tag")
-
-    if arg.tag is None:
-        tag_ind = 0
-    else:
-        tag_ind = models_tag.index(arg.tag)
-
     valid = arg.valid[0]
-    model_state = models_state[tag_ind]
-    model_type = model_types[tag_ind].lower()
-
-    print("===model info===")
-    print("maxlen", maxlen)
-    print("type", model_type)
-    print("tag", arg.tag)
-    print("valid", valid)
-    print('==========')
-
-    if "once" in model_type:
-        eval_dataset = gen_once.get_data_from_file(valid)
-        model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
-    elif "twice" in model_type:
-        eval_dataset = gen_once.get_data_from_file(valid)
-        model = gen_twice.Twice(tokenizer, pretrained, maxlen=maxlen)
-    elif "onebyone" in model_type:
-        eval_dataset = gen_once.get_data_from_file(valid)
-        model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
-    elif 'clas' in model_type:
-        eval_dataset = classifier.get_data_from_file(valid)
-        model = classifier.MtClassifier(package['task'], tokenizer, pretrained)
-    elif 'tag' in model_type:
-        if "row" in model_type:
-            eval_dataset = tag.get_data_from_file_row(valid)
-        elif "col" in model_type:
-            eval_dataset = tag.get_data_from_file_col(valid)
-        model = tag.Tagger(package['label'], tokenizer, pretrained, maxlen=maxlen)
-    elif 'qa' in model_type:
-        eval_dataset = qa.get_data_from_file(valid)
-        model = qa.QA(tokenizer, pretrained, maxlen=maxlen)
-
-    model.load_state_dict(model_state, strict=False)
-    model = model.to(device)
+    model, eval_dataset = load_model(arg.model, model_dataset=valid)
 
     if not arg.beamsearch:
-        eval_metrics = [EvalMetric(tokenizer)]
+        eval_metrics = [EvalMetric(model.tokenizer)]
     else:
-        eval_metrics = [EvalMetric(tokenizer) for _ in range(arg.beamsize)]
+        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(arg.beamsize)]
 
+    predict_parameter = load_predict_parameter(model)
     for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
         input = i[2]
         target = i[3]
 
-        predict_param = {'input': input, 'task': task}
-        if arg.beamsearch and 'onebyone' in model_type:
-            predict_param['beamsearch'] = True
-            predict_param['beamsize'] = arg.beamsize
-            predict_param['filtersim'] = arg.beamfiltersim
-        elif 'onebyone' in model_type:
-            predict_param['topP'] = arg.topP
-            predict_param['topK'] = arg.topK
-
-        result, result_dict = model.predict(**predict_param)
+        predict_parameter.update({'input': input, 'task': task})
+        result, result_dict = model.predict(**predict_parameter)
         for eval_pos, eval_metric in enumerate(eval_metrics):
-            if 'qa' in model_type:
+            if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
-            if 'onebyone' in model_type and arg.beamsearch:
+            if 'OneByOne' in model.__class__.__name__ and arg.beamsearch:
                 predicted = result_dict['label_map'][eval_pos][0]
-            elif 'tag' in model_type:
+            elif 'Tagger' in model.__class__.__name__:
                 predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
+                target = target.split(" ")
+                predicted = predicted.split(" ")
             else:
                 predicted = result[0] if len(result) > 0 else ''
 

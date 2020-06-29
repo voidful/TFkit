@@ -26,7 +26,8 @@ setup(
         "sklearn",
         "matplotlib",
         "nlp2>=1.6.1",
-        "tqdm>=4.45.0"
+        "tqdm>=4.45.0",
+        "inquirer"
     ],
     entry_points={
         'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']

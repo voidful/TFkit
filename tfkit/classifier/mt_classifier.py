@@ -70,7 +70,7 @@ class MtClassifier(nn.Module):
                 if 'multi_target' in task:
                     reshaped_logits = sigmoid(reshaped_logits)
                 else:
-                    reshaped_logits = softmax(reshaped_logits,dim=1)
+                    reshaped_logits = softmax(reshaped_logits, dim=1)
                 logit_prob = reshaped_logits[0].data.tolist()
                 logit_label = dict(zip(task_lables, logit_prob))
                 result_dict['label_prob_all'].append({task: logit_label})
@@ -89,7 +89,11 @@ class MtClassifier(nn.Module):
 
         return outputs
 
-    def predict(self, task, input, topk=1):
+    def get_all_task(self):
+        return list(self.tasks.keys())
+
+    def predict(self, input, topk=1, task=get_all_task):
+        topk = int(topk)
         self.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, self.tasks_detail[task], task, input)

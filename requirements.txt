@@ -5,3 +5,4 @@ sklearn
 nlp2>=1.6.1
 matplotlib
 tqdm>=4.45.0
+inquirer
