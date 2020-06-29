@@ -271,7 +271,7 @@ def main():
             if 'tag' in m:
                 save_model['label'] = models[ind].labels
             if "clas" in m:
-                save_model['task'] = models[ind].tasks_detail
+                save_model['task-label'] = models[ind].tasks_detail
 
         torch.save(save_model, f"{fname}.pt")
         write_log(f"weights were saved to {fname}.pt")

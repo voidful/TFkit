@@ -77,9 +77,13 @@ class OneByOne(nn.Module):
             outputs = masked_lm_loss
         return outputs
 
-    def predict(self, input, topP=1, topK=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
+    def predict(self, input, topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True,task=None):
+        topK = int(topK)
+        topP = float(topP)
+        beamsize = int(beamsize)
+
         if beamsearch:
-            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim, task=None)
+            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim)
         else:
             self.eval()
             with torch.no_grad():
@@ -100,13 +104,13 @@ class OneByOne(nn.Module):
                 result_dict['label_map'].append(predictions['label_map'])
                 result_dict['prob_list'].append(predictions['prob_list'])
 
-                topP_list = [p for w, p in predictions['label_prob_all'][0]][:topP]
-                topK_list = np.cumsum(topP_list)
-                index_overK = [i for i, x in enumerate(topK_list) if x > topK]
+                topK_list = [p for w, p in predictions['label_prob_all'][0]][:topK]
+                topP_list = np.cumsum(topK_list)
+                index_overK = [i for i, x in enumerate(topP_list) if x > topP]
                 index_overK = 0 if len(index_overK) < 1 else index_overK[0]
-                topK_list = list(topP_list[:index_overK + 1])
-                prob_norm = [float(i) / sum(topK_list) for i in topK_list]
-                sampling_index = topK_list.index(np.random.choice(topK_list, p=prob_norm))
+                topP_list = list(topK_list[:index_overK + 1])
+                prob_norm = [float(i) / sum(topP_list) for i in topP_list]
+                sampling_index = topP_list.index(np.random.choice(topP_list, p=prob_norm))
 
                 predicted_token = predictions['label_prob_all'][0][sampling_index][0]
 
@@ -126,18 +130,18 @@ class OneByOne(nn.Module):
     def isSimilar(self, s, t):
         return self.jaccard_similarity(s, t) > 0.5
 
-    def filterSimilar(self, d, topk):
+    def filterSimilar(self, d, topP):
         while True:
             filteredOne = False
             for s, t in combinations(d, 2):
-                if self.isSimilar(s[0], t[0]) and len(d) - 1 >= topk:
+                if self.isSimilar(s[0], t[0]) and len(d) - 1 >= topP:
                     d.remove(t)
                     filteredOne = True
                     break
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, beamsize=3, filtersim=True, task=None):
+    def predict_beamsearch(self, input, beamsize=3, filtersim=True):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():

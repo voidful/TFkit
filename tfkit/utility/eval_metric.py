@@ -51,8 +51,10 @@ class EvalMetric:
         return self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
 
     def add_record(self, input, predicted, target, task='default'):
-        input = self.tokenize_text(input.strip())
-        predicted = self.tokenize_text(predicted)
+        if isinstance(input, str):
+            input = self.tokenize_text(input.strip())
+        if isinstance(predicted, str):
+            predicted = self.tokenize_text(predicted)
         if isinstance(target, str):
             if "[SEP]" in target:
                 targets = [self.tokenize_text(t.strip()) for t in target.split("[SEP]")]
@@ -117,6 +119,14 @@ class EvalMetric:
                 from sklearn.preprocessing import MultiLabelBinarizer
                 target_key = [t for t in self.target_list[task_name].keys() if len(t) > 0]
                 mlb = MultiLabelBinarizer().fit([target_key])
+                # remove all blank target
+                task['targets'] = [[j for j in sub if len(j) > 0] for sub in task['targets']]
+
+                # modify for tagging result
+                if isinstance(task['predicteds'][0][0], list):
+                    task['targets'] = [j for sub in task['targets'] for j in sub]
+                    task['predicteds'] = [j for sub in task['predicted'] for j in sub]
+
                 result = classification_report(
                     mlb.transform(task['targets']),
                     mlb.transform(task['predicteds']),

@@ -76,7 +76,7 @@ class Once(nn.Module):
 
         return outputs
 
-    def predict(self, input, task=None):
+    def predict(self, input,task=None):
         self.model.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input)

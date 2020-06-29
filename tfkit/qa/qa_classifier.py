@@ -51,8 +51,8 @@ class QA(nn.Module):
                 'label_prob_all': [],
                 'label_map': []
             }
-            reshaped_start_logits = softmax(start_logits,dim=1)
-            reshaped_end_logits = softmax(end_logits,dim=1)
+            reshaped_start_logits = softmax(start_logits, dim=1)
+            reshaped_end_logits = softmax(end_logits, dim=1)
             start_prob = reshaped_start_logits.data.tolist()[0]
             end_prob = reshaped_end_logits.data.tolist()[0]
             result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob))})
@@ -69,6 +69,7 @@ class QA(nn.Module):
         return outputs
 
     def predict(self, input, topk=1, task=None):
+        topk = int(topk)
         self.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, input, maxlen=self.maxlen)

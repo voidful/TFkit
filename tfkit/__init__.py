@@ -5,3 +5,4 @@ import tfkit.gen_twice
 import tfkit.qa
 import tfkit.classifier
 import tfkit.utility
+from tfkit.eval import load_model, load_predict_parameter
