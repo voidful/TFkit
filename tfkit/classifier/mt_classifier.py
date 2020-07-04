@@ -91,7 +91,7 @@ class MtClassifier(nn.Module):
     def get_all_task(self):
         return list(self.tasks.keys())
 
-    def predict(self, input, topk=1, task=get_all_task):
+    def predict(self, input='', topk=1, task=get_all_task):
         topk = int(topk)
         self.eval()
         with torch.no_grad():

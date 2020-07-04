@@ -68,7 +68,7 @@ class QA(nn.Module):
 
         return outputs
 
-    def predict(self, input, topk=1, task=None):
+    def predict(self, input='', topk=1, task=None):
         topk = int(topk)
         self.eval()
         with torch.no_grad():

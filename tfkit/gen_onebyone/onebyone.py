@@ -77,7 +77,7 @@ class OneByOne(nn.Module):
             outputs = masked_lm_loss
         return outputs
 
-    def predict(self, input, topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True,task=None):
+    def predict(self, input='', topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
         topK = int(topK)
         topP = float(topP)
         beamsize = int(beamsize)
