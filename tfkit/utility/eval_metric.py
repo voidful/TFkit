@@ -124,8 +124,8 @@ class EvalMetric:
 
                 # modify for tagging result
                 if isinstance(task['predicteds'][0][0], list):
-                    task['targets'] = [j for sub in task['targets'] for j in sub]
-                    task['predicteds'] = [j for sub in task['predicted'] for j in sub]
+                    task['targets'] = [[j for sub in task['targets'] for j in sub]]
+                    task['predicteds'] = [[j for sub in task['predicted'] for j in sub]]
 
                 result = classification_report(
                     mlb.transform(task['targets']),

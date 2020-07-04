@@ -52,8 +52,8 @@ nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 train model with albert
 ```bash
 tfkit-train --batch 10 \
---epoch 3 \
---lr 5e-6 \
+--epoch 5 \
+--lr 5e-5 \
 --train ./clner_row/train \
 --test ./clner_row/test \
 --maxlen 512 \
@@ -64,7 +64,7 @@ tfkit-train --batch 10 \
 eval model
 ```bash
 tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
-```
+```         
 host prediction service
 ```bash
 nlp2go --model ./albert_ner/3.pt --api_path ner
