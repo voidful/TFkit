@@ -284,7 +284,8 @@ load_model<span class="p">(</span><span class="n">model_path</span><span class="
 82
 83
 84
-85</pre>
+85
+86</pre>
 </div>
 </td>
 <td class="code">
@@ -324,6 +325,7 @@ load_model<span class="p">(</span><span class="n">model_path</span><span class="
         <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
     <span class="n">pretrained</span> <span class="o">=</span> <span class="n">AutoModel</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 
+    <span class="nb">type</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
     <span class="k">if</span> <span class="s2">"once"</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">:</span>
         <span class="n">eval_dataset</span> <span class="o">=</span> <span class="n">gen_once</span><span class="o">.</span><span class="n">get_data_from_file</span><span class="p">(</span><span class="n">model_dataset</span><span class="p">)</span> <span class="k">if</span> <span class="n">model_dataset</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">gen_once</span><span class="o">.</span><span class="n">Once</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">pretrained</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">maxlen</span><span class="p">)</span>
@@ -377,9 +379,9 @@ load_predict_parameter<span class="p">(</span><span class="n">model</span><span 
 <tr>
 <td class="linenos">
 <div class="linenodiv">
-<pre><span></span>116
-117
-118</pre>
+<pre><span></span>117
+118
+119</pre>
 </div>
 </td>
 <td class="code">

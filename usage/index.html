@@ -314,18 +314,18 @@ optional arguments:
 </code></pre></div>
 <h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">¶</a></h2>
 <h3 id="use-distilbert-to-train-ner-model">Use distilbert to train NER Model<a class="headerlink" href="#use-distilbert-to-train-ner-model" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code>nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
+<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 tfkit-train --batch <span class="m">10</span> --epoch <span class="m">3</span> --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen <span class="m">512</span> --model tagRow --config distilbert-base-multilingual-cased 
 nlp2go --model ./checkpoints/3.pt  --cli     
 </code></pre></div>
 <h3 id="use-albert-to-train-drcd-qa-model">Use Albert to train DRCD QA Model<a class="headerlink" href="#use-albert-to-train-drcd-qa-model" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code>nlprep --dataset zhqa --task qa --outdir ./zhqa/   
+<div class="highlight"><pre><span></span><code>nlprep --dataset qa_zh --outdir ./zhqa/   
 tfkit-train --maxlen <span class="m">512</span> --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
 nlp2go --model ./drcd_qa_model/3.pt --cli 
 </code></pre></div>
 <h3 id="use-albert-to-train-both-drcd-qa-and-ner-model">Use Albert to train both DRCD QA and NER Model<a class="headerlink" href="#use-albert-to-train-both-drcd-qa-and-ner-model" title="Permanent link">¶</a></h3>
-<div class="highlight"><pre><span></span><code>nlprep --dataset clner --outdir ./clner_row --util s2t 
-nlprep --dataset zhqa --outdir ./zhqa/ 
+<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+nlprep --dataset qa_zh --outdir ./zhqa/ 
 tfkit-train --maxlen <span class="m">300</span> --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --model tagRow qa --config voidful/albert_chinese_small
 nlp2go --model ./mt-qaner/3.pt --cli 
 </code></pre></div>

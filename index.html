@@ -156,8 +156,8 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#running-tfkit-to-train-a-sentiment-classification-model">
-    Running TFKit to train a sentiment classification model
+<a class="md-nav__link" href="#running-tfkit-to-train-a-ner-model">
+    Running TFKit to train a ner model
   </a>
 </li>
 </ul>
@@ -258,8 +258,8 @@
   </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#running-tfkit-to-train-a-sentiment-classification-model">
-    Running TFKit to train a sentiment classification model
+<a class="md-nav__link" href="#running-tfkit-to-train-a-ner-model">
+    Running TFKit to train a ner model
   </a>
 </li>
 </ul>
@@ -351,9 +351,9 @@ At the same time, it can do multi-task multi-model learning, and can introduce i
 <h3 id="installing-via-pip">Installing via pip<a class="headerlink" href="#installing-via-pip" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code>pip install tfkit
 </code></pre></div>
-<h3 id="running-tfkit-to-train-a-sentiment-classification-model">Running TFKit to train a sentiment classification model<a class="headerlink" href="#running-tfkit-to-train-a-sentiment-classification-model" title="Permanent link">¶</a></h3>
+<h3 id="running-tfkit-to-train-a-ner-model">Running TFKit to train a ner model<a class="headerlink" href="#running-tfkit-to-train-a-ner-model" title="Permanent link">¶</a></h3>
 <p>download dataset using nlprep
-<div class="highlight"><pre><span></span><code>nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
+<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 </code></pre></div>
 train model with albert
 <div class="highlight"><pre><span></span><code>tfkit-train --batch <span class="m">10</span> <span class="se">\</span>
@@ -363,16 +363,15 @@ train model with albert
 --test ./clner_row/test <span class="se">\</span>
 --maxlen <span class="m">512</span> <span class="se">\</span>
 --model tagRow <span class="se">\</span>
---savedir ./albert_ner
+--savedir ./albert_ner <span class="se">\</span>
 --config voidful/albert_chinese_small
 </code></pre></div>
 eval model
-<div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --metric clas
+<div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
 </code></pre></div>
 host prediction service
-<div class="highlight"><pre><span></span><code>nlp2go --model ./checkpoints/3.pt 
+<div class="highlight"><pre><span></span><code>nlp2go --model ./albert_ner/3.pt --api_path ner
 </code></pre></div></p>
-<p><strong>You can also try tfkit in Google Colab: <a href=""><img alt="Google Colab" src="https://colab.research.google.com/assets/colab-badge.svg" title="tfkit"/></a></strong></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¶</a></h2>
 <h3 id="train">Train<a class="headerlink" href="#train" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code>$ tfkit-train
