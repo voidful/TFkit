@@ -369,6 +369,34 @@ train model with albert
 eval model
 <div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
 </code></pre></div>
+result
+<div class="highlight"><pre><span></span><code>Task : default report 
+TASK:  default 0
+                precision    recall  f1-score   support
+
+    B_Abstract       0.00      0.00      0.00         1
+    B_Location       1.00      1.00      1.00         1
+      B_Metric       1.00      1.00      1.00         1
+B_Organization       0.00      0.00      0.00         1
+      B_Person       1.00      1.00      1.00         1
+    B_Physical       0.00      0.00      0.00         1
+       B_Thing       1.00      1.00      1.00         1
+        B_Time       1.00      1.00      1.00         1
+    I_Abstract       1.00      1.00      1.00         1
+    I_Location       1.00      1.00      1.00         1
+      I_Metric       1.00      1.00      1.00         1
+I_Organization       0.00      0.00      0.00         1
+      I_Person       1.00      1.00      1.00         1
+    I_Physical       0.00      0.00      0.00         1
+       I_Thing       1.00      1.00      1.00         1
+        I_Time       1.00      1.00      1.00         1
+             O       1.00      1.00      1.00         1
+
+     micro avg       1.00      0.71      0.83        17
+     macro avg       0.71      0.71      0.71        17
+  weighted avg       0.71      0.71      0.71        17
+   samples avg       1.00      0.71      0.83        17
+</code></pre></div>
 host prediction service
 <div class="highlight"><pre><span></span><code>nlp2go --model ./albert_ner/3.pt --api_path ner
 </code></pre></div></p>
