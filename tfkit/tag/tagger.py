@@ -74,7 +74,7 @@ class Tagger(nn.Module):
 
         return outputs
 
-    def predict(self, input, neg="O",task=None):
+    def predict(self, input='', neg="O", task=None):
         self.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(tokenizer=self.tokenizer, labels=self.labels, input=input.strip(),
