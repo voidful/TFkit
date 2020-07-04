@@ -70,6 +70,8 @@ host prediction service
 nlp2go --model ./checkpoints/3.pt 
 ```
 
+**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")]()**
+
 ## Overview
 ### Train
 ```

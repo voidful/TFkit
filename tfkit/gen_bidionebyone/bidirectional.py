@@ -8,7 +8,6 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 import torch.nn as nn
-from transformers import *
 from gen_onebyone.data_loader import get_feature_from_data
 from itertools import combinations
 from torch.nn.functional import softmax
@@ -16,7 +15,6 @@ from math import log
 from utility.loss import *
 from utility.tok import *
 import numpy as np
-import random
 
 
 class BiDiOneByOne(nn.Module):
@@ -71,7 +69,7 @@ class BiDiOneByOne(nn.Module):
             outputs = masked_lm_loss
         return outputs
 
-    def predict(self, input, topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True,task=None):
+    def predict(self, input, topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
         topK = int(topK)
         topP = float(topP)
         beamsize = int(beamsize)

@@ -13,6 +13,7 @@ from tqdm import tqdm
 from utility.eval_metric import EvalMetric
 import csv
 import inquirer
+import nlp2
 
 
 def load_model(model_path, model_type=None, model_dataset=None):
@@ -25,7 +26,7 @@ def load_model(model_path, model_type=None, model_dataset=None):
     [print(key, ':', torchpack[key]) for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key]
     print('==========')
 
-    if 'tags' in torchpack and torchpack['tags'] > 1:
+    if 'tags' in torchpack and len(torchpack['tags']) > 1:
         if model_type is None:
             print("Pick which models to use in multi-task models")
             inquirer_res = inquirer.prompt(
@@ -84,79 +85,72 @@ def load_model(model_path, model_type=None, model_dataset=None):
         return model
 
 
-def load_predict_parameter(model, use_default=False):
+def get_class_that_defined_method(meth):
+    if inspect.ismethod(meth):
+        for cls in inspect.getmro(meth.__self__.__class__):
+            if cls.__dict__.get(meth.__name__) is meth:
+                return cls
+        meth = meth.__func__  # fallback to __qualname__ parsing
+    if inspect.isfunction(meth):
+        cls = getattr(inspect.getmodule(meth),
+                      meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+        if isinstance(cls, type):
+            return cls
+    return getattr(meth, '__objclass__', None)  # handle special descriptor objects
+
+
+def get_class_that_defined_method(meth):
+    if inspect.ismethod(meth):
+        for cls in inspect.getmro(meth.__self__.__class__):
+            if cls.__dict__.get(meth.__name__) is meth:
+                return cls
+        meth = meth.__func__  # fallback to __qualname__ parsing
+    if inspect.isfunction(meth):
+        cls = getattr(inspect.getmodule(meth),
+                      meth.__qualname__.split('.<locals>', 1)[0].rsplit('.', 1)[0])
+        if isinstance(cls, type):
+            return cls
+    return None  # not required since None would have been implicitly returned anyway
+
+
+def load_predict_parameter(model, enable_arg_panel=False):
     """use inquirer panel to let user input model parameter or just use default value"""
-
-    print("Input parameter for predict function")
-    arg_len = len(inspect.getfullargspec(model.predict).args)
-    def_len = len(inspect.getfullargspec(model.predict).defaults)
-    arg_w_def = zip(inspect.getfullargspec(model.predict).args[arg_len - def_len:],
-                    inspect.getfullargspec(model.predict).defaults)
-
-    inquirer_list = []
-    for k, v in arg_w_def:
-        if v is not None:
-            if callable(v):
-                msg = k
-                inquirer_list.append(inquirer.List(k, message=msg, choices=v(model)))
-            elif isinstance(v, list):
-                msg = k
-                inquirer_list.append(inquirer.List(k, message=msg, choices=v))
-            elif isinstance(v, bool):
-                msg = k
-                inquirer_list.append(inquirer.List(k, message=msg, choices=[True, False]))
-            else:
-                if isinstance(v, float) and 0 < v < 1:  # probability
-                    msg = k + " (between 0-1)"
-                elif isinstance(v, float) or isinstance(v, int):  # number
-                    msg = k + " (number)"
-                else:
-                    msg = k
-                inquirer_list.append(inquirer.Text(k, message=msg, default=v))
-    predict_parameter = inquirer.prompt(inquirer_list)
-
-    if use_default:
-        return dict(arg_w_def)
-    else:
-        return predict_parameter
+    return nlp2.function_argument_panel(model.predict, disable_input_panel=(not enable_arg_panel), func_parent=model)
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", required=True, type=str)
-    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'])
-    parser.add_argument("--valid", required=True, type=str, nargs='+')
-    parser.add_argument("--tag", type=str)
-    parser.add_argument("--batch", type=int, default=5)
-    parser.add_argument("--print", action='store_true')
-    parser.add_argument("--beamsearch", action='store_true')
-    parser.add_argument("--beamsize", type=int, default=3)
-    parser.add_argument("--beamfiltersim", action='store_true')
-    parser.add_argument("--topP", type=int, default=1)
-    parser.add_argument("--topK", type=float, default=0.6)
+    parser.add_argument("--model", required=True, type=str, help="model path")
+    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
+    parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
+    parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
+    parser.add_argument("--enable_arg_panel", action='store_true', help="enable panel to input argument")
     arg = parser.parse_args()
 
     valid = arg.valid[0]
     model, eval_dataset = load_model(arg.model, model_dataset=valid)
+    predict_parameter = load_predict_parameter(model, arg.enable_arg_panel)
 
-    if not arg.beamsearch:
-        eval_metrics = [EvalMetric(model.tokenizer)]
+    if 'beamsearch' in predict_parameter and predict_parameter['beamsearch']:
+        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['beamsize'])]
     else:
-        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(arg.beamsize)]
+        eval_metrics = [EvalMetric(model.tokenizer)]
 
-    predict_parameter = load_predict_parameter(model)
     for i in tqdm(eval_dataset):
         tasks = i[0]
         task = i[1]
         input = i[2]
         target = i[3]
 
-        predict_parameter.update({'input': input, 'task': task})
+        predict_parameter.update({'input': input})
+        if 'task' not in predict_parameter:
+            predict_parameter.update({'task': task})
+
         result, result_dict = model.predict(**predict_parameter)
         for eval_pos, eval_metric in enumerate(eval_metrics):
             if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
-            if 'OneByOne' in model.__class__.__name__ and arg.beamsearch:
+            if 'OneByOne' in model.__class__.__name__ and predict_parameter['beamsearch']:
                 predicted = result_dict['label_map'][eval_pos][0]
             elif 'Tagger' in model.__class__.__name__:
                 predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
@@ -177,7 +171,7 @@ def main():
     for eval_pos, eval_metric in enumerate(eval_metrics):
 
         argtype = "_dataset_" + valid.replace("/", "_").replace(".", "")
-        if arg.beamsearch:
+        if 'beamsearch' in predict_parameter:
             argtype = "_beam_" + str(eval_pos)
         outfile_name = arg.model + argtype
 
