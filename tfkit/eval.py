@@ -51,6 +51,7 @@ def load_model(model_path, model_type=None, model_dataset=None):
         tokenizer = AutoTokenizer.from_pretrained(config)
     pretrained = AutoModel.from_pretrained(config)
 
+    type = type.lower()
     if "once" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
