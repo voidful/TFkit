@@ -44,10 +44,10 @@ At the same time, it can do multi-task multi-model learning, and can introduce i
 ```bash
 pip install tfkit
 ```
-### Running TFKit to train a sentiment classification model
+### Running TFKit to train a ner model
 download dataset using nlprep
 ```bash
-nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
+nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 ```
 train model with albert
 ```bash
@@ -58,19 +58,17 @@ tfkit-train --batch 10 \
 --test ./clner_row/test \
 --maxlen 512 \
 --model tagRow \
---savedir ./albert_ner
+--savedir ./albert_ner \
 --config voidful/albert_chinese_small
 ```
 eval model
 ```bash
-tfkit-eval --model ./albert_ner/3.pt --metric clas
+tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
 ```
 host prediction service
 ```bash
-nlp2go --model ./checkpoints/3.pt 
+nlp2go --model ./albert_ner/3.pt --api_path ner
 ```
-
-**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")]()**
 
 ## Overview
 ### Train

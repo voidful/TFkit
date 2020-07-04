@@ -53,22 +53,22 @@ optional arguments:
 
 ### Use distilbert to train NER Model
 ```bash
-nlprep --dataset clner --task tagRow --outdir ./clner_row --util s2t 
+nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen 512 --model tagRow --config distilbert-base-multilingual-cased 
 nlp2go --model ./checkpoints/3.pt  --cli     
 ```
 
 ### Use Albert to train DRCD QA Model
 ```bash
-nlprep --dataset zhqa --task qa --outdir ./zhqa/   
+nlprep --dataset qa_zh --outdir ./zhqa/   
 tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
 nlp2go --model ./drcd_qa_model/3.pt --cli 
 ```
 
 ### Use Albert to train both DRCD QA and NER Model
 ```bash
-nlprep --dataset clner --outdir ./clner_row --util s2t 
-nlprep --dataset zhqa --outdir ./zhqa/ 
+nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+nlprep --dataset qa_zh --outdir ./zhqa/ 
 tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --model tagRow qa --config voidful/albert_chinese_small
 nlp2go --model ./mt-qaner/3.pt --cli 
 ```
