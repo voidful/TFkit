@@ -122,27 +122,27 @@ def set_seed(seed):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--batch", type=int, default=20)
-    parser.add_argument("--lr", type=float, nargs='+', default=[5e-5])
-    parser.add_argument("--epoch", type=int, default=10)
-    parser.add_argument("--maxlen", type=int, default=368)
-    parser.add_argument("--savedir", type=str, default="checkpoints/")
-    parser.add_argument("--add_tokens", action='store_true', help="add new token if not exist")
-    parser.add_argument("--train", type=str, nargs='+', required=True)
-    parser.add_argument("--valid", type=str, nargs='+', required=True)
+    parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
+    parser.add_argument("--lr", type=float, nargs='+', default=[5e-5], help="learning rate, default 5e-5")
+    parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
+    parser.add_argument("--maxlen", type=int, default=368, help="max tokenized sequence length, default 368")
+    parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
+    # parser.add_argument("--add_tokens", action='store_true', help="add new token if not exist")
+    parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
+    parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'clas', 'tagRow', 'tagCol', 'qa',
-                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both'])
+                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both'], help="model task")
     parser.add_argument("--lossdrop", action='store_true', help="loss dropping for text generation")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
-    parser.add_argument("--seed", type=int, default=609)
-    parser.add_argument("--worker", type=int, default=8)
-    parser.add_argument("--grad_accum", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
+    parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
+    parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
-    parser.add_argument("--cache", action='store_true', help='Caching training data')
+    parser.add_argument("--cache", action='store_true', help='cache training data')
     global arg
     arg = parser.parse_args()
 
@@ -167,46 +167,46 @@ def main():
     test_dataset = []
     train_ds_maxlen = 0
     test_ds_maxlen = 0
-    for model_type, train_file, valid_file in zip_longest(arg.model, arg.train, arg.valid, fillvalue=""):
+    for model_type, train_file, test_file in zip_longest(arg.model, arg.train, arg.test, fillvalue=""):
         model_type = model_type.lower()
         if "once" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                 cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                cache=arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "twice" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                 cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                cache=arg.cache)
             model = gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "onebyone" in model_type:
             train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                         cache=arg.cache,
                                                         likelihood=model_type)
-            test_ds = gen_onebyone.loadOneByOneDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                        cache=arg.cache)
             model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen, lossdrop=arg.lossdrop)
         elif 'clas' in model_type:
             train_ds = classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = classifier.loadClassifierDataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = classifier.loadClassifierDataset(test_file, pretrained=arg.config, cache=arg.cache)
             model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
         elif 'tag' in model_type:
             if "row" in model_type:
                 train_ds = tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                     cache=arg.cache)
-                test_ds = tag.loadRowTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadRowTaggerDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                    cache=arg.cache)
             elif "col" in model_type:
                 train_ds = tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                     cache=arg.cache)
-                test_ds = tag.loadColTaggerDataset(valid_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadColTaggerDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
                                                    cache=arg.cache)
             model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'qa' in model_type:
             train_ds = qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = qa.loadQADataset(valid_file, pretrained=arg.config, cache=arg.cache)
+            test_ds = qa.loadQADataset(test_file, pretrained=arg.config, cache=arg.cache)
             model = qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
 
         model = model.to(device)

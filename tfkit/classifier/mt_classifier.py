@@ -6,7 +6,6 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 import torch.nn as nn
-from transformers import *
 from torch.nn.functional import softmax, sigmoid
 from classifier.data_loader import get_feature_from_data
 from utility.loss import *

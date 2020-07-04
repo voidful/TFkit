@@ -1,0 +1,93 @@
+# Project information
+site_name: tfkit
+site_description: 🤖📇 Transformers kit - End2End toolkit for NLP task
+site_author: Voidful
+site_url: https://github.com/voidful/tfkit
+repo_name: tfkit
+repo_url: https://github.com/voidful/tfkit
+copyright: Copyright &copy; Voidful
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Usage: usage.md
+  - Task: task.md
+  - Benchmark: benchmark.md
+#  - Class: class.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          setup_commands:
+            - import sys
+            - sys.path.append("docs")
+      watch:
+        - nlprep
+
+theme:
+  name: material
+  language: en
+  palette:
+    primary: blue grey
+    accent: blue grey
+  font:
+    text: Roboto
+    code: Roboto Mono
+  logo: img/tfkit-icon.png
+  favicon: img/tfkit-icon.png
+
+# Extras
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/voidful/tfkit
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/voidful_stack
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/voidful/
+
+# Google Analytics
+google_analytics:
+  - UA-127062540-5
+  - auto
+
+# Extensions
+markdown_extensions:
+  - markdown.extensions.admonition
+  - markdown.extensions.attr_list
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - markdown.extensions.def_list
+  - markdown.extensions.footnotes
+  - markdown.extensions.meta
+  - markdown.extensions.toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+   # - pymdownx.highlight:
+   #     linenums_style: pymdownx-inline
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
