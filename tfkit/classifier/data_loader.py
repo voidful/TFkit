@@ -58,8 +58,8 @@ def get_data_from_file(fpath):
     tasks = defaultdict(list)
     with open(fpath, 'r', encoding='utf8', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        headers = next(reader, None)
         reader = list(reader)
+        headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0])-1)]
         for row in reader:
             start_pos = 1
             for pos, item in enumerate(row[start_pos:]):
