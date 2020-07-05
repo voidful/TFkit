@@ -25,7 +25,7 @@ setup(
         "torch",
         "sklearn",
         "matplotlib",
-        "nlp2>=1.6.9",
+        "nlp2>=1.7.0",
         "tqdm>=4.45.0",
         "inquirer"
     ],
