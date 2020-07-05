@@ -63,7 +63,7 @@ def load_model(model_path, model_type=None, model_dataset=None):
         model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
     elif 'classify' in type or 'clas' in type:
         eval_dataset = classifier.get_data_from_file(model_dataset) if model_dataset else None
-        model = classifier.MtClassifier(torchpack['task'], tokenizer, pretrained)
+        model = classifier.MtClassifier(torchpack['task-label'], tokenizer, pretrained)
     elif 'tag' in type:
         if model_dataset and "row" in type:
             eval_dataset = tag.get_data_from_file_row(model_dataset)
