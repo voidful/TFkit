@@ -28,12 +28,21 @@ class loadClassifierDataset(data.Dataset):
                 task_dict = outdata['task']
         else:
             task_dict = {}
+            total_data = 0
+            data_exceed_maxlen = 0
             for i in tqdm(get_data_from_file(fpath)):
                 all_task, task, input, target = i
                 task_dict.update(all_task)
                 feature = get_feature_from_data(tokenizer, maxlen, all_task, task, input, target)
                 if len(feature['input']) <= maxlen:
                     sample.append(feature)
+                else:
+                    data_exceed_maxlen += 1
+                total_data += 1
+
+            print("Processed " + str(total_data) + " data, removed " + str(
+                data_exceed_maxlen) + " data that exceed the maximum length.")
+
             if cache:
                 with open(cache_path, 'wb') as cf:
                     outdata = {'sample': sample, 'task': task_dict}
@@ -59,7 +68,7 @@ def get_data_from_file(fpath):
     with open(fpath, 'r', encoding='utf8', newline='') as csvfile:
         reader = csv.reader(csvfile)
         reader = list(reader)
-        headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0])-1)]
+        headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0]) - 1)]
         for row in reader:
             start_pos = 1
             for pos, item in enumerate(row[start_pos:]):
