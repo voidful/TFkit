@@ -352,22 +352,25 @@ At the same time, it can do multi-task multi-model learning, and can introduce i
 <div class="highlight"><pre><span></span><code>pip install tfkit
 </code></pre></div>
 <h3 id="running-tfkit-to-train-a-ner-model">Running TFKit to train a ner model<a class="headerlink" href="#running-tfkit-to-train-a-ner-model" title="Permanent link">¶</a></h3>
-<p>download dataset using nlprep
+<p>install nlprep and nlp2go    <br/>
+<div class="highlight"><pre><span></span><code>pip install nlprep  nlp2go -U
+</code></pre></div>
+download dataset using nlprep
 <div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 </code></pre></div>
 train model with albert
-<div class="highlight"><pre><span></span><code>tfkit-train --batch <span class="m">10</span> <span class="se">\</span>
---epoch <span class="m">3</span> <span class="se">\</span>
---lr 5e-6 <span class="se">\</span>
---train ./clner_row/train <span class="se">\</span>
---test ./clner_row/test <span class="se">\</span>
+<div class="highlight"><pre><span></span><code>tfkit-train --batch <span class="m">20</span> <span class="se">\</span>
+--epoch <span class="m">5</span> <span class="se">\</span>
+--lr 5e-5 <span class="se">\</span>
+--train ./clner_row/train.csv <span class="se">\</span>
+--test ./clner_row/test.csv <span class="se">\</span>
 --maxlen <span class="m">512</span> <span class="se">\</span>
 --model tagRow <span class="se">\</span>
 --savedir ./albert_ner <span class="se">\</span>
 --config voidful/albert_chinese_small
 </code></pre></div>
 eval model
-<div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
+<div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation.csv --metric clas
 </code></pre></div>
 result
 <div class="highlight"><pre><span></span><code>Task : default report 
@@ -400,6 +403,7 @@ I_Organization       0.00      0.00      0.00         1
 host prediction service
 <div class="highlight"><pre><span></span><code>nlp2go --model ./albert_ner/3.pt --api_path ner
 </code></pre></div></p>
+<p><strong>You can also try tfkit in Google Colab: <a href="https://colab.research.google.com/drive/1SGiwl06Prkh6iFHHfRlxGWIrnUhrbx0p?usp=sharing"><img alt="Google Colab" src="https://colab.research.google.com/assets/colab-badge.svg" title="tfkit"/></a></strong></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">¶</a></h2>
 <h3 id="train">Train<a class="headerlink" href="#train" title="Permanent link">¶</a></h3>
 <div class="highlight"><pre><span></span><code>$ tfkit-train

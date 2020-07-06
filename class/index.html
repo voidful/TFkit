@@ -337,7 +337,7 @@ load_model<span class="p">(</span><span class="n">model_path</span><span class="
         <span class="n">model</span> <span class="o">=</span> <span class="n">gen_onebyone</span><span class="o">.</span><span class="n">OneByOne</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="n">pretrained</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="n">maxlen</span><span class="p">)</span>
     <span class="k">elif</span> <span class="s1">'classify'</span> <span class="ow">in</span> <span class="nb">type</span> <span class="ow">or</span> <span class="s1">'clas'</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">:</span>
         <span class="n">eval_dataset</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">get_data_from_file</span><span class="p">(</span><span class="n">model_dataset</span><span class="p">)</span> <span class="k">if</span> <span class="n">model_dataset</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="n">model</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">MtClassifier</span><span class="p">(</span><span class="n">torchpack</span><span class="p">[</span><span class="s1">'task'</span><span class="p">],</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">pretrained</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">MtClassifier</span><span class="p">(</span><span class="n">torchpack</span><span class="p">[</span><span class="s1">'task-label'</span><span class="p">],</span> <span class="n">tokenizer</span><span class="p">,</span> <span class="n">pretrained</span><span class="p">)</span>
     <span class="k">elif</span> <span class="s1">'tag'</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">model_dataset</span> <span class="ow">and</span> <span class="s2">"row"</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">:</span>
             <span class="n">eval_dataset</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">get_data_from_file_row</span><span class="p">(</span><span class="n">model_dataset</span><span class="p">)</span>
@@ -379,16 +379,18 @@ load_predict_parameter<span class="p">(</span><span class="n">model</span><span 
 <tr>
 <td class="linenos">
 <div class="linenodiv">
-<pre><span></span>117
-118
-119</pre>
+<pre><span></span>89
+90
+91
+92</pre>
 </div>
 </td>
 <td class="code">
 <div class="highlight">
 <pre><span></span><code><span class="k">def</span> <span class="nf">load_predict_parameter</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">enable_arg_panel</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="sd">"""use inquirer panel to let user input model parameter or just use default value"""</span>
-    <span class="k">return</span> <span class="n">nlp2</span><span class="o">.</span><span class="n">function_argument_panel</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span> <span class="n">disable_input_panel</span><span class="o">=</span><span class="p">(</span><span class="ow">not</span> <span class="n">enable_arg_panel</span><span class="p">),</span> <span class="n">func_parent</span><span class="o">=</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">nlp2</span><span class="o">.</span><span class="n">function_argument_panel</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">,</span> <span class="n">disable_input_panel</span><span class="o">=</span><span class="p">(</span><span class="ow">not</span> <span class="n">enable_arg_panel</span><span class="p">),</span> <span class="n">func_parent</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                                        <span class="n">ignore_empty</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </code></pre>
 </div>
 </td>
