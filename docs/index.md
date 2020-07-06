@@ -45,17 +45,21 @@ At the same time, it can do multi-task multi-model learning, and can introduce i
 pip install tfkit
 ```
 ### Running TFKit to train a ner model
+install nlprep and nlp2go      
+```bash
+pip install nlprep  nlp2go -U
+```
 download dataset using nlprep
 ```bash
 nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 ```
 train model with albert
 ```bash
-tfkit-train --batch 10 \
---epoch 3 \
---lr 5e-6 \
---train ./clner_row/train \
---test ./clner_row/test \
+tfkit-train --batch 20 \
+--epoch 5 \
+--lr 5e-5 \
+--train ./clner_row/train.csv \
+--test ./clner_row/test.csv \
 --maxlen 512 \
 --model tagRow \
 --savedir ./albert_ner \
@@ -63,8 +67,8 @@ tfkit-train --batch 10 \
 ```
 eval model
 ```bash
-tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation --metric clas
-```
+tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation.csv --metric clas
+```     
 result
 ```text
 Task : default report 
@@ -93,11 +97,14 @@ I_Organization       0.00      0.00      0.00         1
      macro avg       0.71      0.71      0.71        17
   weighted avg       0.71      0.71      0.71        17
    samples avg       1.00      0.71      0.83        17
-```
+```    
 host prediction service
 ```bash
 nlp2go --model ./albert_ner/3.pt --api_path ner
 ```
+
+**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1SGiwl06Prkh6iFHHfRlxGWIrnUhrbx0p?usp=sharing)**
+
 
 ## Overview
 ### Train
