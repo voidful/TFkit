@@ -23,11 +23,20 @@ class loadOnceDataset(data.Dataset):
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
         else:
+            total_data = 0
+            data_exceed_maxlen = 0
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
                 feature = get_feature_from_data(tokenizer, maxlen, input, target)
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= maxlen:
                     sample.append(feature)
+                else:
+                    data_exceed_maxlen += 1
+                total_data += 1
+
+            print("Processed " + str(total_data) + " data, removed " + str(
+                data_exceed_maxlen) + " data that exceed the maximum length.")
+
             if cache:
                 with open(cache_path, 'wb') as cf:
                     pickle.dump(sample, cf)

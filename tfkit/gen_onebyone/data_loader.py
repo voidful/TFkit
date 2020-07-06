@@ -27,6 +27,8 @@ class loadOneByOneDataset(data.Dataset):
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
         else:
+            total_data = 0
+            data_exceed_maxlen = 0
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
                 input = input.strip()
@@ -48,20 +50,33 @@ class loadOneByOneDataset(data.Dataset):
                                 if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
                                     feature['ntarget'][feature['start']] = -1
                                 sample.append(feature)
+                            else:
+                                data_exceed_maxlen += 1
+                            total_data += 1
                     else:
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                             if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
                                 feature['ntarget'][feature['start']] = -1
                             sample.append(feature)
+                        else:
+                            data_exceed_maxlen += 1
+                        total_data += 1
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
+                else:
+                    data_exceed_maxlen += 1
+                total_data += 1
 
                 if 'pos' in likelihood:
                     feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                          " ".join(target))
-                    sample.extend([feature] * 2)
+                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                        sample.extend([feature] * 2)
+                    else:
+                        data_exceed_maxlen += 1
+                    total_data += 1
                 elif negative_text is not None:
                     if "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
@@ -80,6 +95,12 @@ class loadOneByOneDataset(data.Dataset):
                             if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
                                 feature['ntarget'][feature['start']] = -1
                             sample.extend([feature] * 2)
+                        else:
+                            data_exceed_maxlen += 1
+                        total_data += 1
+
+            print("Processed " + str(total_data) + " data, removed " + str(
+                data_exceed_maxlen) + " data that exceed the maximum length.")
 
             if cache:
                 with open(cache_path, 'wb') as cf:

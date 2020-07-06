@@ -70,12 +70,22 @@ class loadRowTaggerDataset(data.Dataset):
                 samples = savedict["samples"]
                 labels = savedict["labels"]
         else:
+            total_data = 0
+            data_exceed_maxlen = 0
+
             for i in get_data_from_file_row(fpath):
                 tasks, task, input, target = i
                 labels = tasks[task]
                 feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
                 if len(feature['input']) == len(feature['target']) <= maxlen:
                     samples.append(feature)
+                else:
+                    data_exceed_maxlen += 1
+                total_data += 1
+
+            print("Processed " + str(total_data) + " data, removed " + str(
+                data_exceed_maxlen) + " data that exceed the maximum length.")
+
             if cache:
                 with open(cache_path, 'wb') as cf:
                     pickle.dump({'samples': samples, 'labels': labels}, cf)

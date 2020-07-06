@@ -25,7 +25,9 @@ class loadBiDiOneByOneDataset(data.Dataset):
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
         else:
-            for i in get_data_from_file(fpath):
+            total_data = 0
+            data_exceed_maxlen = 0
+            for i in tqdm(get_data_from_file(fpath)):
                 tasks, task, input, target, negative_text = i
                 input = input.strip()
                 tokenized_target = tokenizer.tokenize(" ".join(target))
@@ -34,6 +36,9 @@ class loadBiDiOneByOneDataset(data.Dataset):
                                                     tokenized_target[:j])
                     if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                         sample.append(feature)
+                    else:
+                        data_exceed_maxlen += 1
+                    total_data += 1
                     if negative_text is not None and 'token' in likelihood:
                         if "[SEP]" in negative_text:
                             ntext_arr = negative_text.split("[SEP]")
@@ -48,10 +53,16 @@ class loadBiDiOneByOneDataset(data.Dataset):
                                                             ntarget=neg_word)
                             if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                                 sample.append(feature)
+                            else:
+                                data_exceed_maxlen += 1
+                            total_data += 1
 
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
                 if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                     sample.append(feature)
+                else:
+                    data_exceed_maxlen += 1
+                total_data += 1
 
                 if negative_text is not None and ('sent' in likelihood or "neg-both" in likelihood):
                     if "[SEP]" in negative_text:
@@ -71,6 +82,12 @@ class loadBiDiOneByOneDataset(data.Dataset):
                                                                                  ntarget=neg_text)
                         if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
                             sample.append(feature)
+                        else:
+                            data_exceed_maxlen += 1
+                        total_data += 1
+
+            print("Processed " + str(total_data) + " data, removed " + str(
+                data_exceed_maxlen) + " data that exceed the maximum length.")
 
             if cache:
                 with open(cache_path, 'wb') as cf:
