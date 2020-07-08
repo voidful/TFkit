@@ -37,6 +37,9 @@ At the same time, it can do multi-task multi-model learning, and can introduce i
 - [NLPrep](https://github.com/voidful/NLPrep): download and preprocessing data in one line     
 - [nlp2go](https://github.com/voidful/nlp2go): create demo api as quickly as possible.
 
+# Documentation
+Learn more from the [docs](https://voidful.github.io/TFkit/).  
+
 
 ## Quick Start
 
