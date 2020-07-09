@@ -17,6 +17,8 @@ import classifier
 import tag
 import qa
 
+from tfkit.utility import get_topP_unk_token
+
 
 def write_log(*args):
     line = ' '.join([str(a) for a in args])
@@ -127,7 +129,8 @@ def main():
     parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
     parser.add_argument("--maxlen", type=int, default=368, help="max tokenized sequence length, default 368")
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
-    # parser.add_argument("--add_tokens", action='store_true', help="add new token if not exist")
+    parser.add_argument("--add_tokens", type=int, default=0,
+                        help="auto add top x percent UNK token to word table, range 0-100")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--model", type=str, required=True, nargs='+',
@@ -154,12 +157,26 @@ def main():
     [write_log(var, ':', vars(arg)[var]) for var in vars(arg)]
     write_log("=======================")
 
+    pretrained_config = arg.config
     # load pre-train model
-    if 'albert_chinese' in arg.config:
-        tokenizer = BertTokenizer.from_pretrained(arg.config)
+    if 'albert_chinese' in pretrained_config:
+        tokenizer = BertTokenizer.from_pretrained(pretrained_config)
     else:
-        tokenizer = AutoTokenizer.from_pretrained(arg.config)
-    pretrained = AutoModel.from_pretrained(arg.config)
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
+    pretrained = AutoModel.from_pretrained(pretrained_config)
+
+    if arg.add_tokens:
+        write_log("Calculating Unknown Token")
+        add_tokens = get_topP_unk_token(tokenizer, arg.train + arg.test, arg.add_tokens)
+        num_added_toks = tokenizer.add_tokens(add_tokens)
+        write_log('We have added', num_added_toks, 'tokens')
+        pretrained.resize_token_embeddings(len(tokenizer))
+        save_path = os.path.join(arg.savedir, pretrained_config + "_added_tok")
+        pretrained_config = save_path
+        pretrained.save_pretrained(save_path)
+        tokenizer.save_pretrained(save_path)
+        write_log('New pre-train model saved at ', save_path)
+        write_log("=======================")
 
     models = []
     models_tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
@@ -170,43 +187,43 @@ def main():
     for model_type, train_file, test_file in zip_longest(arg.model, arg.train, arg.test, fillvalue=""):
         model_type = model_type.lower()
         if "once" in model_type:
-            train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                 cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                cache=arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "twice" in model_type:
-            train_ds = gen_once.loadOnceDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                 cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                cache=arg.cache)
             model = gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
         elif "onebyone" in model_type:
-            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                         cache=arg.cache,
                                                         likelihood=model_type)
-            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
+            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                        cache=arg.cache)
             model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen, lossdrop=arg.lossdrop)
         elif 'clas' in model_type:
-            train_ds = classifier.loadClassifierDataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = classifier.loadClassifierDataset(test_file, pretrained=arg.config, cache=arg.cache)
+            train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=arg.cache)
+            test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=arg.cache)
             model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
         elif 'tag' in model_type:
             if "row" in model_type:
-                train_ds = tag.loadRowTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                train_ds = tag.loadRowTaggerDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                     cache=arg.cache)
-                test_ds = tag.loadRowTaggerDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadRowTaggerDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                    cache=arg.cache)
             elif "col" in model_type:
-                train_ds = tag.loadColTaggerDataset(train_file, pretrained=arg.config, maxlen=arg.maxlen,
+                train_ds = tag.loadColTaggerDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                     cache=arg.cache)
-                test_ds = tag.loadColTaggerDataset(test_file, pretrained=arg.config, maxlen=arg.maxlen,
+                test_ds = tag.loadColTaggerDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
                                                    cache=arg.cache)
             model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
         elif 'qa' in model_type:
-            train_ds = qa.loadQADataset(train_file, pretrained=arg.config, cache=arg.cache)
-            test_ds = qa.loadQADataset(test_file, pretrained=arg.config, cache=arg.cache)
+            train_ds = qa.loadQADataset(train_file, pretrained=pretrained_config, cache=arg.cache)
+            test_ds = qa.loadQADataset(test_file, pretrained=pretrained_config, cache=arg.cache)
             model = qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
 
         model = model.to(device)
@@ -238,7 +255,7 @@ def main():
     start_epoch = 1
 
     if arg.resume:
-        print("Loading back:", arg.resume)
+        write_log("Loading back:", arg.resume)
         package = torch.load(arg.resume, map_location=device)
         if 'model_state_dict' in package:
             models[0].load_state_dict(package['model_state_dict'])

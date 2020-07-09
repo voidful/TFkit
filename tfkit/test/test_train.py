@@ -31,4 +31,7 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --lr 1e-4 --grad_accum 2 --batch 2 --epoch 2 --train ../demo_data/classification.csv --test ../demo_data/classification.csv --model clas --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)
 
-
+    def testAddToken(self):
+        result = os.system(
+            'tfkit-train --batch 2 --add_tokens 100 --epoch 1  --train ../demo_data/generate.csv --test ../demo_data/generate.csv --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+        self.assertTrue(result == 0)

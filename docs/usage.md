@@ -17,17 +17,18 @@ arguments:
   --savedir SAVEDIR     model saving dir, default /checkpoints
 optional arguments:
   -h, --help            show this help message and exit
-  --batch BATCH         batch size, default 20
+  --batch               batch size, default 20
   --lr LR [LR ...]      learning rate, default 5e-5
-  --epoch EPOCH         epoch, default 10
-  --maxlen MAXLEN       max tokenized sequence length, default 368
+  --epoch               epoch, default 10
+  --maxlen              max tokenized sequence length, default 368
   --lossdrop            loss dropping for text generation
-  --tag TAG [TAG ...]   tag to identity task in multi-task
-  --seed SEED           random seed, default 609
-  --worker WORKER       number of worker on pre-processing, default 8
+  --add_tokens          auto add top x percent UNK token to word table, default 0, range 0-100
+  --tag     [TAG ...]   tag to identity task in multi-task
+  --seed                random seed, default 609
+  --worker              number of worker on pre-processing, default 8
   --grad_accum          gradient accumulation, default 1
   --tensorboard         Turn on tensorboard graphing
-  --resume RESUME       resume training
+  --resume              resume training
   --cache               cache training data
 
 ```
@@ -42,6 +43,7 @@ arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
+  --config              pre-trained model path after add token
   --print               print each pair of evaluate data
   --enable_arg_panel    enable panel to input argument
 
