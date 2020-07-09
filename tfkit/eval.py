@@ -16,7 +16,7 @@ import inquirer
 import nlp2
 
 
-def load_model(model_path, model_type=None, model_dataset=None):
+def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=None):
     """load model from dumped file"""
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -39,7 +39,10 @@ def load_model(model_path, model_type=None, model_dataset=None):
     print("loading model from dumped file")
     # get all loading parameter
     maxlen = torchpack['maxlen']
-    config = torchpack['model_config'] if 'model_config' in torchpack else torchpack['bert']
+    if pretrained_path is not None:
+        config = pretrained_path
+    else:
+        config = torchpack['model_config'] if 'model_config' in torchpack else torchpack['bert']
     model_types = [torchpack['type']] if not isinstance(torchpack['type'], list) else torchpack['type']
     models_state = torchpack['models'] if 'models' in torchpack else [torchpack['model_state_dict']]
     type = model_types[type_ind] if model_type is None else model_type
@@ -95,6 +98,7 @@ def load_predict_parameter(model, enable_arg_panel=False):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", required=True, type=str, help="model path")
+    parser.add_argument("--config", type=str, help='pre-trained model path after add token')
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
@@ -102,7 +106,7 @@ def main():
     arg = parser.parse_args()
 
     valid = arg.valid[0]
-    model, eval_dataset = load_model(arg.model, model_dataset=valid)
+    model, eval_dataset = load_model(arg.model, model_dataset=valid, pretrained_path=arg.config)
     predict_parameter = load_predict_parameter(model, arg.enable_arg_panel)
 
     if 'beamsearch' in predict_parameter and predict_parameter['beamsearch']:

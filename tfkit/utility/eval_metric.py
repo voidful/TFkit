@@ -55,16 +55,15 @@ class EvalMetric:
             input = self.tokenize_text(input.strip())
         if isinstance(predicted, str):
             predicted = self.tokenize_text(predicted)
-        if isinstance(target, str):
-            if "[SEP]" in target:
-                targets = [self.tokenize_text(t.strip()) for t in target.split("[SEP]")]
-                target = self.tokenize_text(targets[0])
+
+        target = [target] if isinstance(target, str) else target
+        targets = []
+        for t in target:
+            if "[SEP]" in t:
+                targets.extend([self.tokenize_text(st.strip()) for st in t.split("[SEP]")])
             else:
-                target = self.tokenize_text(target.strip())
-                targets = [target]
-        else:
-            targets = target
-            target = target[0]
+                targets.append(self.tokenize_text(t.strip()))
+        target = targets[0]
 
         if self.max_candidate - len(targets) > 0:
             targets.extend([""] * (self.max_candidate - len(targets)))
