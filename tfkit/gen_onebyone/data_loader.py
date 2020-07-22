@@ -15,6 +15,7 @@ import gen_once
 class loadOneByOneDataset(data.Dataset):
 
     def __init__(self, fpath, pretrained, maxlen=510, cache=False, likelihood=''):
+        self.maxlen = maxlen
         sample = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
@@ -28,7 +29,7 @@ class loadOneByOneDataset(data.Dataset):
                 sample = pickle.load(cf)
         else:
             total_data = 0
-            data_exceed_maxlen = 0
+            data_invalid = 0
             for i in get_data_from_file(fpath):
                 tasks, task, input, target, negative_text = i
                 input = input.strip()
@@ -36,52 +37,58 @@ class loadOneByOneDataset(data.Dataset):
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
                                                     tokenized_target[:j])
-                    if negative_text is not None and ("neg" in likelihood or 'both' in likelihood):
-                        if "[SEP]" in negative_text:
+                    if "neg" in likelihood or 'both' in likelihood:
+                        # formatting neg data in csv
+                        if negative_text is None:
+                            ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]
+                        elif "[SEP]" in negative_text:
                             ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                         else:
                             ntext_arr = [negative_text.strip()]
-
+                        # adding neg data
                         for neg_text in ntext_arr:
                             feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                      ntarget=neg_text)
                             feature['ntarget'] = feature_neg['ntarget']
-                            if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                                if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
-                                    feature['ntarget'][feature['start']] = -1
+
+                            if self.check_feature_valid(feature):
                                 sample.append(feature)
                             else:
-                                data_exceed_maxlen += 1
+                                data_invalid += 1
                             total_data += 1
                     else:
-                        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                            if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
-                                feature['ntarget'][feature['start']] = -1
+                        if self.check_feature_valid(feature):
                             sample.append(feature)
                         else:
-                            data_exceed_maxlen += 1
+                            data_invalid += 1
                         total_data += 1
 
+                # end of the last word
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
-                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                if self.check_feature_valid(feature):
                     sample.append(feature)
                 else:
-                    data_exceed_maxlen += 1
+                    data_invalid += 1
                 total_data += 1
 
+                # whole sentence masking
                 if 'pos' in likelihood:
                     feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                          " ".join(target))
-                    if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
+                    if self.check_feature_valid(feature):
                         sample.extend([feature] * 2)
                     else:
-                        data_exceed_maxlen += 1
+                        data_invalid += 1
                     total_data += 1
-                elif negative_text is not None:
-                    if "[SEP]" in negative_text:
+                else:
+                    # formatting neg data in csv
+                    if negative_text is None:
+                        ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]
+                    elif "[SEP]" in negative_text:
                         ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
                     else:
                         ntext_arr = [negative_text.strip()]
+
                     for neg_text in ntext_arr:
                         if 'neg' in likelihood:
                             feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
@@ -90,17 +97,14 @@ class loadOneByOneDataset(data.Dataset):
                             feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                  " ".join(target),
                                                                                  ntarget=neg_text)
-
-                        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == maxlen:
-                            if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
-                                feature['ntarget'][feature['start']] = -1
+                        if self.check_feature_valid(feature):
                             sample.extend([feature] * 2)
                         else:
-                            data_exceed_maxlen += 1
+                            data_invalid += 1
                         total_data += 1
 
             print("Processed " + str(total_data) + " data, removed " + str(
-                data_exceed_maxlen) + " data that exceed the maximum length.")
+                data_invalid) + " data that exceed the maximum length.")
 
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -108,8 +112,16 @@ class loadOneByOneDataset(data.Dataset):
         self.sample = sample
 
     def increase_with_sampling(self, total):
-        inc_samp = [choice(self.sample) for i in range(total - len(self.sample))]
+        inc_samp = [choice(self.sample) for _ in range(total - len(self.sample))]
         self.sample.extend(inc_samp)
+
+    def check_feature_valid(self, feature):
+        if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) == self.maxlen:
+            if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
+                feature['ntarget'][feature['start']] = -1
+            return True
+        else:
+            return False
 
     def __len__(self):
         return len(self.sample)

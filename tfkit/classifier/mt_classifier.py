@@ -106,4 +106,4 @@ class MtClassifier(nn.Module):
                     task_map = [i[task] for i in result['label_prob_all'] if task in i][0]
                     return sorted(task_map, key=task_map.get, reverse=True)[:topk], result
             else:
-                return [""], {}
+                return [], {}

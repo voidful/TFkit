@@ -103,6 +103,8 @@ class Twice(nn.Module):
         self.model.eval()
         with torch.no_grad():
             feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input)
+            if len(feature_dict['input']) > self.maxlen:
+                return [], {}
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
             predictions = self.forward(feature_dict, eval=True)

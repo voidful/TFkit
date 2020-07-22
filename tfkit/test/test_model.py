@@ -29,6 +29,10 @@ class TestModel(unittest.TestCase):
         self.assertTrue('label_map' in model_dict)
         print(model.predict(task="taskA", input=input))
         print(model.predict(task="taskA", input=input, topk=2))
+        # test exceed 512
+        result, model_dict = model.predict(task="taskA", input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
 
     # @pytest.mark.skip()
     def testQA(self):
@@ -56,6 +60,10 @@ class TestModel(unittest.TestCase):
         self.assertTrue('label_prob_all' in model_dict)
         self.assertTrue('label_map' in model_dict)
         self.assertTrue(len(result) == 2)
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
 
     # @pytest.mark.skip()
     def testTag(self):
@@ -70,16 +78,20 @@ class TestModel(unittest.TestCase):
                                  tokenizer, pretrained)
 
         self.assertTrue(isinstance(model(feature), Tensor))
-        print(model(feature, eval=True))
+        # print(model(feature, eval=True))
         model_dict = model(feature, eval=True)
         self.assertTrue('label_prob_all' in model_dict)
         self.assertTrue('label_map' in model_dict)
         result, model_dict = model.predict(input=input)
         self.assertTrue('label_prob_all' in model_dict)
         self.assertTrue('label_map' in model_dict)
-        print(result, len(result))
+        # print(result, len(result))
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
 
     # @pytest.mark.skip()
     def testOnce(self):
@@ -106,6 +118,10 @@ class TestModel(unittest.TestCase):
         print(result, len(result))
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
 
     # @pytest.mark.skip()
     def testTwice(self):
@@ -131,6 +147,10 @@ class TestModel(unittest.TestCase):
         print(result, len(result))
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
 
     # @pytest.mark.skip()
     def testOnebyone(self):
@@ -163,3 +183,8 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result[0][0], str))
         result, model_dict = model.predict(input=input, beamsearch=True, beamsize=3)
         print("beamsaerch", result, len(result), model_dict)
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        print(result)
+        self.assertTrue(len(result) == 0)

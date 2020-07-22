@@ -53,17 +53,26 @@ class EvalMetric:
     def add_record(self, input, predicted, target, task='default'):
         if isinstance(input, str):
             input = self.tokenize_text(input.strip())
+        if isinstance(input, list):
+            for i, t in enumerate(input):
+                input[i] = self.tokenize_text(t)
+
         if isinstance(predicted, str):
             predicted = self.tokenize_text(predicted)
+        if isinstance(predicted, list):
+            for i, t in enumerate(predicted):
+                predicted[i] = self.tokenize_text(t)
 
-        target = [target] if isinstance(target, str) else target
-        targets = []
-        for t in target:
-            if "[SEP]" in t:
-                targets.extend([self.tokenize_text(st.strip()) for st in t.split("[SEP]")])
+        if isinstance(target, str):
+            targets = []
+            if "[SEP]" in target:
+                targets.extend([self.tokenize_text(st.strip()) for st in target.split("[SEP]")])
             else:
-                targets.append(self.tokenize_text(t.strip()))
-        target = targets[0]
+                targets.append(self.tokenize_text(target.strip()))
+        if isinstance(target, list):
+            for i, t in enumerate(target):
+                target[i] = self.tokenize_text(t)
+            targets = target
 
         if self.max_candidate - len(targets) > 0:
             targets.extend([""] * (self.max_candidate - len(targets)))
@@ -120,11 +129,13 @@ class EvalMetric:
                 mlb = MultiLabelBinarizer().fit([target_key])
                 # remove all blank target
                 task['targets'] = [[j for j in sub if len(j) > 0] for sub in task['targets']]
-
                 # modify for tagging result
                 if isinstance(task['predicteds'][0][0], list):
-                    task['targets'] = [[j for sub in task['targets'] for j in sub]]
-                    task['predicteds'] = [[j for sub in task['predicted'] for j in sub]]
+                    task['targets'] = sum([[[j] for j in sub] for sub in task['targets']], [])
+                    task['predicteds'] = sum([[[j] for j in sub] for sub in task['predicted']], [])
+                    if len(task['targets']) != len(task['predicteds']):
+                        diff = len(task['targets']) - len(task['predicteds'])
+                        task['predicteds'].extend([''] * diff)
 
                 result = classification_report(
                     mlb.transform(task['targets']),

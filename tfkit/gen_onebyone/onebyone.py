@@ -88,39 +88,41 @@ class OneByOne(nn.Module):
             self.eval()
             with torch.no_grad():
                 output = []
-            result_dict = {
-                'label_prob_all': [],
-                'label_map': [],
-                'prob_list': []
-            }
-            while True:
-                feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
-                if len(feature_dict['input']) > self.maxlen:
-                    break
-                for k, v in feature_dict.items():
-                    feature_dict[k] = [v]
-                predictions = self.forward(feature_dict, eval=True)
-                result_dict['label_prob_all'].append(predictions['label_prob_all'])
-                result_dict['label_map'].append(predictions['label_map'])
-                result_dict['prob_list'].append(predictions['prob_list'])
+                result_dict = {
+                    'label_prob_all': [],
+                    'label_map': [],
+                    'prob_list': []
+                }
+                while True:
+                    feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
+                    if len(feature_dict['input']) > self.maxlen:
+                        break
+                    for k, v in feature_dict.items():
+                        feature_dict[k] = [v]
+                    predictions = self.forward(feature_dict, eval=True)
+                    result_dict['label_prob_all'].append(predictions['label_prob_all'])
+                    result_dict['label_map'].append(predictions['label_map'])
+                    result_dict['prob_list'].append(predictions['prob_list'])
 
-                topK_list = [p for w, p in predictions['label_prob_all'][0]][:topK]
-                topP_list = np.cumsum(topK_list)
-                index_overK = [i for i, x in enumerate(topP_list) if x > topP]
-                index_overK = 0 if len(index_overK) < 1 else index_overK[0]
-                topP_list = list(topK_list[:index_overK + 1])
-                prob_norm = [float(i) / sum(topP_list) for i in topP_list]
-                sampling_index = topP_list.index(np.random.choice(topP_list, p=prob_norm))
+                    topK_list = [p for w, p in predictions['label_prob_all'][0]][:topK]
+                    topP_list = np.cumsum(topK_list)
+                    index_overK = [i for i, x in enumerate(topP_list) if x > topP]
+                    index_overK = 0 if len(index_overK) < 1 else index_overK[0]
+                    topP_list = list(topK_list[:index_overK + 1])
+                    prob_norm = [float(i) / sum(topP_list) for i in topP_list]
+                    sampling_index = topP_list.index(np.random.choice(topP_list, p=prob_norm))
 
-                predicted_token = predictions['label_prob_all'][0][sampling_index][0]
+                    predicted_token = predictions['label_prob_all'][0][sampling_index][0]
 
-                if tok_sep(self.tokenizer) in predicted_token or \
-                        len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
-                    break
-                output.append(predicted_token)
+                    if tok_sep(self.tokenizer) in predicted_token or \
+                            len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
+                        break
+                    output.append(predicted_token)
 
-            output = self.tokenizer.convert_tokens_to_string(output)
-            return [output], result_dict
+                output = self.tokenizer.convert_tokens_to_string(output)
+                if len(output) < 1:
+                    return [], {}
+                return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
         s1 = set(list1)

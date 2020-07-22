@@ -95,4 +95,4 @@ class QA(nn.Module):
                     return ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
                             answer_results], result
             else:
-                return [""], {}
+                return [], {}

@@ -200,7 +200,38 @@ class TestEval(unittest.TestCase):
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
-                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", [""] * 7,
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", [],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
                         task='default')
         for s in eval.cal_score('classification'):
             print(s[0])
