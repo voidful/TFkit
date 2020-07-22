@@ -79,6 +79,9 @@ class Tagger(nn.Module):
         with torch.no_grad():
             feature_dict = get_feature_from_data(tokenizer=self.tokenizer, labels=self.labels, input=input.strip(),
                                                  maxlen=self.maxlen)
+            
+            if len(feature_dict['input']) > self.maxlen:
+                return [], {}
 
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]

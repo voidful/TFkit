@@ -4,7 +4,6 @@ from transformers import *
 import argparse
 import torch
 import gen_once
-import gen_twice
 import gen_onebyone
 import qa
 import classifier
@@ -129,11 +128,14 @@ def main():
             if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
             if 'OneByOne' in model.__class__.__name__ and predict_parameter['beamsearch']:
-                predicted = result_dict['label_map'][eval_pos][0]
+                predicted = result_dict['label_map'][eval_pos][0] if 'label_map' in result_dict else ''
             elif 'Tagger' in model.__class__.__name__:
-                predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
                 target = target.split(" ")
-                predicted = predicted.split(" ")
+                if 'label_map' in result_dict:
+                    predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
+                    predicted = predicted.split(" ")
+                else:
+                    predicted = [""] * len(target)
             else:
                 predicted = result[0] if len(result) > 0 else ''
 

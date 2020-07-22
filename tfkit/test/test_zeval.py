@@ -43,7 +43,7 @@ class TestEval(unittest.TestCase):
 
     def testEvalTAG(self):
         result = os.system(
-            'tfkit-eval --model ./cache/model/albert_small_zh_ner.pt --valid ../demo_data/tag_row.csv --metric clas')
+            'tfkit-eval --model ./cache/model/albert_small_zh_ner.pt --valid ../demo_data/tag_row.csv --metric clas --print')
         self.assertTrue(result == 0)
 
     def testEvalAddedTokenModel(self):
