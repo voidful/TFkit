@@ -44,7 +44,7 @@ def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=
         config = torchpack['model_config'] if 'model_config' in torchpack else torchpack['bert']
     model_types = [torchpack['type']] if not isinstance(torchpack['type'], list) else torchpack['type']
     models_state = torchpack['models'] if 'models' in torchpack else [torchpack['model_state_dict']]
-    type = model_types[type_ind] if model_type is None else model_type
+    type = model_types[type_ind]
 
     # load model
     if 'albert_chinese' in config:
@@ -57,9 +57,6 @@ def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=
     if "once" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
-    elif "twice" in type:
-        eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
-        model = gen_twice.Twice(tokenizer, pretrained, maxlen=maxlen)
     elif "onebyone" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
