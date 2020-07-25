@@ -139,7 +139,7 @@ def main():
     parser.add_argument("--lossdrop", action='store_true', help="loss dropping for text generation")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
-                        help='distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small')
+                        help='distilbert-base-multilingual-cased|bert-base-multilingual-cased|voidful/albert_chinese_small')
     parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
