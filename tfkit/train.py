@@ -11,7 +11,6 @@ from torch.utils import data
 from itertools import zip_longest
 import os
 import gen_once
-import gen_twice
 import gen_onebyone
 import classifier
 import tag
