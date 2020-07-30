@@ -1,10 +1,11 @@
 import argparse
 import random
 
+import nlp2
 import torch
 from torch import nn
 from tqdm import tqdm
-from transformers import *
+from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
 import numpy as np
 import tensorboardX as tensorboard
 from torch.utils import data
@@ -18,10 +19,12 @@ import qa
 
 from tfkit.utility import get_topP_unk_token
 
+input_arg = {}
+
 
 def write_log(*args):
     line = ' '.join([str(a) for a in args])
-    with open(os.path.join(arg.savedir, "message.log"), "a", encoding='utf8') as log_file:
+    with open(os.path.join(input_arg.savedir, "message.log"), "a", encoding='utf8') as log_file:
         log_file.write(line + '\n')
     print(line)
 
@@ -38,14 +41,14 @@ def optimizer(model, lr):
     return optimizer
 
 
-def train(models_list, train_dataset, models_tag, arg, epoch):
+def model_train(models_list, train_dataset, models_tag, input_arg, epoch, writer):
     optims = []
     models = []
     for i, m in enumerate(models_list):
         model = nn.DataParallel(m)
         model.train()
         models.append(model)
-        optims.append(optimizer(m, arg.lr[i] if i < len(arg.lr) else arg.lr[0]))
+        optims.append(optimizer(m, input_arg.lr[i] if i < len(input_arg.lr) else input_arg.lr[0]))
 
     total_iter = 0
     t_loss = 0
@@ -59,27 +62,28 @@ def train(models_list, train_dataset, models_tag, arg, epoch):
             train_batch = next(batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
-                loss = loss / arg.grad_accum
+                loss = loss / input_arg.grad_accum
                 loss.mean().backward()
-                if (total_iter + 1) % arg.grad_accum == 0:
+                if (total_iter + 1) % input_arg.grad_accum == 0:
                     optim.step()
                     model.zero_grad()
                 t_loss += loss.mean().item()
-                if arg.tensorboard:
+                if input_arg.tensorboard:
                     writer.add_scalar("loss/step", loss.mean().item(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     write_log(
-                        f"tag: {mtag}, model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
+                        f"epoch: {epoch}, tag: {mtag}, model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
             else:
                 end = True
         pbar.update(1)
         total_iter += 1
     pbar.close()
-    write_log(f"step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
+    write_log(
+        f"epoch: {epoch}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
     return t_loss / total_iter
 
 
-def eval(models, test_dataset, fname, epoch):
+def model_eval(models, test_dataset, fname, epoch, writer):
     t_loss = 0
     t_length = 0
     for m in models:
@@ -104,7 +108,7 @@ def eval(models, test_dataset, fname, epoch):
 
     avg_t_loss = t_loss / t_length if t_length > 0 else 0
     write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
-    if arg.tensorboard:
+    if input_arg.tensorboard:
         writer.add_scalar("eval_loss/step", avg_t_loss, epoch)
     return avg_t_loss
 
@@ -119,6 +123,59 @@ def set_seed(seed):
     torch.cuda.manual_seed(seed)
     if torch.cuda.is_available() > 0:
         torch.cuda.manual_seed_all(seed)
+
+
+def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
+    models = []
+    train_dataset = []
+    test_dataset = []
+    train_ds_maxlen = 0
+    test_ds_maxlen = 0
+    for model_type, train_file, test_file in zip_longest(input_arg.model, input_arg.train, input_arg.test,
+                                                         fillvalue=""):
+        model_type = model_type.lower()
+        if "once" in model_type:
+            train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                cache=input_arg.cache)
+            test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                               cache=input_arg.cache)
+            model = gen_once.Once(tokenizer, pretrained, maxlen=input_arg.maxlen)
+        elif "onebyone" in model_type:
+            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=pretrained_config,
+                                                        maxlen=input_arg.maxlen,
+                                                        cache=input_arg.cache,
+                                                        likelihood=model_type)
+            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                       cache=input_arg.cache)
+            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=input_arg.maxlen, lossdrop=input_arg.lossdrop)
+        elif 'clas' in model_type:
+            train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=input_arg.cache)
+            test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=input_arg.cache)
+            model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
+        elif 'tag' in model_type:
+            if "row" in model_type:
+                train_ds = tag.loadRowTaggerDataset(train_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                    cache=input_arg.cache)
+                test_ds = tag.loadRowTaggerDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                   cache=input_arg.cache)
+            elif "col" in model_type:
+                train_ds = tag.loadColTaggerDataset(train_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                    cache=input_arg.cache)
+                test_ds = tag.loadColTaggerDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
+                                                   cache=input_arg.cache)
+            model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=input_arg.maxlen)
+        elif 'qa' in model_type:
+            train_ds = qa.loadQADataset(train_file, pretrained=pretrained_config, cache=input_arg.cache)
+            test_ds = qa.loadQADataset(test_file, pretrained=pretrained_config, cache=input_arg.cache)
+            model = qa.QA(tokenizer, pretrained, maxlen=input_arg.maxlen)
+
+        model = model.to(device)
+        train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
+        test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
+        train_dataset.append(train_ds)
+        test_dataset.append(test_ds)
+        models.append(model)
+    return models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen
 
 
 def main():
@@ -145,93 +202,45 @@ def main():
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
-    global arg
-    arg = parser.parse_args()
+    global input_arg
+    input_arg = parser.parse_args()
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    if not os.path.exists(arg.savedir): os.makedirs(arg.savedir)
+    nlp2.get_dir_with_notexist_create(input_arg.savedir)
 
     write_log("TRAIN PARAMETER")
     write_log("=======================")
-    [write_log(var, ':', vars(arg)[var]) for var in vars(arg)]
+    [write_log(var, ':', vars(input_arg)[var]) for var in vars(input_arg)]
     write_log("=======================")
 
-    pretrained_config = arg.config
     # load pre-train model
+    pretrained_config = input_arg.config
     if 'albert_chinese' in pretrained_config:
         tokenizer = BertTokenizer.from_pretrained(pretrained_config)
     else:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
     pretrained = AutoModel.from_pretrained(pretrained_config)
 
-    if arg.add_tokens:
+    # handling add tokens
+    if input_arg.add_tokens:
         write_log("Calculating Unknown Token")
-        add_tokens = get_topP_unk_token(tokenizer, arg.train + arg.test, arg.add_tokens)
+        add_tokens = get_topP_unk_token(tokenizer, input_arg.train + input_arg.test, input_arg.add_tokens)
         num_added_toks = tokenizer.add_tokens(add_tokens)
         write_log('We have added', num_added_toks, 'tokens')
         pretrained.resize_token_embeddings(len(tokenizer))
-        save_path = os.path.join(arg.savedir, pretrained_config + "_added_tok")
+        save_path = os.path.join(input_arg.savedir, pretrained_config + "_added_tok")
         pretrained_config = save_path
         pretrained.save_pretrained(save_path)
         tokenizer.save_pretrained(save_path)
         write_log('New pre-train model saved at ', save_path)
         write_log("=======================")
 
-    models = []
-    models_tag = arg.tag if arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in enumerate(arg.model)]
-    train_dataset = []
-    test_dataset = []
-    train_ds_maxlen = 0
-    test_ds_maxlen = 0
-    for model_type, train_file, test_file in zip_longest(arg.model, arg.train, arg.test, fillvalue=""):
-        model_type = model_type.lower()
-        if "once" in model_type:
-            train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                               cache=arg.cache)
-            model = gen_once.Once(tokenizer, pretrained, maxlen=arg.maxlen)
-        elif "twice" in model_type:
-            train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                cache=arg.cache)
-            test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                               cache=arg.cache)
-            model = gen_twice.Twice(tokenizer, pretrained, maxlen=arg.maxlen)
-        elif "onebyone" in model_type:
-            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                        cache=arg.cache,
-                                                        likelihood=model_type)
-            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                       cache=arg.cache)
-            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=arg.maxlen, lossdrop=arg.lossdrop)
-        elif 'clas' in model_type:
-            train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=arg.cache)
-            test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=arg.cache)
-            model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
-        elif 'tag' in model_type:
-            if "row" in model_type:
-                train_ds = tag.loadRowTaggerDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                    cache=arg.cache)
-                test_ds = tag.loadRowTaggerDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                   cache=arg.cache)
-            elif "col" in model_type:
-                train_ds = tag.loadColTaggerDataset(train_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                    cache=arg.cache)
-                test_ds = tag.loadColTaggerDataset(test_file, pretrained=pretrained_config, maxlen=arg.maxlen,
-                                                   cache=arg.cache)
-            model = tag.Tagger(train_ds.label, tokenizer, pretrained, maxlen=arg.maxlen)
-        elif 'qa' in model_type:
-            train_ds = qa.loadQADataset(train_file, pretrained=pretrained_config, cache=arg.cache)
-            test_ds = qa.loadQADataset(test_file, pretrained=pretrained_config, cache=arg.cache)
-            model = qa.QA(tokenizer, pretrained, maxlen=arg.maxlen)
-
-        model = model.to(device)
-        train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
-        test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
-        train_dataset.append(train_ds)
-        test_dataset.append(test_ds)
-        models.append(model)
-
+    # load model and data
+    models_tag = input_arg.tag if input_arg.tag is not None else [m.lower() + "_" + str(ind) for ind, m in
+                                                                  enumerate(input_arg.model)]
+    models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen = _load_model_and_data(pretrained_config,
+                                                                                                tokenizer, pretrained,
+                                                                                                device)
     # balance sample for multi-task
     for ds in train_dataset:
         ds.increase_with_sampling(train_ds_maxlen)
@@ -239,23 +248,20 @@ def main():
         ds.increase_with_sampling(test_ds_maxlen)
 
     train_dataset = [data.DataLoader(dataset=ds,
-                                     batch_size=arg.batch,
+                                     batch_size=input_arg.batch,
                                      shuffle=True,
-                                     num_workers=arg.worker) for ds in train_dataset]
+                                     num_workers=input_arg.worker) for ds in train_dataset]
     test_dataset = [data.DataLoader(dataset=ds,
-                                    batch_size=arg.batch,
+                                    batch_size=input_arg.batch,
                                     shuffle=True,
-                                    num_workers=arg.worker) for ds in test_dataset]
+                                    num_workers=input_arg.worker) for ds in test_dataset]
 
-    if arg.tensorboard:
-        global writer
-    writer = tensorboard.SummaryWriter()
-
+    writer = tensorboard.SummaryWriter() if input_arg.tensorboard else None
     start_epoch = 1
 
-    if arg.resume:
-        write_log("Loading back:", arg.resume)
-        package = torch.load(arg.resume, map_location=device)
+    if input_arg.resume:
+        write_log("Loading back:", input_arg.resume)
+        package = torch.load(input_arg.resume, map_location=device)
         if 'model_state_dict' in package:
             models[0].load_state_dict(package['model_state_dict'])
         else:
@@ -263,27 +269,25 @@ def main():
                 tag_ind = package['tags'].index(model_tag)
                 models[tag_ind].load_state_dict(state_dict)
         start_epoch = int(package.get('epoch', 1)) + 1
-
-    set_seed(arg.seed)
-
-    write_log("training batch : " + str(arg.batch * arg.grad_accum))
-    for epoch in range(start_epoch, start_epoch + arg.epoch):
-        fname = os.path.join(arg.savedir, str(epoch))
+    set_seed(input_arg.seed)
+    write_log("training batch : " + str(input_arg.batch * input_arg.grad_accum))
+    for epoch in range(start_epoch, start_epoch + input_arg.epoch):
+        fname = os.path.join(input_arg.savedir, str(epoch))
 
         write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = train(models, train_dataset, models_tag, arg, epoch)
+        train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, writer)
 
         write_log(f"=========save at epoch={epoch}=========")
         save_model = {
             'models': [m.state_dict() for m in models],
-            'model_config': arg.config,
+            'model_config': input_arg.config,
             'tags': models_tag,
-            'type': arg.model,
-            'maxlen': arg.maxlen,
+            'type': input_arg.model,
+            'maxlen': input_arg.maxlen,
             'epoch': epoch
         }
 
-        for ind, m in enumerate(arg.model):
+        for ind, m in enumerate(input_arg.model):
             if 'tag' in m:
                 save_model['label'] = models[ind].labels
             if "clas" in m:
@@ -293,11 +297,11 @@ def main():
         write_log(f"weights were saved to {fname}.pt")
 
         write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = eval(models, test_dataset, fname, epoch)
+        eval_avg_loss = model_eval(models, test_dataset, fname, epoch, writer)
 
-        if arg.tensorboard:
+        if input_arg.tensorboard:
             writer.add_scalar("train_loss/epoch", train_avg_loss, epoch)
-        writer.add_scalar("eval_loss/epoch", eval_avg_loss, epoch)
+            writer.add_scalar("eval_loss/epoch", eval_avg_loss, epoch)
 
 
 if __name__ == "__main__":
