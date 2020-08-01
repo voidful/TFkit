@@ -30,15 +30,7 @@ def write_log(*args):
 
 
 def optimizer(model, lr):
-    param_optimizer = list(model.named_parameters())
-    param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
-    no_decay = ['bias', 'gamma', 'beta', 'LayerNorm.bias', 'LayerNorm.weight']
-    optimizer_parameters = [
-        {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.01},
-        {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)], 'weight_decay_rate': 0.0}
-    ]
-    optimizer = AdamW(optimizer_parameters, lr=lr)
-    return optimizer
+    return AdamW(model.parameters(), lr=lr)
 
 
 def model_train(models_list, train_dataset, models_tag, input_arg, epoch, writer):
