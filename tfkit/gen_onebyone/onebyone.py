@@ -1,6 +1,8 @@
 import sys
 import os
 
+from transformers import activations
+
 from tfkit.utility import tok_sep
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -22,7 +24,14 @@ class OneByOne(nn.Module):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
+
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__(), bias=False)
+        self.dense = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.hidden_size)
+        self.transform_act_fn = activations.ACT2FN[self.pretrained.config.hidden_act]
+        self.LayerNorm = nn.LayerNorm(self.pretrained.config.hidden_size, eps=self.pretrained.config.layer_norm_eps)
+        self.bias = nn.Parameter(torch.zeros(self.tokenizer.__len__()))
+        self.model.bias = self.bias
+
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         self.lossdrop = lossdrop
@@ -40,8 +49,11 @@ class OneByOne(nn.Module):
         mask_tensors = torch.as_tensor(masks).to(self.device)
 
         outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
-        sequence_output = outputs[0]
+        sequence_output = self.dense(outputs[0])
+        sequence_output = self.transform_act_fn(sequence_output)
+        sequence_output = self.LayerNorm(sequence_output)
         prediction_scores = self.model(sequence_output)
+
         if eval:
             result_dict = {
                 'label_prob_all': [],
