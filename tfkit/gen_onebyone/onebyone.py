@@ -1,8 +1,6 @@
 import sys
 import os
 
-from transformers import activations
-
 from tfkit.utility import tok_sep
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -24,14 +22,7 @@ class OneByOne(nn.Module):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__(), bias=False)
-        self.dense = nn.Linear(self.pretrained.config.hidden_size, self.pretrained.config.hidden_size)
-        self.transform_act_fn = activations.ACT2FN[self.pretrained.config.hidden_act]
-        self.LayerNorm = nn.LayerNorm(self.pretrained.config.hidden_size, eps=self.pretrained.config.layer_norm_eps)
-        self.bias = nn.Parameter(torch.zeros(self.tokenizer.__len__()))
-        self.model.bias = self.bias
-
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         self.lossdrop = lossdrop
@@ -49,10 +40,7 @@ class OneByOne(nn.Module):
         mask_tensors = torch.as_tensor(masks).to(self.device)
 
         outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
-        sequence_output = self.dense(outputs[0])
-        sequence_output = self.transform_act_fn(sequence_output)
-        sequence_output = self.LayerNorm(sequence_output)
-        prediction_scores = self.model(sequence_output)
+        prediction_scores = self.model(outputs[0])
 
         if eval:
             result_dict = {
@@ -89,13 +77,16 @@ class OneByOne(nn.Module):
             outputs = masked_lm_loss
         return outputs
 
-    def predict(self, input='', topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, task=None):
+    def predict(self, input='', topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, outspacelen=0,
+                task=None):
+        beamsearch = bool(beamsearch)
+        filtersim = bool(filtersim)
         topK = int(topK)
         topP = float(topP)
         beamsize = int(beamsize)
 
         if beamsearch:
-            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim)
+            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim, outspacelen=outspacelen)
         else:
             self.eval()
             with torch.no_grad():
@@ -106,7 +97,8 @@ class OneByOne(nn.Module):
                     'prob_list': []
                 }
                 while True:
-                    feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output)
+                    feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output,
+                                                         outspacelen=outspacelen)
                     if len(feature_dict['input']) > self.maxlen:
                         break
                     for k, v in feature_dict.items():
@@ -123,17 +115,16 @@ class OneByOne(nn.Module):
                     topP_list = list(topK_list[:index_overK + 1])
                     prob_norm = [float(i) / sum(topP_list) for i in topP_list]
                     sampling_index = topP_list.index(np.random.choice(topP_list, p=prob_norm))
-
+                    if len(output) > 1 and predictions['label_prob_all'][0][sampling_index][0] == output[-1]:
+                        sampling_index += 1
                     predicted_token = predictions['label_prob_all'][0][sampling_index][0]
-
-                    if tok_sep(self.tokenizer) in predicted_token or \
-                            len(output) > 2 and output[-1] == output[-2] == predicted_token[0]:
+                    if tok_sep(self.tokenizer) in predicted_token:
                         break
                     output.append(predicted_token)
 
                 output = self.tokenizer.convert_tokens_to_string(output)
                 if len(output) < 1:
-                    return [], {}
+                    return [''], result_dict
                 return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
@@ -155,7 +146,7 @@ class OneByOne(nn.Module):
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, beamsize=3, filtersim=True):
+    def predict_beamsearch(self, input, beamsize=3, filtersim=True, outspacelen=0):
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -165,7 +156,8 @@ class OneByOne(nn.Module):
                 for seq in sequences:
                     if tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
-                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens)
+                        feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
+                                                             outspacelen=outspacelen)
                         if len(feature_dict['input']) > self.maxlen:
                             exceed = True
                             all_candidates.append(seq)

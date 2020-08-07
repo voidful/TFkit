@@ -41,18 +41,15 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) < 512)
 
     def testOnebyone(self):
-        tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
         for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
         maxlen = 512
         for likelihood in ['onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
-                                                            pretrained='bert-base-cased',
+                                                            pretrained='voidful/albert_chinese_tiny',
                                                             maxlen=maxlen, likelihood=likelihood):
-                # print(likelihood, i)
-                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
-                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
                 start_pos = i['start']
                 self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
                 if 'neg' in likelihood and i['target'][start_pos] == -1:

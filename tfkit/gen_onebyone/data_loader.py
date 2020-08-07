@@ -145,10 +145,12 @@ def get_data_from_file(fpath):
             yield tasks, task, input, target, negative_text
 
 
-def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenized_target=None, ntarget=None):
+def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenized_target=None, ntarget=None,
+                          outspacelen=0):
     row_dict = dict()
-
-    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
+    tokenized_input = tokenizer.tokenize(input)
+    tokenized_input = [tok_begin(tokenizer)] + tokenized_input[maxlen - (maxlen - outspacelen):] \
+                      + [tok_sep(tokenizer)]
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append(tok_mask(tokenizer))
     tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
@@ -184,11 +186,11 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
 
     # if True:
     #     print("*** Example ***")
-    #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
-    #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
-    #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")
+    #     print(f"input: {len(row_dict['input'])}, {tokenizer.decode(row_dict['input'][:target_start])} ")
+    #     print(f"type: {len(row_dict['type'])}, {row_dict['type'][:target_start]} ")
+    #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask'][:target_start]} ")
     #     if tokenized_target is not None:
-    #         print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
+    #         print(f"target: {len(row_dict['target'])}, {tokenizer.convert_ids_to_tokens(row_dict['target'][target_start])} ")
     #     if ntarget is not None:
     #         print("POS", target_start, len(tokenized_ntarget))
     #         print("STR", tokenized_ntarget)
