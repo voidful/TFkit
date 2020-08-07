@@ -104,8 +104,7 @@ def main():
     valid = arg.valid[0]
     model, eval_dataset = load_model(arg.model, model_dataset=valid, pretrained_path=arg.config)
     predict_parameter = load_predict_parameter(model, arg.enable_arg_panel)
-
-    if 'beamsearch' in predict_parameter and predict_parameter['beamsearch']:
+    if 'beamsearch' in predict_parameter and predict_parameter['beamsearch'] == 'True':
         eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['beamsize'])]
     else:
         eval_metrics = [EvalMetric(model.tokenizer)]
@@ -148,7 +147,7 @@ def main():
     for eval_pos, eval_metric in enumerate(eval_metrics):
 
         argtype = "_dataset_" + valid.replace("/", "_").replace(".", "")
-        if 'beamsearch' in predict_parameter:
+        if 'beamsearch' in predict_parameter and predict_parameter['beamsearch'] == 'True':
             argtype = "_beam_" + str(eval_pos)
         outfile_name = arg.model + argtype
 

@@ -1,3 +1,4 @@
+import os
 import unittest
 
 import pytest
@@ -154,3 +155,25 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result, list))
         print(result)
         self.assertTrue(len(result) == 0)
+
+    def testOnebyoneWithOutSpace(self):
+        ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))
+        DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
+
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+
+        for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(DATASET_DIR, 'generate.csv')):
+            tasks, task, input, target, negative_text = i
+            input = input.strip()
+            tokenized_target = tokenizer.tokenize(" ".join(target))
+            for j in range(1, len(tokenized_target) + 1):
+                feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input,
+                                                                   tokenized_previous=tokenized_target[:j - 1],
+                                                                   tokenized_target=tokenized_target[:j],
+                                                                   maxlen=20, outspacelen=0)
+                target_start = feature['start']
+                print(f"input: {len(feature['input'])}, {tokenizer.decode(feature['input'][:target_start])} ")
+                print(f"type: {len(feature['type'])}, {feature['type'][:target_start]} ")
+                print(f"mask: {len(feature['mask'])}, {feature['mask'][:target_start]} ")
+                if tokenized_target is not None:
+                    print(f"target: {len(feature['target'])}, {tokenizer.convert_ids_to_tokens(feature['target'][target_start])} ")

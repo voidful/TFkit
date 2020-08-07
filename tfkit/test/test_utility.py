@@ -41,6 +41,17 @@ class TestLoss(unittest.TestCase):
         self.assertTrue(0.99 < custom_criterion(self.outputs, self.alln_targets).item() <= 1)
         self.assertTrue(0.8 < custom_criterion(self.outputs, self.onen_targets).item() < 1)
 
+    def testLossDrop(self):
+        outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
+        targets = torch.Tensor([1, 1]).long()
+        norm_loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
+        loss_fct = nn.CrossEntropyLoss(reduction='none', ignore_index=-1)  # -1 index = padding token
+        masked_lm_loss = loss_fct(outputs, targets)
+        masked_lm_loss = masked_lm_loss.view(-1, len(targets))  # view by batch size
+        masked_lm_loss = masked_lm_loss.sum(dim=0)
+        masked_lm_loss = masked_lm_loss.mean()
+        print(masked_lm_loss.mean(), norm_loss_fct(outputs, targets).mean())
+
     def testNegativeCElLoss(self):
         outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
         targets = torch.Tensor([1, 1]).long()

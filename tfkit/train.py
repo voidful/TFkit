@@ -18,6 +18,7 @@ import tag
 import qa
 
 from tfkit.utility import get_topP_unk_token
+from tfkit.utility import BalancedDataParallel
 
 input_arg = {}
 
@@ -37,7 +38,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, writer
     optims = []
     models = []
     for i, m in enumerate(models_list):
-        model = nn.DataParallel(m)
+        model = BalancedDataParallel(input_arg.batch, m)
         model.train()
         models.append(model)
         optims.append(optimizer(m, input_arg.lr[i] if i < len(input_arg.lr) else input_arg.lr[0]))
@@ -58,6 +59,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, writer
                 loss.mean().backward()
                 if (total_iter + 1) % input_arg.grad_accum == 0:
                     optim.step()
+                    optim.zero_grad()
                     model.zero_grad()
                 t_loss += loss.mean().item()
                 if input_arg.tensorboard:
