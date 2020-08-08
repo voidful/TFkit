@@ -124,7 +124,7 @@ class OneByOne(nn.Module):
 
                 output = self.tokenizer.convert_tokens_to_string(output)
                 if len(output) < 1:
-                    return [''], result_dict
+                    return [], result_dict
                 return [output], result_dict
 
     def jaccard_similarity(self, list1, list2):
