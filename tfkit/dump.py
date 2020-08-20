@@ -1,14 +1,10 @@
 import argparse
 import torch
 import gen_once
-import gen_twice
 import gen_onebyone
 import qa
 import classifier
 import tag
-from tqdm import tqdm
-from utility.eval_metric import EvalMetric
-import csv
 
 
 def main():
@@ -21,27 +17,25 @@ def main():
     package = torch.load(arg.model, map_location=device)
 
     maxlen = package['maxlen']
-    type = package['type']
+    model_type = package['type']
     config = package['model_config'] if 'model_config' in package else package['bert']
-    type = type.lower()
+    model_type = model_type.lower()
 
     print("===model info===")
     print("maxlen", maxlen)
-    print("type", type)
+    print("model_type", model_type)
     print("pretrain", config)
     print('==========')
 
-    if "once" in type:
+    if "once" in model_type:
         model = gen_once.Once(model_config=config, maxlen=maxlen)
-    elif "twice" in type:
-        model = gen_twice.Twice(model_config=config, maxlen=maxlen)
-    elif "onebyone" in type:
+    elif "onebyone" in model_type:
         model = gen_onebyone.OneByOne(model_config=config, maxlen=maxlen)
-    elif 'clas' in type:
+    elif 'clas' in model_type:
         model = classifier.MtClassifier(package['task'], model_config=config)
-    elif 'tag' in type:
+    elif 'tag' in model_type:
         model = tag.Tagger(package['label'], model_config=config, maxlen=maxlen)
-    elif 'qa' in type:
+    elif 'qa' in model_type:
         model = qa.QA(model_config=config, maxlen=maxlen)
 
     model = model.to(device)
