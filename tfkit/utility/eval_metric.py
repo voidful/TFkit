@@ -90,6 +90,7 @@ class EvalMetric:
         return self.tasks[task]
 
     def cal_score(self, metric):
+        data_score = []
         for task_name, task in self.tasks.items():
             print("Task : " + task_name + " report ")
             if "emf1" in metric:
@@ -105,26 +106,41 @@ class EvalMetric:
                                 _normalize_answer(predict)) > 0:
                             equal = True
                         if equal:
-                            em_list.append(1)
-                            f1_list.append(1)
+                            em_score = 1
+                            f1_score = 1
+                            em_list.append(em_score)
+                            f1_list.append(f1_score)
                         else:
-                            f1_list.append(_f1_score(predict, target))
+                            em_score = 0
+                            f1_score = _f1_score(predict, target)
+                            f1_list.append(f1_score)
+                        data_score.append([predict, target, {'em': em_score, 'f1': f1_score}])
                     em += max(em_list)
                     f1 += max(f1_list)
                     total += 1
                 result = {"EM": em / (total or not total), "F1": f1 / (total or not total)}
+                data_score = sorted(data_score, key=lambda i: i[2]['em'])
             if "nlg" in metric:
                 try:
                     from nlgeval import NLGEval
                 except ImportError:
-                    print("nlg-eval package not install, plz install it from https://github.com/Maluuba/nlg-eval")
+                    print(
+                        "nlg-eval package not install, plz install it: pip install git+https://github.com/voidful/nlg-eval.git ; nlg-eval --setup ./nlg-eval-data/")
                     raise
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
+                nlgeval.compute_metrics(ref_list=['abc'],  # transpose
+                                        hyp_list='abc')
+                targets = task['targets']
+                predicted = task['predicted']
+                for t, p in zip(targets, predicted):
+                    data_score.append([p, t, nlgeval.compute_metrics(ref_list=list(map(list, zip(t))), hyp_list=[p])])
                 result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['targets']))),  # transpose
-                                                 hyp_list=task['predicted'])
+                                                 hyp_list=predicted)
+                data_score = sorted(data_score, key=lambda i: i[2]['ROUGE_L'])
             if "clas" in metric:
                 from sklearn.metrics import classification_report
                 from sklearn.preprocessing import MultiLabelBinarizer
+                from sklearn.metrics import precision_recall_fscore_support
                 target_key = [t for t in self.target_list[task_name].keys() if len(t) > 0]
                 mlb = MultiLabelBinarizer().fit([target_key])
                 # remove all blank target
@@ -135,10 +151,17 @@ class EvalMetric:
                     task['predicteds'] = sum([[[j] for j in sub] for sub in task['predicted']], [])
                     if len(task['targets']) != len(task['predicteds']):
                         diff = len(task['targets']) - len(task['predicteds'])
-                        task['predicteds'].extend([''] * diff)
-
+                        task['predicteds'].extend([['']] * diff)
+                targets = task['targets']
+                predicted = task['predicteds']
+                for p, t in zip(predicted, targets):
+                    score = dict(zip(["precision", "recall", "fbeta_score", "support"],
+                                     precision_recall_fscore_support(mlb.transform([t]), mlb.transform([p]),
+                                                                     average='weighted')))
+                    data_score.append([p, t, score])
                 result = classification_report(
-                    mlb.transform(task['targets']),
-                    mlb.transform(task['predicteds']),
+                    mlb.transform(targets),
+                    mlb.transform(predicted),
                     target_names=list(mlb.classes_))
-            yield (task_name, result)
+                data_score = sorted(data_score, key=lambda i: i[2]['fbeta_score'])
+                yield (task_name, result, data_score)

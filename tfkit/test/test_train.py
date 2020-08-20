@@ -50,7 +50,7 @@ class TestTrain(unittest.TestCase):
 
     def testAddToken(self):
         result = os.system(
-            'tfkit-train --batch 2 --add_tokens 100 --epoch 1  --train ' + os.path.join(self.DATASET_DIR,
+            'tfkit-train --batch 2 --add_tokens 0 --epoch 1  --train ' + os.path.join(self.DATASET_DIR,
                                                                                         'generate.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'generate.csv') + ' --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')

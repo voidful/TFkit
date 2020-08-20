@@ -144,6 +144,7 @@ class TestEval(unittest.TestCase):
     @pytest.mark.skip()
     def testNLG(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "a b c", "a b c[SEP]a c c[SEP]", task='default')
         for s in eval.cal_score('nlg'):
@@ -151,6 +152,13 @@ class TestEval(unittest.TestCase):
 
         eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=1)
         eval1.add_record("input", "abc", " abc ", task='default')
+        for s1 in eval1.cal_score('nlg'):
+            print(s1)
+
+        eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=1)
+        eval1.add_record("input", "abb", " abc ", task='default')
+        eval1.add_record("input", "abc", " abc ", task='default')
+        eval1.add_record("input", "abd", " abc ", task='default')
         for s1 in eval1.cal_score('nlg'):
             print(s1)
 
@@ -163,7 +171,7 @@ class TestEval(unittest.TestCase):
         eval6.add_record("input", "abc", "abb [SEP] acc [SEP]abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             print(s6)
-        self.assertTrue(s1 == s3 == s6)
+        self.assertTrue(s1[0] == s3[0] == s6[0])
 
         eval1 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=1)
         eval1.add_record("input", "opq", "abc", task='default')
@@ -179,7 +187,7 @@ class TestEval(unittest.TestCase):
         eval6.add_record("input", "opq", "abb [SEP] acc[SEP]abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             print(s6)
-        self.assertTrue(s1 == s3 == s6)
+        self.assertTrue(s1[0] == s3[0] == s6[0])
 
     def testClassify(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -247,6 +255,7 @@ class TestEval(unittest.TestCase):
         for s in eval.cal_score('classification'):
             print(s[0])
             print(s[1])
+            print(s)
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", '攝影台', ['攝影台'], task='default')

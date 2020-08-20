@@ -1,8 +1,12 @@
 transformers>=2.5.1
-tensorboardX
-torch
-sklearn
+tensorboardX~=2.1
+torch~=1.6.0
+sklearn~=0.0
 nlp2>=1.8.2
-matplotlib
 tqdm>=4.45.0
-inquirer
+inquirer~=2.7.0
+numpy~=1.19.1
+pytest~=6.0.1
+tfkit~=0.3.70
+scikit-learn~=0.23.2
+setuptools~=40.8.0

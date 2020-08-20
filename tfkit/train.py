@@ -3,7 +3,6 @@ import random
 
 import nlp2
 import torch
-from torch import nn
 from tqdm import tqdm
 from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
 import numpy as np
@@ -17,7 +16,7 @@ import classifier
 import tag
 import qa
 
-from tfkit.utility import get_topP_unk_token
+from tfkit.utility import get_freqK_unk_token
 from tfkit.utility import BalancedDataParallel
 
 input_arg = {}
@@ -180,7 +179,7 @@ def main():
     parser.add_argument("--maxlen", type=int, default=368, help="max tokenized sequence length, default 368")
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
     parser.add_argument("--add_tokens", type=int, default=0,
-                        help="auto add top x percent UNK token to word table, range 0-100")
+                        help="auto add freq > x UNK token to word table")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--model", type=str, required=True, nargs='+',
@@ -218,7 +217,7 @@ def main():
     # handling add tokens
     if input_arg.add_tokens:
         write_log("Calculating Unknown Token")
-        add_tokens = get_topP_unk_token(tokenizer, input_arg.train + input_arg.test, input_arg.add_tokens)
+        add_tokens = get_freqK_unk_token(tokenizer, input_arg.train + input_arg.test, input_arg.add_tokens)
         num_added_toks = tokenizer.add_tokens(add_tokens)
         write_log('We have added', num_added_toks, 'tokens')
         pretrained.resize_token_embeddings(len(tokenizer))
