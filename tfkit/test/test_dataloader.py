@@ -45,12 +45,13 @@ class TestDataLoader(unittest.TestCase):
 
         for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
-        maxlen = 512
+        maxlen = 100
         for likelihood in ['onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
-                                                            pretrained='voidful/albert_chinese_tiny',
+                                                            pretrained_config='voidful/albert_chinese_tiny',
                                                             maxlen=maxlen, likelihood=likelihood):
                 start_pos = i['start']
+                print(i)
                 self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
                 if 'neg' in likelihood and i['target'][start_pos] == -1:
                     self.assertTrue(i['ntarget'][start_pos] != -1)
@@ -65,7 +66,7 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['onebyone', 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             output = []
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
-                                                            pretrained='openai-gpt',
+                                                            pretrained_config='openai-gpt',
                                                             maxlen=maxlen, likelihood=likelihood):
                 start_pos = i['start']
                 output.append(tokenizer.convert_ids_to_tokens(i['target'])[start_pos])

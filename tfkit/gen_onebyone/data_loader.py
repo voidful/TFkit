@@ -14,16 +14,17 @@ import gen_once
 
 class loadOneByOneDataset(data.Dataset):
 
-    def __init__(self, fpath, pretrained, maxlen=510, cache=False, likelihood=''):
+    def __init__(self, fpath, pretrained_config, maxlen=510, cache=False, likelihood='', pos_ratio=1, neg_ratio=1,
+                 **kwargs):
         self.maxlen = maxlen
         sample = []
-        if 'albert_chinese' in pretrained:
-            tokenizer = BertTokenizer.from_pretrained(pretrained)
+        if 'albert_chinese' in pretrained_config:
+            tokenizer = BertTokenizer.from_pretrained(pretrained_config)
         else:
-            tokenizer = AutoTokenizer.from_pretrained(pretrained)
+            tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
 
         neg_info = "_" + likelihood + "_"
-        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained.replace("/", "_") + neg_info + ".cache"
+        cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained_config.replace("/", "_") + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 sample = pickle.load(cf)
@@ -34,6 +35,7 @@ class loadOneByOneDataset(data.Dataset):
                 tasks, task, input, target, negative_text = i
                 input = input.strip()
                 tokenized_target = tokenizer.tokenize(" ".join(target))
+                # each word in sentence
                 for j in range(1, len(tokenized_target) + 1):
                     feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target[:j - 1],
                                                     tokenized_target[:j])
@@ -50,7 +52,6 @@ class loadOneByOneDataset(data.Dataset):
                             feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                                      ntarget=neg_text)
                             feature['ntarget'] = feature_neg['ntarget']
-
                             if self.check_feature_valid(feature):
                                 sample.append(feature)
                             else:
@@ -76,7 +77,8 @@ class loadOneByOneDataset(data.Dataset):
                     feature = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
                                                                          " ".join(target))
                     if self.check_feature_valid(feature):
-                        sample.extend([feature] * 2)
+                        for _ in range(int(pos_ratio)):
+                            sample.append(feature)
                     else:
                         data_invalid += 1
                     total_data += 1
@@ -98,7 +100,8 @@ class loadOneByOneDataset(data.Dataset):
                                                                                  " ".join(target),
                                                                                  ntarget=neg_text)
                         if self.check_feature_valid(feature):
-                            sample.extend([feature] * 2)
+                            for _ in range(int(neg_ratio)):
+                                sample.append(feature)
                         else:
                             data_invalid += 1
                         total_data += 1
