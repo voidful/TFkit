@@ -127,6 +127,7 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
     for model_type, train_file, test_file in zip_longest(input_arg.model, input_arg.train, input_arg.test,
                                                          fillvalue=""):
         model_type = model_type.lower()
+
         if "once" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
                                                 cache=input_arg.cache)
@@ -134,13 +135,19 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
                                                cache=input_arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=input_arg.maxlen)
         elif "onebyone" in model_type:
-            train_ds = gen_onebyone.loadOneByOneDataset(train_file, pretrained=pretrained_config,
-                                                        maxlen=input_arg.maxlen,
-                                                        cache=input_arg.cache,
-                                                        likelihood=model_type)
-            test_ds = gen_onebyone.loadOneByOneDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
-                                                       cache=input_arg.cache)
-            model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=input_arg.maxlen, lossdrop=input_arg.lossdrop)
+            panel = nlp2.Panel()
+            inputted_arg = {"pretrained_config": pretrained_config, "maxlen": input_arg.maxlen,
+                            "cache": input_arg.cache, "likelihood": model_type, "lossdrop": input_arg.lossdrop}
+            all_arg = nlp2.function_get_all_arg_with_value(gen_onebyone.loadOneByOneDataset)
+            if input_arg.enable_arg_panel:
+                for missarg in nlp2.function_check_missing_arg(gen_onebyone.loadOneByOneDataset,
+                                                               inputted_arg):
+                    panel.add_element(k=missarg, v=all_arg[missarg], msg=missarg, default=all_arg[missarg])
+                filled_arg = panel.get_result_dict()
+                inputted_arg.update(filled_arg)
+            train_ds = gen_onebyone.loadOneByOneDataset(train_file, **inputted_arg)
+            test_ds = gen_onebyone.loadOneByOneDataset(test_file, **inputted_arg)
+            model = gen_onebyone.OneByOne(tokenizer, pretrained, **inputted_arg)
         elif 'clas' in model_type:
             train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=input_arg.cache)
             test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=input_arg.cache)
@@ -195,6 +202,7 @@ def main():
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
+    parser.add_argument("--enable_arg_panel", action='store_true', help="enable panel to input argument")
     global input_arg
     input_arg = parser.parse_args()
 
@@ -262,6 +270,7 @@ def main():
                 tag_ind = package['tags'].index(model_tag)
                 models[tag_ind].load_state_dict(state_dict)
         start_epoch = int(package.get('epoch', 1)) + 1
+
     set_seed(input_arg.seed)
     write_log("training batch : " + str(input_arg.batch * input_arg.grad_accum))
     for epoch in range(start_epoch, start_epoch + input_arg.epoch):

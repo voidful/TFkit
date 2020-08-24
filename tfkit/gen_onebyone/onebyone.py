@@ -18,7 +18,7 @@ import numpy as np
 
 
 class OneByOne(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, lossdrop=False):
+    def __init__(self, tokenizer, pretrained, maxlen=512, lossdrop=False, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
