@@ -1,8 +1,12 @@
 import argparse
 import random
+from collections import Iterable, defaultdict
 
 import nlp2
 import torch
+from torch import nn
+from torch._six import container_abcs
+from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
 from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
 import numpy as np
@@ -251,10 +255,12 @@ def main():
     train_dataset = [data.DataLoader(dataset=ds,
                                      batch_size=input_arg.batch,
                                      shuffle=True,
+                                     # collate_fn=data_collate,
                                      num_workers=input_arg.worker) for ds in train_dataset]
     test_dataset = [data.DataLoader(dataset=ds,
                                     batch_size=input_arg.batch,
                                     shuffle=True,
+                                    # collate_fn=data_collate,
                                     num_workers=input_arg.worker) for ds in test_dataset]
 
     writer = tensorboard.SummaryWriter() if input_arg.tensorboard else None

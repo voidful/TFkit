@@ -34,7 +34,6 @@ class QA(nn.Module):
     def forward(self, batch_data, eval=False):
         inputs = torch.as_tensor(batch_data['input']).to(self.device)
         masks = torch.as_tensor(batch_data['mask']).to(self.device)
-
         targets = torch.as_tensor(batch_data['target']).to(self.device)
         start_positions, end_positions = targets.split(1, dim=1)
         start_positions = start_positions.squeeze(1)
