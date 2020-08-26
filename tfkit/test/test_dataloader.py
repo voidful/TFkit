@@ -89,13 +89,11 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                         pretrained='bert-base-chinese',
                                         maxlen=512):
-            print(i['raw_input'][int(i['target'][0]):int(i['target'][1])])
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
         for i in tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                         pretrained='voidful/albert_chinese_tiny',
                                         maxlen=512):
-            print(i['raw_input'][int(i['target'][0]):int(i['target'][1])])
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
 
