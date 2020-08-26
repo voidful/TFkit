@@ -4,6 +4,7 @@ import pickle
 from collections import defaultdict
 
 import numpy as np
+import torch
 from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoTokenizer, BertTokenizer
@@ -53,6 +54,7 @@ class loadQADataset(data.Dataset):
 
     def __getitem__(self, idx):
         self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items() if k != 'raw_input')
+        self.sample[idx].pop('raw_input', None)
         return self.sample[idx]
 
 
@@ -69,7 +71,6 @@ def get_data_from_file(fpath):
 def get_feature_from_data(tokenizer, input, target=None, maxlen=512, separator=" "):
     row_dict = dict()
     row_dict['target'] = [0, 0]
-    tokenized_input_ori = tokenizer.tokenize(input)
     tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
     input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
     ext_tok = []

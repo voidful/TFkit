@@ -1,4 +1,4 @@
-#modify from https://github.com/Link-Li/Balanced-DataParallel
+# modify from https://github.com/Link-Li/Balanced-DataParallel
 
 from torch.nn.parallel import DataParallel
 import torch
@@ -67,7 +67,7 @@ class BalancedDataParallel(DataParallel):
         else:
             device_ids = self.device_ids
         inputs, kwargs = self.scatter(inputs, kwargs, device_ids)
-        # print('len(inputs)1: ', str(len(inputs)))
+        # print('len(inputs): ', str(len(inputs)))
         # print('self.device_ids[:len(inputs)]', str(self.device_ids[:len(inputs)]))
         if len(self.device_ids) == 1:
             return self.module(*inputs[0], **kwargs[0])
