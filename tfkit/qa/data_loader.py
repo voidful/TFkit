@@ -53,8 +53,8 @@ class loadQADataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
-        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items() if k != 'raw_input')
         self.sample[idx].pop('raw_input', None)
+        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items())
         return self.sample[idx]
 
 
