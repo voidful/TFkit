@@ -103,7 +103,7 @@ host prediction service
 nlp2go --model ./albert_ner/3.pt --api_path ner
 ```
 
-**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1SGiwl06Prkh6iFHHfRlxGWIrnUhrbx0p?usp=sharing)**
+**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ?usp=sharing)**
 
 
 ## Overview
