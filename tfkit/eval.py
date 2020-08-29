@@ -159,6 +159,7 @@ def main():
                 writer.writerow([i, p, "[SEP]".join([onet for onet in t if len(onet) > 0])])
         print("write result at:", outfile_name)
 
+        print(eval_metric.cal_score(arg.metric))
         with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
             eds = csv.writer(edsf)
             with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
