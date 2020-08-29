@@ -164,4 +164,4 @@ class EvalMetric:
                     mlb.transform(predicted),
                     target_names=list(mlb.classes_))
                 data_score = sorted(data_score, key=lambda i: i[2]['fbeta_score'])
-                yield (task_name, result, data_score)
+            yield (task_name, result, data_score)
