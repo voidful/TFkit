@@ -141,7 +141,7 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
         elif "onebyone" in model_type:
             panel = nlp2.Panel()
             inputted_arg = {"pretrained_config": pretrained_config, "maxlen": input_arg.maxlen,
-                            "cache": input_arg.cache, "likelihood": model_type, "lossdrop": input_arg.lossdrop}
+                            "cache": input_arg.cache, "likelihood": model_type}
             all_arg = nlp2.function_get_all_arg_with_value(gen_onebyone.loadOneByOneDataset)
             if input_arg.enable_arg_panel:
                 for missarg in nlp2.function_check_missing_arg(gen_onebyone.loadOneByOneDataset,
@@ -196,7 +196,6 @@ def main():
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'clas', 'tagRow', 'tagCol', 'qa',
                                  'onebyone-neg', 'onebyone-pos', 'onebyone-both'], help="model task")
-    parser.add_argument("--lossdrop", action='store_true', help="loss dropping for text generation")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|bert-base-multilingual-cased|voidful/albert_chinese_small')
