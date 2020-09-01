@@ -18,15 +18,13 @@ import numpy as np
 
 
 class OneByOne(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, lossdrop=False, **kwargs):
+    def __init__(self, tokenizer, pretrained, maxlen=512,  **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
-        self.lossdrop = lossdrop
-        self.dropper = LossDropper()
         print('Using device:', self.device)
         self.model.to(self.device)
 
@@ -59,21 +57,13 @@ class OneByOne(nn.Module):
         else:
             loss_tensors = torch.as_tensor(targets).to(self.device)
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
-            loss_fct = nn.CrossEntropyLoss(reduction='none', ignore_index=-1)  # -1 index = padding token
+            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
-
-            negative_loss_fct = NegativeCElLoss(reduction='none', ignore_index=-1).to(self.device)
+            negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
             negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                               negativeloss_tensors.view(-1))
-
             masked_lm_loss += negative_loss
-            masked_lm_loss = masked_lm_loss.view(-1, len(targets))  # view by batch size
-            masked_lm_loss = masked_lm_loss.sum(dim=0)
-            if self.lossdrop:
-                mask = self.dropper(masked_lm_loss)
-                masked_lm_loss *= mask
-            masked_lm_loss = masked_lm_loss.mean()
             outputs = masked_lm_loss
         return outputs
 
