@@ -1,3 +1,4 @@
+import json
 import sys
 import os
 
@@ -18,7 +19,7 @@ import numpy as np
 
 
 class OneByOne(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512,  **kwargs):
+    def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
@@ -69,8 +70,8 @@ class OneByOne(nn.Module):
 
     def predict(self, input='', topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, outspacelen=0,
                 task=None):
-        beamsearch = bool(beamsearch)
-        filtersim = bool(filtersim)
+        beamsearch = json.loads(str(beamsearch).lower())
+        filtersim = json.loads(str(filtersim).lower())
         topK = int(topK)
         topP = float(topP)
         beamsize = int(beamsize)
