@@ -82,7 +82,7 @@ class loadOneByOneDataset(data.Dataset):
                     else:
                         data_invalid += 1
                     total_data += 1
-                else:
+                elif "neg" in likelihood or 'both' in likelihood:
                     # formatting neg data in csv
                     if negative_text is None:
                         ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]

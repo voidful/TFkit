@@ -49,7 +49,7 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                                                             pretrained_config='voidful/albert_chinese_tiny',
-                                                            maxlen=maxlen, likelihood=likelihood, pos_ratio=2):
+                                                            maxlen=maxlen, likelihood=likelihood):
                 start_pos = i['start']
                 print(i)
                 self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
