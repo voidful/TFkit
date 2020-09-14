@@ -69,11 +69,17 @@ def get_data_from_file(fpath):
         reader = csv.reader(csvfile)
         reader = list(reader)
         headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0]) - 1)]
+        is_multi_label = ""
+        for row in reader:
+            if '/' in row[1]:
+                is_multi_label = "_multi_label"
+                break
+
         for row in reader:
             start_pos = 1
             for pos, item in enumerate(row[start_pos:]):
                 pos += start_pos
-                task = headers[0] + "_" + headers[pos]
+                task = headers[0] + "_" + headers[pos] + is_multi_label
                 item = item.strip()
                 if '/' in item:
                     for i in item.split("/"):
@@ -86,7 +92,7 @@ def get_data_from_file(fpath):
             start_pos = 1
             for pos, item in enumerate(row[start_pos:]):
                 pos += start_pos
-                task = headers[0] + "_" + headers[pos]
+                task = headers[0] + "_" + headers[pos] + is_multi_label
                 item = item.strip()
                 target = item.split('/') if '/' in item else [item]
                 input = row[0]
@@ -111,9 +117,9 @@ def get_feature_from_data(tokenizer, maxlen, task_lables, task, input, target=No
     row_dict['mask'] = mask_id
     row_dict['target'] = [-1]
     if target is not None:
-        if 'multi_target' in task:
-            mlb = MultiLabelBinarizer(classes=task_lables)
-            tar = mlb.fit_transform([target.split("/")])
+        if 'multi_label' in task:
+            mlb = MultiLabelBinarizer(classes=task_lables[task])
+            tar = mlb.fit_transform([target])
             tokenize_label = tar
         else:
             tokenize_label = [task_lables[task].index(target[0])]
