@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.3.86.dev1',
+    version='0.3.88',
     description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
     url='https://github.com/voidful/TFkit',
     author='Voidful',

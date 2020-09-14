@@ -103,18 +103,18 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
     row_dict['mask'] = mask_id
     row_dict['start'] = target_start
 
-    if True:
-        print("*** Example ***")
-        print("tokenized_input",input,tokenized_input)
-        print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
-        print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
-        print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")
-        if target is not None:
-            print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
-        if ntarget is not None:
-            print("POS", target_start, len(tokenized_ntarget))
-            print("STR", tokenized_target, tokenized_ntarget)
-            print("ANS", tokenized_target[target_start], tokenized_ntarget_id)
-            print(f"ntarget: {len(tokenized_ntarget_id)}, {row_dict['ntarget']} ")
+    # if True:
+    #     print("*** Example ***")
+    #     print("tokenized_input",input,tokenized_input)
+    #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
+    #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
+    #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")
+    #     if target is not None:
+    #         print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
+    #     if ntarget is not None:
+    #         print("POS", target_start, len(tokenized_ntarget))
+    #         print("STR", tokenized_target, tokenized_ntarget)
+    #         print("ANS", tokenized_target[target_start], tokenized_ntarget_id)
+    #         print(f"ntarget: {len(tokenized_ntarget_id)}, {row_dict['ntarget']} ")
 
     return row_dict
