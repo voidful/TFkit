@@ -66,22 +66,25 @@ class MtClassifier(nn.Module):
                 target = targets[p]
                 result_labels.append(target)
             else:
-                if 'multi_target' in task:
+                if 'multi_label' in task:
                     reshaped_logits = sigmoid(reshaped_logits)
                 else:
                     reshaped_logits = softmax(reshaped_logits, dim=1)
                 logit_prob = reshaped_logits[0].data.tolist()
                 logit_label = dict(zip(task_lables, logit_prob))
                 result_dict['label_prob_all'].append({task: logit_label})
-                result_dict['label_map'].append({task: task_lables[logit_prob.index(max(logit_prob))]})
+                if 'multi_label' in task:
+                    result_dict['label_map'].append({task: [k for k, v in logit_label.items() if v > 0.5]})
+                else:
+                    result_dict['label_map'].append({task: [task_lables[logit_prob.index(max(logit_prob))]]})
 
         if eval:
             outputs = result_dict
         else:
             loss = 0
             for logits, labels, task in zip(result_logits, result_labels, tasks):
-                if 'multi_target' in task:
-                    loss += self.loss_fct_mt(logits, labels)
+                if 'multi_label' in task:
+                    loss += self.loss_fct_mt(logits, labels.type_as(logits))
                 else:
                     loss += self.loss_fct(logits, labels)
             outputs = loss

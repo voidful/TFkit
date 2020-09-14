@@ -14,7 +14,8 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.tag.get_data_from_file_row(os.path.join(TestDataLoader.DATASET_DIR, 'tag_row.csv')):
             print(i)
         for i in tfkit.tag.loadRowTaggerDataset(os.path.join(TestDataLoader.DATASET_DIR, 'tag_row.csv'),
-                                                pretrained='bert-base-chinese', maxlen=128):
+                                                pretrained='voidful/albert_chinese_small', maxlen=128):
+            print(i)
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
@@ -23,20 +24,21 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.tag.get_data_from_file_col(os.path.join(TestDataLoader.DATASET_DIR, 'tag_col.csv')):
             print(i)
         for i in tfkit.tag.loadColTaggerDataset(os.path.join(TestDataLoader.DATASET_DIR, 'tag_col.csv'),
-                                                pretrained='bert-base-chinese', maxlen=128):
+                                                pretrained='voidful/albert_chinese_small', maxlen=128):
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
     def testOnce(self):
 
-        tokenizer = BertTokenizer.from_pretrained('bert-base-chinese')
-        for i in tfkit.gen_once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+        for i in tfkit.gen_once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv')):
             print(i)
-        for i in tfkit.gen_once.loadOnceDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
-                                                pretrained='bert-base-chinese',
+        for i in tfkit.gen_once.loadOnceDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv'),
+                                                pretrained='bert-base-uncased',
                                                 maxlen=128):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
+            print(i)
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
@@ -78,7 +80,15 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.classifier.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv')):
             print(i)
         for i in tfkit.classifier.loadClassifierDataset(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv'),
-                                                        pretrained='bert-base-chinese',
+                                                        pretrained='voidful/albert_chinese_small',
+                                                        maxlen=512):
+            self.assertTrue(len(i['input']) <= 512)
+            self.assertTrue(len(i['target']) < 512)
+
+        for i in tfkit.classifier.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv')):
+            print(i)
+        for i in tfkit.classifier.loadClassifierDataset(os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv'),
+                                                        pretrained='voidful/albert_chinese_small',
                                                         maxlen=512):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
@@ -87,7 +97,7 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.qa.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv')):
             print(i)
         for i in tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
-                                        pretrained='bert-base-chinese',
+                                        pretrained='voidful/albert_chinese_small',
                                         maxlen=512):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
@@ -99,14 +109,14 @@ class TestDataLoader(unittest.TestCase):
 
     def testLen(self):
         ds = tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
-                                    pretrained='bert-base-chinese',
+                                    pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
         print(ds.__len__())
         ds.increase_with_sampling(20)
         self.assertTrue(ds.__len__() == 20)
 
         ds = tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
-                                    pretrained='bert-base-chinese',
+                                    pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
         print(ds.__len__())
         ds.increase_with_sampling(12)

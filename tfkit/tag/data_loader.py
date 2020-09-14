@@ -172,7 +172,11 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
             for _ in range(len(tokenizer.tokenize(i))):
                 target_token += [labels.index(t)]
 
-        target_id = [labels.index("O")] + target_token + [labels.index("O")]
+        if "O" in labels:
+            target_id = [labels.index("O")] + target_token + [labels.index("O")]
+        else:
+            target_id = [target_token[0]] + target_token + [target_token[-1]]
+
         if len(input_id) != len(target_id):
             print("input target len not equal", len(input_id), len(target_id), len(input), len(target),
                   len(tokenized_input), len(target_token))
