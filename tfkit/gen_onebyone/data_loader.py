@@ -23,7 +23,7 @@ class loadOneByOneDataset(data.Dataset):
         else:
             tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
 
-        neg_info = "_" + likelihood + "_"
+        neg_info = "_" + likelihood + "_pos_" + str(pos_ratio) + "_neg_" + str(pos_ratio)
         cache_path = fpath + "_maxlen" + str(maxlen) + "_" + pretrained_config.replace("/", "_") + neg_info + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
@@ -66,11 +66,30 @@ class loadOneByOneDataset(data.Dataset):
 
                 # end of the last word
                 feature = get_feature_from_data(tokenizer, maxlen, input, tokenized_target, [tok_sep(tokenizer)])
-                if self.check_feature_valid(feature):
-                    sample.append(feature)
+                if "neg" in likelihood or 'both' in likelihood:
+                    # formatting neg data in csv
+                    if negative_text is None:
+                        ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]
+                    elif "[SEP]" in negative_text:
+                        ntext_arr = [ntext.strip() for ntext in negative_text.split("[SEP]")]
+                    else:
+                        ntext_arr = [negative_text.strip()]
+                    # adding neg data
+                    for neg_text in ntext_arr:
+                        feature_neg = gen_once.data_loader.get_feature_from_data(tokenizer, maxlen, input,
+                                                                                 ntarget=neg_text)
+                        feature['ntarget'] = feature_neg['ntarget']
+                        if self.check_feature_valid(feature):
+                            sample.append(feature)
+                        else:
+                            data_invalid += 1
+                        total_data += 1
                 else:
-                    data_invalid += 1
-                total_data += 1
+                    if self.check_feature_valid(feature):
+                        sample.append(feature)
+                    else:
+                        data_invalid += 1
+                    total_data += 1
 
                 # whole sentence masking
                 if 'pos' in likelihood:
