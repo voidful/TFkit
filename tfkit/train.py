@@ -19,6 +19,7 @@ import gen_onebyone
 import classifier
 import tag
 import qa
+import gen_mask
 
 from tfkit.utility import get_freqK_unk_token
 from tfkit.utility import BalancedDataParallel
@@ -138,6 +139,12 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
             test_ds = gen_once.loadOnceDataset(test_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
                                                cache=input_arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=input_arg.maxlen)
+        elif "mask" in model_type:
+            train_ds = gen_mask.loadMaskDataset(train_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
+                                                cache=input_arg.cache)
+            test_ds = gen_mask.loadMaskDataset(test_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
+                                               cache=input_arg.cache)
+            model = gen_mask.Mask(tokenizer, pretrained, maxlen=input_arg.maxlen)
         elif "onebyone" in model_type:
             panel = nlp2.Panel()
             inputted_arg = {"pretrained_config": pretrained_config, "maxlen": input_arg.maxlen,
@@ -195,7 +202,7 @@ def main():
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'clas', 'tagRow', 'tagCol', 'qa',
-                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both'], help="model task")
+                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both', 'mask'], help="model task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|bert-base-multilingual-cased|voidful/albert_chinese_small')

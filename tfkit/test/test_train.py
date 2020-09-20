@@ -56,6 +56,22 @@ class TestTrain(unittest.TestCase):
                 'generate.csv') + ' --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)
 
+    def testGenOnce(self):
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
+                                                                       'generate.csv') + ' --test ' + os.path.join(
+                self.DATASET_DIR,
+                'generate.csv') + ' --model once --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+        self.assertTrue(result == 0)
+
+    def testGenMask(self):
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
+                                                                       'mask.csv') + ' --test ' + os.path.join(
+                self.DATASET_DIR,
+                'mask.csv') + ' --model mask --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+        self.assertTrue(result == 0)
+
     def testGenWithSentLoss(self):
         result = os.system(
             'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
@@ -75,7 +91,7 @@ class TestTrain(unittest.TestCase):
     def testAddToken(self):
         result = os.system(
             'tfkit-train --batch 2 --add_tokens 0 --epoch 1  --train ' + os.path.join(self.DATASET_DIR,
-                                                                                        'generate.csv') + ' --test ' + os.path.join(
+                                                                                      'generate.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'generate.csv') + ' --model onebyone --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)
