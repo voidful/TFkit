@@ -168,10 +168,10 @@ def get_data_from_file(fpath):
 
 
 def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenized_target=None, ntarget=None,
-                          outspacelen=0):
+                          reserved_len=0):
     row_dict = dict()
     tokenized_input = tokenizer.tokenize(input)
-    tokenized_input = [tok_begin(tokenizer)] + tokenized_input[maxlen - (maxlen - outspacelen):] \
+    tokenized_input = [tok_begin(tokenizer)] + tokenized_input[maxlen - (maxlen - reserved_len):] \
                       + [tok_sep(tokenizer)]
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append(tok_mask(tokenizer))

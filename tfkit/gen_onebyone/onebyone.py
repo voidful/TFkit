@@ -68,76 +68,33 @@ class OneByOne(nn.Module):
             outputs = masked_lm_loss
         return outputs
 
-    def predict(self, input='', topK=1, topP=0.7, beamsearch=False, beamsize=3, filtersim=True, outspacelen=0,
-                task=None):
-        beamsearch = json.loads(str(beamsearch).lower())
-        filtersim = json.loads(str(filtersim).lower())
-        topK = int(topK)
-        topP = float(topP)
-        beamsize = int(beamsize)
-
-        if beamsearch:
-            return self.predict_beamsearch(input, beamsize=beamsize, filtersim=filtersim, outspacelen=outspacelen)
-        else:
-            self.eval()
-            with torch.no_grad():
-                output = []
-                result_dict = {
-                    'label_prob_all': [],
-                    'label_map': [],
-                    'prob_list': []
-                }
-                while True:
-                    feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, output,
-                                                         outspacelen=outspacelen)
-                    if len(feature_dict['input']) > self.maxlen:
-                        break
-                    for k, v in feature_dict.items():
-                        feature_dict[k] = [v]
-                    predictions = self.forward(feature_dict, eval=True)
-                    result_dict['label_prob_all'].append(predictions['label_prob_all'])
-                    result_dict['label_map'].append(predictions['label_map'])
-                    result_dict['prob_list'].append(predictions['prob_list'])
-
-                    topK_list = [p for w, p in predictions['label_prob_all'][0]][:topK]
-                    topP_list = np.cumsum(topK_list)
-                    index_overK = [i for i, x in enumerate(topP_list) if x > topP]
-                    index_overK = 0 if len(index_overK) < 1 else index_overK[0]
-                    topP_list = list(topK_list[:index_overK + 1])
-                    prob_norm = [float(i) / sum(topP_list) for i in topP_list]
-                    sampling_index = topP_list.index(np.random.choice(topP_list, p=prob_norm))
-                    if len(output) > 1 and predictions['label_prob_all'][0][sampling_index][0] == output[-1]:
-                        sampling_index += 1
-                    predicted_token = predictions['label_prob_all'][0][sampling_index][0]
-                    if tok_sep(self.tokenizer) in predicted_token:
-                        break
-                    output.append(predicted_token)
-
-                output = self.tokenizer.convert_tokens_to_string(output)
-                if len(output) < 1:
-                    return [], {}
-                return [output], result_dict
-
-    def jaccard_similarity(self, list1, list2):
+    def _jaccard_similarity(self, list1, list2):
         s1 = set(list1)
         s2 = set(list2)
         return len(s1.intersection(s2)) / len(s1.union(s2))
 
-    def isSimilar(self, s, t):
-        return self.jaccard_similarity(s, t) > 0.5
+    def _isSimilar(self, s, t):
+        return self._jaccard_similarity(s, t) > 0.5
 
-    def filterSimilar(self, d, topP):
+    def _filterSimilar(self, d, topP):
         while True:
             filteredOne = False
             for s, t in combinations(d, 2):
-                if self.isSimilar(s[0], t[0]) and len(d) - 1 >= topP:
+                if self._isSimilar(s[0], t[0]) and len(d) - 1 >= topP:
                     d.remove(t)
                     filteredOne = True
                     break
             if not filteredOne:
                 break
 
-    def predict_beamsearch(self, input, beamsize=3, filtersim=True, outspacelen=0):
+    def predict(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1, filtersim=True,
+                reserved_len=0, task=None):
+        filtersim = json.loads(str(filtersim).lower())
+        topK = int(topK)
+        topP = float(topP)
+        decodenum = int(decodenum)
+        mode = mode[0] if isinstance(mode, list) else mode.lower()
+
         self.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
@@ -148,37 +105,61 @@ class OneByOne(nn.Module):
                     if tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
-                                                             outspacelen=outspacelen)
+                                                             reserved_len=reserved_len)
+                        # check input exceed
                         if len(feature_dict['input']) > self.maxlen:
                             exceed = True
                             all_candidates.append(seq)
                             continue
+
                         for k, v in feature_dict.items():
                             feature_dict[k] = [v]
                         predictions = self.forward(feature_dict, eval=True)
-                        for k, v in predictions['label_prob_all'][0][:50]:
-                            if len(tokens) > 0 and tokens[-1] == k or len(k) < 1:
-                                continue
-                            candidate = [tokens + [k], score + -log(v)]
-                            all_candidates.append(candidate)
+                        token_prob_list = predictions['label_prob_all'][0]
+
+                        # topK topP
+                        if 'top' in mode:
+                            prob_list = [prob for tok, prob in token_prob_list]
+                            if 'topk' in mode:
+                                sample_list = prob_list[:topK]
+                            else:
+                                topP_list = np.cumsum(prob_list)
+                                index_overK = [i for i, x in enumerate(topP_list) if x > topP]
+                                index_overK = 0 if len(index_overK) < 1 else index_overK[0]
+                                sample_list = prob_list[:index_overK + 1]
+                            prob_norm = [float(i) / sum(sample_list) for i in sample_list]
+                            for _ in range(decodenum * 2):
+                                sampling_index = prob_list.index(np.random.choice(sample_list, p=prob_norm))
+                                k, v = token_prob_list[sampling_index]
+                                candidate = [tokens + [k], score + -log(v)]
+                                all_candidates.append(candidate)
+
+                        # greedy / beam search
+                        else:
+                            for k, v in token_prob_list[:50]:
+                                if len(tokens) > 0 and tokens[-1] == k or len(k) < 1:
+                                    continue
+                                candidate = [tokens + [k], score + -log(v)]
+                                all_candidates.append(candidate)
                     else:
                         all_candidates.append(seq)
 
                 ordered = sorted(all_candidates, key=lambda tup: tup[1])
                 if filtersim:
-                    self.filterSimilar(ordered, beamsize)
-                sequences = ordered[:beamsize]
+                    self._filterSimilar(ordered, decodenum)
+                sequences = ordered[:decodenum]
                 stop = 0
                 for i in sequences:
-                    if tok_sep(self.tokenizer) in i[0] or \
-                            len(i[0]) > 3 and i[0][-1] == i[0][-2] == i[0][-3] or \
-                            i[1] > 300:
+                    # i[0] - sequence,i[1] - sequence score
+                    if tok_sep(self.tokenizer) in i[0] \
+                            or len(i[0]) > 3 and i[0][-1] == i[0][-2] == i[0][-3] \
+                            or i[1] > 300:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break
 
             for i in range(len(sequences)):
-                if tok_sep(self.tokenizer) in sequences[i][0]:
+                if tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
                 sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
             result_dict = {
