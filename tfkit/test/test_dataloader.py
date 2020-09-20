@@ -28,8 +28,22 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['input']) < 512)
             self.assertTrue(len(i['target']) < 512)
 
-    def testOnce(self):
+    def testMask(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        for i in tfkit.gen_mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
+            print(i)
 
+        maxlen = 100
+        for i in tfkit.gen_mask.loadMaskDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv'),
+                                                        pretrained_config='voidful/albert_chinese_tiny',
+                                                        maxlen=maxlen):
+            print(i)
+            # self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
+            # self.assertTrue(i['target'][start_pos] != -1)
+            self.assertTrue(len(i['input']) == maxlen)
+            self.assertTrue(len(i['target']) == maxlen)
+
+    def testOnce(self):
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         for i in tfkit.gen_once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv')):
             print(i)
@@ -48,7 +62,7 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
         maxlen = 100
-        for likelihood in ['onebyone-neg', 'onebyone-pos', 'onebyone-both']:
+        for likelihood in ['onebyone', 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                                                             pretrained_config='voidful/albert_chinese_tiny',
                                                             maxlen=maxlen, likelihood=likelihood):
@@ -85,11 +99,13 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
 
-        for i in tfkit.classifier.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv')):
+        for i in tfkit.classifier.get_data_from_file(
+                os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv')):
             print(i)
-        for i in tfkit.classifier.loadClassifierDataset(os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv'),
-                                                        pretrained='voidful/albert_chinese_small',
-                                                        maxlen=512):
+        for i in tfkit.classifier.loadClassifierDataset(
+                os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv'),
+                pretrained='voidful/albert_chinese_small',
+                maxlen=512):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
 

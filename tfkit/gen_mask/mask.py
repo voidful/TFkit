@@ -9,12 +9,12 @@ import torch
 import torch.nn as nn
 from transformers import *
 from torch.nn.functional import softmax
-from gen_once.data_loader import get_feature_from_data
+from gen_mask.data_loader import get_feature_from_data
 from utility.loss import *
 from utility.tok import *
 
 
-class Once(nn.Module):
+class Mask(nn.Module):
     def __init__(self, tokenizer, pretrained, maxlen=512):
         super().__init__()
         self.tokenizer = tokenizer
@@ -28,50 +28,34 @@ class Once(nn.Module):
     def forward(self, batch_data, eval=False):
         inputs = batch_data['input']
         targets = batch_data['target']
-        negative_targets = batch_data['ntarget']
         masks = batch_data['mask']
-
         tokens_tensor = torch.as_tensor(inputs).to(self.device)
         mask_tensors = torch.as_tensor(masks).to(self.device)
         loss_tensors = torch.as_tensor(targets).to(self.device)
-        negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
-
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
 
         if eval:
             result_dict = {
-                'label_prob_all': [],
                 'label_map': [],
-                'prob_list': []
+                'label_prob': []
             }
-            start = batch_data['start'][0]
-            end = False
-            while start < self.maxlen and not end:
-                predicted_index = torch.argmax(prediction_scores[0][start]).item()
-                predicted_token = self.tokenizer.decode([predicted_index])
-                logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
-                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
-
-                result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
-                result_dict['label_prob_all'].append(dict(prob_result))
-                result_dict['label_map'].append(prob_result[0])
-
-                if tok_sep(self.tokenizer) in predicted_token:
-                    end = True
-                start += 1
-                outputs = result_dict
+            for tok_pos, tok in enumerate(batch_data['input'][0]):
+                if tok != self.tokenizer.convert_tokens_to_ids([tok_sep(self.tokenizer)])[0]:
+                    if tok == self.tokenizer.convert_tokens_to_ids([tok_mask(self.tokenizer)])[0]:
+                        logit_prob = softmax(prediction_scores[0][tok_pos], dim=0).data.tolist()
+                        prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+                        prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+                        result_dict['label_prob'].append(prob_result[:10])
+                        result_dict['label_map'].append(prob_result[0])
+                else:
+                    break
+            return result_dict
         else:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
-
-            negative_loss_fct = NegativeCElLoss().to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
-                                              negativeloss_tensors.view(-1))
-            masked_lm_loss += negative_loss
             outputs = masked_lm_loss
 
         return outputs
@@ -85,5 +69,4 @@ class Once(nn.Module):
             for k, v in feature_dict.items():
                 feature_dict[k] = [v]
             predictions = self.forward(feature_dict, eval=True)
-            output = "".join(self.tokenizer.convert_tokens_to_string([i[0] for i in predictions['label_map']]))
-            return [output], predictions
+            return [i[0] for i in predictions['label_map']], predictions

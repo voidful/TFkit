@@ -15,6 +15,8 @@ def tok_sep(tokenizer):
 def tok_mask(tokenizer):
     return tokenizer._mask_token or 'msk'
 
+def tok_pad(tokenizer):
+    return tokenizer._pad_token or 'pad'
 
 def get_topP_unk_token(tokenizer, file_paths: list, topP: float):
     unk_count_dict = OrderedDict()

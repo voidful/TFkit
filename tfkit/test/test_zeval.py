@@ -20,25 +20,27 @@ class TestEval(unittest.TestCase):
         result = os.system(
             'tfkit-eval --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
                                                                                  'generate.csv') + ' --metric emf1 --print')
+        self.assertTrue(result == 0)
         result = os.system(
             'tfkit-eval  --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
                                                                                   'generate.csv') + ' --metric emf1 --print')
+        self.assertTrue(result == 0)
         result = os.system(
             'tfkit-eval --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
                                                                                  'generate.csv') + ' --metric clas --print')
+        self.assertTrue(result == 0)
 
-    def testEvalOnGen(self):
+    def testEvalMask(self):
         result = os.system(
             'tfkit-eval --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
-                                                                                 'generate.csv') + ' --metric clas --print')
-        result = os.system(
-            'tfkit-eval --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
-                                                                                 'generate.csv') + ' --metric emf1 --print')
+                                                                                 'mask.csv') + ' --metric clas --print')
+        self.assertTrue(result == 0)
 
     def testEvalClassify(self):
         result = os.system(
             'tfkit-eval --model ' + self.MODEL_PATH + ' --valid ' + os.path.join(self.DATASET_DIR,
-                                                                                 'classification.csv') + ' --metric clas')
+                                                                                 'classification.csv') + ' --metric clas --print')
+        self.assertTrue(result == 0)
 
     def testEvalAddedTokenModel(self):
         result = os.system(

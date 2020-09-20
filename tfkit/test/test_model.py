@@ -2,6 +2,7 @@ import os
 import unittest
 
 import pytest
+import torch
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel
 
@@ -91,6 +92,39 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result, list))
         self.assertTrue(len(result) == 0)
 
+    def testMask(self):
+        input = "今 天 [MASK] 情 [MASK] 好"
+        target = "心 很"
+
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
+
+        feature = tfkit.gen_mask.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512)
+        for k, v in feature.items():
+            feature[k] = [v]
+        model = tfkit.gen_mask.Mask(tokenizer, pretrained)
+
+        print(model(feature))
+        self.assertTrue(isinstance(model(feature), Tensor))
+
+        model_dict = model(feature, eval=True)
+        print(model_dict)
+        self.assertTrue('label_map' in model_dict)
+        self.assertTrue('label_prob' in model_dict)
+
+        result, model_dict = model.predict(input=input)
+        self.assertTrue('label_prob' in model_dict)
+        self.assertTrue('label_map' in model_dict)
+        print("predict", result, len(result))
+
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 512)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(len(result) == 0)
+
     def testOnce(self):
         input = "See you next time"
         target = "下 次 見"
@@ -126,8 +160,8 @@ class TestModel(unittest.TestCase):
         target = "下 次 見"
         ntarget = "不 見 不 散"
 
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
 
         feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input,
                                                            tokenized_previous=tokenizer.tokenize(" ".join(previous)),
@@ -135,28 +169,56 @@ class TestModel(unittest.TestCase):
                                                            maxlen=512)
         for k, v in feature.items():
             feature[k] = [v, v]
+
         model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained)
+        # package = torch.load('./cache/model.pt', map_location='cpu')
+        # for model_tag, state_dict in zip(package['tags'], package['models']):
+        #     model.load_state_dict(state_dict)
 
         print(model(feature))
         self.assertTrue(isinstance(model(feature), Tensor))
         model_dict = model(feature, eval=True)
-        self.assertTrue('label_prob_all' in model_dict)
         self.assertTrue('label_map' in model_dict)
+
+        # greedy
         result, model_dict = model.predict(input=input)
-        self.assertTrue('label_prob_all' in model_dict)
+        print(result, model_dict)
         self.assertTrue('label_map' in model_dict)
-        print(result, len(result))
+        self.assertTrue(len(result) == 1)
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
-        result, model_dict = model.predict(input=input, beamsearch=True, beamsize=3)
+
+        # beamsearch
+        result, model_dict = model.predict(input=input, decodenum=3)
         print("beamsaerch", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict)
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
+        print("TopK", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict)
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopP
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
+        print("TopP", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict)
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
         # test exceed 512
         result, model_dict = model.predict(input="T " * 512)
         self.assertTrue(isinstance(result, list))
-        print(result)
-        self.assertTrue(len(result) == 0)
+        print("exceed max len", result)
+        self.assertTrue(len(result[0]) == 0)
 
-    def testOnebyoneWithOutSpace(self):
+    def testOnebyoneWithReservedLen(self):
         ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))
         DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
@@ -170,10 +232,11 @@ class TestModel(unittest.TestCase):
                 feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input,
                                                                    tokenized_previous=tokenized_target[:j - 1],
                                                                    tokenized_target=tokenized_target[:j],
-                                                                   maxlen=20, outspacelen=0)
+                                                                   maxlen=20, reserved_len=0)
                 target_start = feature['start']
                 print(f"input: {len(feature['input'])}, {tokenizer.decode(feature['input'][:target_start])} ")
                 print(f"type: {len(feature['type'])}, {feature['type'][:target_start]} ")
                 print(f"mask: {len(feature['mask'])}, {feature['mask'][:target_start]} ")
                 if tokenized_target is not None:
-                    print(f"target: {len(feature['target'])}, {tokenizer.convert_ids_to_tokens(feature['target'][target_start])} ")
+                    print(
+                        f"target: {len(feature['target'])}, {tokenizer.convert_ids_to_tokens(feature['target'][target_start])} ")
