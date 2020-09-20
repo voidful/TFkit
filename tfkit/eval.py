@@ -4,6 +4,7 @@ from transformers import *
 import argparse
 import torch
 import gen_once
+import gen_mask
 import gen_onebyone
 import qa
 import classifier
@@ -57,6 +58,9 @@ def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=
     if "once" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
+    elif "mask" in type:
+        eval_dataset = gen_mask.get_data_from_file(model_dataset) if model_dataset else None
+        model = gen_mask.Mask(tokenizer, pretrained, maxlen=maxlen)
     elif "onebyone" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
@@ -104,8 +108,8 @@ def main():
     valid = arg.valid[0]
     model, eval_dataset = load_model(arg.model, model_dataset=valid, pretrained_path=arg.config)
     predict_parameter = load_predict_parameter(model, arg.enable_arg_panel)
-    if 'beamsearch' in predict_parameter and predict_parameter['beamsearch'] is True:
-        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['beamsize'])]
+    if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
+        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['decodenum'])]
     else:
         eval_metrics = [EvalMetric(model.tokenizer)]
 
@@ -123,8 +127,11 @@ def main():
         for eval_pos, eval_metric in enumerate(eval_metrics):
             if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
-            if 'OneByOne' in model.__class__.__name__ and predict_parameter['beamsearch']:
+            elif 'OneByOne' in model.__class__.__name__:
                 predicted = result_dict['label_map'][eval_pos][0] if 'label_map' in result_dict else ''
+            elif 'Mask' in model.__class__.__name__:
+                target = target.split(" ")
+                predicted = result
             elif 'Tagger' in model.__class__.__name__:
                 target = target.split(" ")
                 if 'label_map' in result_dict:
@@ -145,10 +152,14 @@ def main():
             eval_metric.add_record(input, predicted, target)
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
+        argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
 
-        argtype = "_dataset_" + valid.replace("/", "_").replace(".", "")
-        if 'beamsearch' in predict_parameter and predict_parameter['beamsearch'] is True:
-            argtype = "_beam_" + str(eval_pos)
+        if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
+            argtype += "_num_" + str(eval_pos)
+        if 'mode' in predict_parameter:
+            argtype += "_mode_" + str(predict_parameter['mode'])
+        if 'filtersim' in predict_parameter:
+            argtype += "_filtersim_" + str(predict_parameter['filtersim'])
         outfile_name = arg.model + argtype
 
         with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
@@ -159,7 +170,6 @@ def main():
                 writer.writerow([i, p, "[SEP]".join([onet for onet in t if len(onet) > 0])])
         print("write result at:", outfile_name)
 
-        print(eval_metric.cal_score(arg.metric))
         with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
             eds = csv.writer(edsf)
             with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
