@@ -122,18 +122,20 @@ class OneByOne(nn.Module):
                             prob_list = [prob for tok, prob in token_prob_list]
                             if 'topk' in mode:
                                 sample_list = prob_list[:topK]
+                                decode_range = max(decodenum, topK)
+                                prob_norm = [float(i) / sum(sample_list) for i in sample_list]
+                                choice_list = np.random.choice(sample_list, p=prob_norm,
+                                                               size=decode_range,
+                                                               replace=False)
                             else:
                                 topP_list = np.cumsum(prob_list)
                                 index_overP = [i for i, x in enumerate(topP_list) if x > topP]
                                 index_overP = 0 if len(index_overP) < 1 else index_overP[0]
                                 sample_list = prob_list[:index_overP + 1]
-
-                            decode_range = min(decodenum, len(sample_list))
-                            prob_norm = [float(i) / sum(sample_list) for i in sample_list]
-                            choice_list = np.random.choice(sample_list, p=prob_norm,
-                                                           size=decode_range,
-                                                           replace=False)
-                            for idx in range(decode_range):
+                                prob_norm = [float(i) / sum(sample_list) for i in sample_list]
+                                choice_list = np.random.choice(sample_list, p=prob_norm,
+                                                               size=decodenum)
+                            for idx in range(decodenum):
                                 sampling_index = prob_list.index(choice_list[idx])
                                 k, v = token_prob_list[sampling_index]
                                 candidate = [tokens + [k], score + -log(v)]
