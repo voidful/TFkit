@@ -171,9 +171,9 @@ class TestModel(unittest.TestCase):
             feature[k] = [v, v]
 
         model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained)
-        package = torch.load('./cache/model.pt', map_location='cpu')
-        for model_tag, state_dict in zip(package['tags'], package['models']):
-            model.load_state_dict(state_dict)
+        # package = torch.load('./cache/model.pt', map_location='cpu')
+        # for model_tag, state_dict in zip(package['tags'], package['models']):
+        #     model.load_state_dict(state_dict)
 
         print(model(feature))
         self.assertTrue(isinstance(model(feature), Tensor))
