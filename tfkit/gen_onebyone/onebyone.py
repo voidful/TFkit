@@ -12,7 +12,7 @@ import torch.nn as nn
 from gen_onebyone.data_loader import get_feature_from_data
 from itertools import combinations
 from torch.nn.functional import softmax
-from math import log
+from math import log, exp
 from utility.loss import *
 from utility.tok import *
 import numpy as np
@@ -124,12 +124,17 @@ class OneByOne(nn.Module):
                                 sample_list = prob_list[:topK]
                             else:
                                 topP_list = np.cumsum(prob_list)
-                                index_overK = [i for i, x in enumerate(topP_list) if x > topP]
-                                index_overK = 0 if len(index_overK) < 1 else index_overK[0]
-                                sample_list = prob_list[:index_overK + 1]
+                                index_overP = [i for i, x in enumerate(topP_list) if x > topP]
+                                index_overP = 0 if len(index_overP) < 1 else index_overP[0]
+                                sample_list = prob_list[:index_overP + 1]
+
+                            decode_range = min(decodenum, len(sample_list))
                             prob_norm = [float(i) / sum(sample_list) for i in sample_list]
-                            for _ in range(decodenum * 2):
-                                sampling_index = prob_list.index(np.random.choice(sample_list, p=prob_norm))
+                            choice_list = np.random.choice(sample_list, p=prob_norm,
+                                                           size=decode_range,
+                                                           replace=False)
+                            for idx in range(decode_range):
+                                sampling_index = prob_list.index(choice_list[idx])
                                 k, v = token_prob_list[sampling_index]
                                 candidate = [tokens + [k], score + -log(v)]
                                 all_candidates.append(candidate)

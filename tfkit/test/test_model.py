@@ -171,9 +171,9 @@ class TestModel(unittest.TestCase):
             feature[k] = [v, v]
 
         model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained)
-        # package = torch.load('./cache/model.pt', map_location='cpu')
-        # for model_tag, state_dict in zip(package['tags'], package['models']):
-        #     model.load_state_dict(state_dict)
+        package = torch.load('./cache/model.pt', map_location='cpu')
+        for model_tag, state_dict in zip(package['tags'], package['models']):
+            model.load_state_dict(state_dict)
 
         print(model(feature))
         self.assertTrue(isinstance(model(feature), Tensor))
@@ -185,6 +185,14 @@ class TestModel(unittest.TestCase):
         print(result, model_dict)
         self.assertTrue('label_map' in model_dict)
         self.assertTrue(len(result) == 1)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
+        print("TopK no filter sim", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict)
+        self.assertTrue(len(result) == 3)
         self.assertTrue(isinstance(result, list))
         self.assertTrue(isinstance(result[0][0], str))
 
