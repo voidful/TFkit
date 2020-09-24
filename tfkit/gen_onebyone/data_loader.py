@@ -171,7 +171,7 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
                           reserved_len=0):
     row_dict = dict()
     tokenized_input = tokenizer.tokenize(input)
-    tokenized_input = [tok_begin(tokenizer)] + tokenized_input[maxlen - (maxlen - reserved_len):] \
+    tokenized_input = [tok_begin(tokenizer)] + tokenized_input[:maxlen - reserved_len - 2] \
                       + [tok_sep(tokenizer)]
     tokenized_input.extend(tokenized_previous)
     tokenized_input.append(tok_mask(tokenizer))
@@ -212,7 +212,8 @@ def get_feature_from_data(tokenizer, maxlen, input, tokenized_previous, tokenize
     #     print(f"type: {len(row_dict['type'])}, {row_dict['type'][:target_start]} ")
     #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask'][:target_start]} ")
     #     if tokenized_target is not None:
-    #         print(f"target: {len(row_dict['target'])}, {tokenizer.convert_ids_to_tokens(row_dict['target'][target_start])} ")
+    #         print(
+    #             f"target: {len(row_dict['target'])}, {tokenizer.convert_ids_to_tokens(row_dict['target'][target_start])} ")
     #     if ntarget is not None:
     #         print("POS", target_start, len(tokenized_ntarget))
     #         print("STR", tokenized_ntarget)

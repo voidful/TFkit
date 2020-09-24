@@ -35,8 +35,8 @@ class TestDataLoader(unittest.TestCase):
 
         maxlen = 100
         for i in tfkit.gen_mask.loadMaskDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv'),
-                                                        pretrained_config='voidful/albert_chinese_tiny',
-                                                        maxlen=maxlen):
+                                                pretrained_config='voidful/albert_chinese_tiny',
+                                                maxlen=maxlen):
             print(i)
             # self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
             # self.assertTrue(i['target'][start_pos] != -1)
@@ -59,9 +59,17 @@ class TestDataLoader(unittest.TestCase):
     def testOnebyone(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
+        maxlen = 10
+        feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
+                                                           tokenized_target=["hi"],
+                                                           reserved_len=3)
+        print(feature)
+        self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
+
+        maxlen = 100
         for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
-        maxlen = 100
+
         for likelihood in ['onebyone', 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                                                             pretrained_config='voidful/albert_chinese_tiny',
