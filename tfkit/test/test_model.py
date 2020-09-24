@@ -171,60 +171,76 @@ class TestModel(unittest.TestCase):
             feature[k] = [v, v]
 
         model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained)
-        # package = torch.load('./cache/model.pt', map_location='cpu')
-        # for model_tag, state_dict in zip(package['tags'], package['models']):
-        #     model.load_state_dict(state_dict)
+        package = torch.load('./cache/model.pt', map_location='cpu')
+        for model_tag, state_dict in zip(package['tags'], package['models']):
+            model.load_state_dict(state_dict)
 
         print(model(feature))
         self.assertTrue(isinstance(model(feature), Tensor))
         model_dict = model(feature, eval=True)
         self.assertTrue('label_map' in model_dict)
 
-        # greedy
-        result, model_dict = model.predict(input=input)
-        print(result, model_dict)
-        self.assertTrue('label_map' in model_dict)
-        self.assertTrue(len(result) == 1)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopK
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
-        print("TopK no filter sim", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict)
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # beamsearch
-        result, model_dict = model.predict(input=input, decodenum=3)
-        print("beamsaerch", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict)
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopK
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
-        print("TopK", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict)
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopP
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
-        print("TopP", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict)
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
+        # # test filter sim
+        # dummy_result = [[['表', '示', '事', '業'], 4.438073633101437],
+        #                 [['表', '示', '事', '情'], 9.86092332722302],
+        #                 [['表', '示', '事', '情'], 9.86092332722302]]
+        # model._filterSimilar(dummy_result, 3)
+        # self.assertTrue(len(dummy_result), 3)
+        #
+        # dummy_result = [[['表', '示', '事', '業'], 4.438073633101437],
+        #                 [['表', '示', '事', '情'], 9.86092332722302]]
+        # model._filterSimilar(dummy_result, 2)
+        # self.assertTrue(len(dummy_result), 2)
+        #
+        # # greedy
+        # result, model_dict = model.predict(input=input)
+        # print(result, model_dict)
+        # self.assertTrue('label_map' in model_dict)
+        # self.assertTrue(len(result) == 1)
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
+        #
+        # # TopK
+        # result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
+        # print("TopK no filter sim", result, len(result), model_dict)
+        # self.assertTrue('label_map' in model_dict)
+        # self.assertTrue(len(result) == 3)
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
+        #
+        # # beamsearch
+        # result, model_dict = model.predict(input=input, decodenum=3)
+        # print("beamsaerch", result, len(result), model_dict)
+        # self.assertTrue('label_map' in model_dict)
+        # self.assertTrue(len(result) == 3)
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
+        #
+        # # TopK
+        # result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
+        # print("TopK", result, len(result), model_dict)
+        # self.assertTrue('label_map' in model_dict)
+        # self.assertTrue(len(result) == 3)
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
+        #
+        # # TopP
+        # result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
+        # print("TopP", result, len(result), model_dict)
+        # self.assertTrue('label_map' in model_dict)
+        # self.assertTrue(len(result) == 3)
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
 
         # test exceed 512
         result, model_dict = model.predict(input="T " * 512)
         self.assertTrue(isinstance(result, list))
         print("exceed max len", result)
         self.assertTrue(len(result[0]) == 0)
+        result, model_dict = model.predict(input="T " * 550, reserved_len=10)
+        self.assertTrue(isinstance(result, list))
+        print("exceed max len with reserved len:", result)
+        self.assertTrue(result)
 
     def testOnebyoneWithReservedLen(self):
         ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))

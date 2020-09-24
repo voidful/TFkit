@@ -128,6 +128,8 @@ def main():
             if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
             elif 'OneByOne' in model.__class__.__name__:
+                if len(result_dict['label_map']) < eval_pos:
+                    print("Decode size smaller than decode num:", result_dict['label_map'])
                 predicted = result_dict['label_map'][eval_pos][0] if 'label_map' in result_dict else ''
             elif 'Mask' in model.__class__.__name__:
                 target = target.split(" ")
