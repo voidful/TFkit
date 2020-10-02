@@ -1,10 +1,11 @@
 import argparse
 import torch
-import gen_once
-import gen_onebyone
-import qa
-import classifier
-import tag
+import tfkit.gen_once as gen_once
+import tfkit.gen_onebyone as gen_onebyone
+import tfkit.qa as qa
+import tfkit.classifier as classifier
+import tfkit.tag as tag
+import tfkit.gen_mask as mask
 
 
 def main():
@@ -37,6 +38,8 @@ def main():
         model = tag.Tagger(package['label'], model_config=config, maxlen=maxlen)
     elif 'qa' in model_type:
         model = qa.QA(model_config=config, maxlen=maxlen)
+    elif 'mask' in model_type:
+        model = mask.Mask(model_config=config, maxlen=maxlen)
 
     model = model.to(device)
     model.load_state_dict(package['model_state_dict'], strict=False)
