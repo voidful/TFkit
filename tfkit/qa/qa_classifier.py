@@ -124,10 +124,8 @@ class QA(nn.Module):
                 min_entropy_index = results_entropy.index(min(results_entropy))
                 max_prob_index = results_prob.index(max(results_prob))
                 if merge_strategy == 'minentropy':
-                    print("min_entropy_index", min(results_entropy), results_entropy)
                     ret_result = ret_result[min_entropy_index]
                 if merge_strategy == 'maxprob':
-                    print("max_prob_index", min(results_prob), results_prob)
                     ret_result = ret_result[max_prob_index]
 
             return ret_result, ret_detail
