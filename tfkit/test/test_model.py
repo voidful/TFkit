@@ -66,8 +66,6 @@ class TestModel(unittest.TestCase):
             self.assertTrue('label_prob_all' in model_dict)
             self.assertTrue('label_map' in model_dict)
 
-
-
         # test predict
         result, model_dict = model.predict(input=input)
         print("model_dict", model_dict, input, result)
@@ -96,14 +94,35 @@ class TestModel(unittest.TestCase):
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
         model = tfkit.tag.Tagger(["O", "A"],
                                  tokenizer, pretrained)
+        for feature in tfkit.tag.get_feature_from_data(tokenizer, labels=["O", "A"], input=input, target=target,
+                                                       maxlen=512):
+            for k, v in feature.items():
+                feature[k] = [v, v]
+            print(feature)
 
+            # test train
+            print(model(feature))
+            self.assertTrue(isinstance(model(feature), Tensor))
+            # test eval
+            model_dict = model(feature, eval=True)
+            self.assertTrue('label_prob_all' in model_dict)
+            self.assertTrue('label_map' in model_dict)
+
+        # test predict
+        result, model_dict = model.predict(input=input)
+        print("model_dict", model_dict)
+        self.assertTrue('label_prob_all' in model_dict[0])
+        self.assertTrue('label_map' in model_dict[0])
+        print("result", result, len(result))
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0][0], str))
 
         # test exceed 512
         for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
             result, model_dict = model.predict(input=" ".join([str(i) for i in range(1000)]),
                                                merge_strategy=merge_strategy)
-            # print(result)
-            # self.assertTrue(isinstance(result, list))
+            print(result)
+            self.assertTrue(isinstance(result, list))
 
     def testMask(self):
         input = "今 天 [MASK] 情 [MASK] 好"

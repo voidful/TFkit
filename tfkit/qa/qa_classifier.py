@@ -106,7 +106,7 @@ class QA(nn.Module):
             if merge_strategy == 'maxcount':  # should not be empty on count
                 non_empty_result = [r for r in ret_result if len(r[0]) != 0]
                 if len(non_empty_result) == 0:
-                    ret_result = []
+                    ret_result = ['']
                 else:
                     ret_result = max(non_empty_result, key=non_empty_result.count)
             else:
