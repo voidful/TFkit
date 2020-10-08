@@ -1,15 +1,17 @@
 import sys
 import os
 
+from torch.distributions import Categorical
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 import torch.nn as nn
-from transformers import *
-from torch.nn.functional import softmax, sigmoid
-from qa.data_loader import get_feature_from_data
-from utility.loss import *
+from torch.nn.functional import softmax
+from tfkit.qa.data_loader import get_feature_from_data
+from tfkit.utility.loss import FocalLoss
+import numpy as np
 
 
 class QA(nn.Module):
@@ -54,10 +56,10 @@ class QA(nn.Module):
             reshaped_end_logits = softmax(end_logits, dim=1)
             start_prob = reshaped_start_logits.data.tolist()[0]
             end_prob = reshaped_end_logits.data.tolist()[0]
-            result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob))})
-            result_dict['label_prob_all'].append({'end': dict(zip(range(len(end_prob)), end_prob))})
-            result_dict['label_map'].append({'start': start_prob.index(max(start_prob))})
-            result_dict['label_map'].append({'end': end_prob.index(max(end_prob))})
+            result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob)),
+                                                  'end': dict(zip(range(len(end_prob)), end_prob))})
+            result_dict['label_map'].append({'start': start_prob.index(max(start_prob)),
+                                             'end': end_prob.index(max(end_prob))})
             outputs = result_dict
         else:
             start_loss = self.loss_fct(start_logits, start_positions)
@@ -67,12 +69,15 @@ class QA(nn.Module):
 
         return outputs
 
-    def predict(self, input='', topk=1, task=None):
+    def predict(self, input='', topk=1, task=None, handle_exceed='slide',
+                merge_strategy=['minentropy', 'maxcount', 'maxprob']):
         topk = int(topk)
         self.eval()
         with torch.no_grad():
-            feature_dict = get_feature_from_data(self.tokenizer, input, maxlen=self.maxlen)
-            if len(feature_dict['input']) <= self.maxlen:
+            ret_result = []
+            ret_detail = []
+            for feature_dict in get_feature_from_data(self.tokenizer, input, maxlen=self.maxlen,
+                                                      handle_exceed=handle_exceed):
                 raw_input = feature_dict['raw_input']
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
@@ -81,7 +86,8 @@ class QA(nn.Module):
                 if topk < 2:
                     start = [i['start'] for i in result['label_map'] if 'start' in i][0]
                     end = [i['end'] for i in result['label_map'] if 'end' in i][0]
-                    return ["".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end]))], result
+                    ret_result.append(["".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end]))])
+                    ret_detail.append(result)
                 else:
                     start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
                     end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
@@ -91,7 +97,37 @@ class QA(nn.Module):
                             answers.append((start_index, end_index, start_dict[start_index] + end_dict[end_index]))
                     answer_results = sorted(answers, key=lambda answers: answers[2],
                                             reverse=True)[:topk]
-                    return ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
-                            answer_results], result
+                    ret_result.append(
+                        ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
+                         answer_results])
+                    ret_detail.append(result)
+
+            # apply different strategy to merge result after sliding windows
+            if merge_strategy == 'maxcount':  # should not be empty on count
+                non_empty_result = [r for r in ret_result if len(r[0]) != 0]
+                if len(non_empty_result) == 0:
+                    ret_result = []
+                else:
+                    ret_result = max(non_empty_result, key=non_empty_result.count)
             else:
-                return [], {}
+                results_prob = []
+                results_entropy = []
+                for detail in ret_detail:
+                    prob_start = detail['label_prob_all'][0]['start'][int(detail['label_map'][0]['start'])]
+                    prob_end = detail['label_prob_all'][0]['end'][int(detail['label_map'][0]['end'])]
+                    results_entropy.append(sum(
+                        Categorical(probs=torch.tensor([list(detail['label_prob_all'][0]['start'].values()),
+                                                        list(detail['label_prob_all'][0][
+                                                                 'end'].values())])).entropy().data.tolist()))
+                    results_prob.append(np.log(prob_start) + np.log(prob_end))
+
+                min_entropy_index = results_entropy.index(min(results_entropy))
+                max_prob_index = results_prob.index(max(results_prob))
+                if merge_strategy == 'minentropy':
+                    print("min_entropy_index", min(results_entropy), results_entropy)
+                    ret_result = ret_result[min_entropy_index]
+                if merge_strategy == 'maxprob':
+                    print("max_prob_index", min(results_prob), results_prob)
+                    ret_result = ret_result[max_prob_index]
+
+            return ret_result, ret_detail

@@ -8,7 +8,7 @@ import pytest
 @pytest.mark.skip()
 class TestEval(unittest.TestCase):
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))
-    MODEL_PATH = os.path.join(ROOT_DIR, 'test/cache/2.pt')
+    MODEL_PATH = os.path.join(ROOT_DIR, 'test/cache/1.pt')
     ADDED_TOK_MODEL = os.path.join(ROOT_DIR, 'test/cache/voidful/albert_chinese_tiny_added_tok')
     DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 

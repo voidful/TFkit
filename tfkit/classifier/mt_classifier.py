@@ -1,14 +1,16 @@
 import sys
 import os
 
+import torch
+from torch import nn
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-import torch
-import torch.nn as nn
 from torch.nn.functional import softmax, sigmoid
-from classifier.data_loader import get_feature_from_data
-from utility.loss import *
+from tfkit.classifier.data_loader import get_feature_from_data
+from tfkit.utility.loss import FocalLoss, BCEFocalLoss
+from torch.distributions import Categorical
 
 
 class MtClassifier(nn.Module):
@@ -94,19 +96,45 @@ class MtClassifier(nn.Module):
     def get_all_task(self):
         return list(self.tasks.keys())
 
-    def predict(self, input='', topk=1, task=get_all_task):
+    def predict(self, input='', topk=1, task=get_all_task, handle_exceed='slide',
+                merge_strategy=['minentropy', 'maxcount', 'maxprob']):
         topk = int(topk)
+        task = task[0] if isinstance(task, list) else task
+        handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
+        merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
         with torch.no_grad():
-            feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, self.tasks_detail[task], task, input)
-            if len(feature_dict['input']) <= self.maxlen:
-                for k, v in feature_dict.items():
-                    feature_dict[k] = [v]
-                result = self.forward(feature_dict, eval=True)
+            ret_result = []
+            ret_detail = []
+            for feature in get_feature_from_data(self.tokenizer, self.maxlen, self.tasks_detail[task], task, input,
+                                                 handle_exceed=handle_exceed):
+                for k, v in feature.items():
+                    feature[k] = [v]
+                result = self.forward(feature, eval=True)
                 if topk < 2:
-                    return [i[task] for i in result['label_map'] if task in i], result
+                    ret_result.append([i[task] for i in result['label_map'] if task in i][0])
+                    ret_detail.append(result)
                 else:
                     task_map = [i[task] for i in result['label_prob_all'] if task in i][0]
-                    return sorted(task_map, key=task_map.get, reverse=True)[:topk], result
-            else:
-                return [], {}
+                    ret_result.append(sorted(task_map, key=task_map.get, reverse=True)[:topk])
+                    ret_detail.append(result)
+
+        # apply different strategy to merge result after sliding windows
+        if merge_strategy == 'maxcount':
+            ret_result = max(ret_result, key=ret_result.count)
+        else:
+            results_prob = []
+            results_entropy = []
+            for detail in ret_detail:
+                prob_map = detail['label_prob_all'][0][task]
+                result_value = [v for _, v in prob_map.items()]
+                results_entropy.append(Categorical(probs=torch.tensor(result_value)).entropy().data.tolist())
+                results_prob.append(max(result_value))
+            min_entropy_index = results_entropy.index(min(results_entropy))
+            max_prob_index = results_prob.index(max(results_prob))
+            if merge_strategy == 'minentropy':
+                ret_result = ret_result[min_entropy_index]
+            if merge_strategy == 'maxprob':
+                ret_result = ret_result[max_prob_index]
+
+        return ret_result, ret_detail

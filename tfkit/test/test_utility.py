@@ -82,6 +82,41 @@ class TestLoss(unittest.TestCase):
         self.assertTrue(criterion(self.outputs, self.onen_targets) > custom_criterion(self.outputs, self.onen_targets))
 
 
+class TestTok(unittest.TestCase):
+
+    def testTok(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        begin = tfkit.utility.tok.tok_begin(tokenizer)
+        self.assertEqual(begin, "[CLS]")
+        sep = tfkit.utility.tok.tok_sep(tokenizer)
+        self.assertEqual(sep, "[SEP]")
+        mask = tfkit.utility.tok.tok_mask(tokenizer)
+        self.assertEqual(mask, "[MASK]")
+        pad = tfkit.utility.tok.tok_pad(tokenizer)
+        self.assertEqual(pad, "[PAD]")
+
+    def testGetXUnkToken(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        result = tfkit.utility.tok.get_topP_unk_token(tokenizer, file_paths=[], topP=0.5)
+        self.assertFalse(result)
+        result = tfkit.utility.tok.get_freqK_unk_token(tokenizer, file_paths=[], freqK=10)
+        self.assertFalse(result)
+
+    def testHandleExceed(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        seq = " ".join([str(_) for _ in range(100)])
+        maxlen = 50
+        for mode in ['remove', 'slide', 'start_slice', 'end_slice']:
+            rlt,_ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
+            print(mode, len(rlt))
+            if mode == 'remove':
+                self.assertTrue(len(rlt) == 0)
+            if mode == 'slide':
+                self.assertTrue(len(rlt) > 1)
+            for i in rlt:
+                self.assertTrue(len(i) == 50)
+
+
 class TestEval(unittest.TestCase):
     def testEMF1(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')

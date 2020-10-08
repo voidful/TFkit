@@ -1,19 +1,18 @@
-import inspect
-
-from transformers import *
+from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
 import argparse
 import torch
-import gen_once
-import gen_mask
-import gen_onebyone
-import qa
-import classifier
-import tag
+import tfkit.gen_once as gen_once
+import tfkit.gen_mask as gen_mask
+import tfkit.gen_onebyone as gen_onebyone
+import tfkit.qa as qa
+import tfkit.classifier as classifier
+import tfkit.tag as tag
 from tqdm import tqdm
-from utility.eval_metric import EvalMetric
 import csv
 import inquirer
 import nlp2
+from tfkit.utility.eval_metric import EvalMetric
+import tfkit.utility.tok as tok
 
 
 def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=None):

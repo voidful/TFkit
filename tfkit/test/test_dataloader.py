@@ -29,7 +29,6 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) < 512)
 
     def testMask(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         for i in tfkit.gen_mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
             print(i)
 
@@ -38,8 +37,6 @@ class TestDataLoader(unittest.TestCase):
                                                 pretrained_config='voidful/albert_chinese_tiny',
                                                 maxlen=maxlen):
             print(i)
-            # self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
-            # self.assertTrue(i['target'][start_pos] != -1)
             self.assertTrue(len(i['input']) == maxlen)
             self.assertTrue(len(i['target']) == maxlen)
 
@@ -62,7 +59,7 @@ class TestDataLoader(unittest.TestCase):
         maxlen = 10
         feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
                                                            tokenized_target=["hi"],
-                                                           reserved_len=3)
+                                                           reserved_len=3)[-1]
         print(feature)
         self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
 
@@ -71,6 +68,7 @@ class TestDataLoader(unittest.TestCase):
             print(i)
 
         for likelihood in ['onebyone', 'onebyone-neg', 'onebyone-pos', 'onebyone-both']:
+            # for likelihood in ['onebyone-both']:
             for i in tfkit.gen_onebyone.loadOneByOneDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                                                             pretrained_config='voidful/albert_chinese_tiny',
                                                             maxlen=maxlen, likelihood=likelihood):
@@ -142,6 +140,7 @@ class TestDataLoader(unittest.TestCase):
         ds = tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                     pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
-        print(ds.__len__())
+        print("before increase_with_sampling", ds.__len__())
         ds.increase_with_sampling(12)
-        self.assertTrue(ds.__len__() == 14)
+        print("after increase_with_sampling", ds.__len__())
+        self.assertTrue(ds.__len__() == 12)

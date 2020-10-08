@@ -1,12 +1,7 @@
 import argparse
 import random
-from collections import Iterable, defaultdict
-
 import nlp2
 import torch
-from torch import nn
-from torch._six import container_abcs
-from torch.utils.data.dataloader import default_collate
 from tqdm import tqdm
 from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
 import numpy as np
@@ -14,15 +9,15 @@ import tensorboardX as tensorboard
 from torch.utils import data
 from itertools import zip_longest
 import os
-import gen_once
-import gen_onebyone
-import classifier
-import tag
-import qa
-import gen_mask
-
+import tfkit.gen_once as gen_once
+import tfkit.gen_onebyone as gen_onebyone
+import tfkit.classifier as classifier
+import tfkit.tag as tag
+import tfkit.qa as qa
+import tfkit.gen_mask as gen_mask
 from tfkit.utility import get_freqK_unk_token
 from tfkit.utility import BalancedDataParallel
+import tfkit.utility.tok as tok
 
 input_arg = {}
 
@@ -132,7 +127,6 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
     for model_type, train_file, test_file in zip_longest(input_arg.model, input_arg.train, input_arg.test,
                                                          fillvalue=""):
         model_type = model_type.lower()
-
         if "once" in model_type:
             train_ds = gen_once.loadOnceDataset(train_file, pretrained=pretrained_config, maxlen=input_arg.maxlen,
                                                 cache=input_arg.cache)
@@ -140,10 +134,11 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
                                                cache=input_arg.cache)
             model = gen_once.Once(tokenizer, pretrained, maxlen=input_arg.maxlen)
         elif "mask" in model_type:
-            train_ds = gen_mask.loadMaskDataset(train_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
-                                                cache=input_arg.cache)
+            train_ds = gen_mask.loadMaskDataset(train_file, pretrained_config=pretrained_config,
+                                                maxlen=input_arg.maxlen, cache=input_arg.cache,
+                                                handle_exceed=input_arg.handle_exceed)
             test_ds = gen_mask.loadMaskDataset(test_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
-                                               cache=input_arg.cache)
+                                               cache=input_arg.cache, handle_exceed=input_arg.handle_exceed)
             model = gen_mask.Mask(tokenizer, pretrained, maxlen=input_arg.maxlen)
         elif "onebyone" in model_type:
             panel = nlp2.Panel()
@@ -160,8 +155,10 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
             test_ds = gen_onebyone.loadOneByOneDataset(test_file, **inputted_arg)
             model = gen_onebyone.OneByOne(tokenizer, pretrained, **inputted_arg)
         elif 'clas' in model_type:
-            train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=input_arg.cache)
-            test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=input_arg.cache)
+            train_ds = classifier.loadClassifierDataset(train_file, pretrained=pretrained_config, cache=input_arg.cache,
+                                                        handle_exceed=input_arg.handle_exceed)
+            test_ds = classifier.loadClassifierDataset(test_file, pretrained=pretrained_config, cache=input_arg.cache,
+                                                       handle_exceed=input_arg.handle_exceed)
             model = classifier.MtClassifier(train_ds.task, tokenizer, pretrained)
         elif 'tag' in model_type:
             if "row" in model_type:
@@ -191,10 +188,14 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
 
 def main():
     parser = argparse.ArgumentParser()
+    exceed_mode = nlp2.function_get_all_arg_with_value(tok.handle_exceed)['mode']
     parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
     parser.add_argument("--lr", type=float, nargs='+', default=[5e-5], help="learning rate, default 5e-5")
     parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
-    parser.add_argument("--maxlen", type=int, default=368, help="max tokenized sequence length, default 368")
+    parser.add_argument("--maxlen", type=int, default=512, help="max tokenized sequence length, default 512")
+    parser.add_argument("--handle_exceed", choices=exceed_mode,
+                        default=exceed_mode[0],
+                        help='select ways to handle input exceed max length')
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
     parser.add_argument("--add_tokens", type=int, default=0,
                         help="auto add freq > x UNK token to word table")
@@ -205,7 +206,7 @@ def main():
                                  'onebyone-neg', 'onebyone-pos', 'onebyone-both', 'mask'], help="model task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
-                        help='distilbert-base-multilingual-cased|bert-base-multilingual-cased|voidful/albert_chinese_small')
+                        help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
     parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")

@@ -5,6 +5,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 import numpy as np
+from math import log, e
 
 
 class BCEFocalLoss(nn.Module):

@@ -1,17 +1,13 @@
 import sys
 import os
-from collections import OrderedDict
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-import torch
-import torch.nn as nn
-from transformers import *
 from torch.nn.functional import softmax
-from gen_once.data_loader import get_feature_from_data
-from utility.loss import *
-from utility.tok import *
+from tfkit.gen_once.data_loader import get_feature_from_data
+from tfkit.utility.loss import *
+from tfkit.utility.tok import *
 
 
 class Once(nn.Module):
@@ -48,6 +44,7 @@ class Once(nn.Module):
             }
             start = batch_data['start'][0]
             end = False
+            outputs = result_dict
             while start < self.maxlen and not end:
                 predicted_index = torch.argmax(prediction_scores[0][start]).item()
                 predicted_token = self.tokenizer.decode([predicted_index])
@@ -76,14 +73,17 @@ class Once(nn.Module):
 
         return outputs
 
-    def predict(self, input='', task=None):
+    def predict(self, input='', task=None, handle_exceed='start_slice'):
+        handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         self.eval()
         with torch.no_grad():
-            feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input)
-            if len(feature_dict['input']) > self.maxlen:
-                return [], {}
-            for k, v in feature_dict.items():
-                feature_dict[k] = [v]
-            predictions = self.forward(feature_dict, eval=True)
+            ret_result = []
+            ret_detail = []
+            feature = get_feature_from_data(self.tokenizer, self.maxlen, input, handle_exceed=handle_exceed)[-1]
+            for k, v in feature.items():
+                feature[k] = [v]
+            predictions = self.forward(feature, eval=True)
             output = "".join(self.tokenizer.convert_tokens_to_string([i[0] for i in predictions['label_map']]))
-            return [output], predictions
+            ret_result.append(output)
+            ret_detail.append(predictions)
+            return ret_result, ret_detail

@@ -2,19 +2,17 @@ import json
 import sys
 import os
 
-from tfkit.utility import tok_sep
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
-import torch.nn as nn
-from gen_onebyone.data_loader import get_feature_from_data
+from torch import nn
+from tfkit.gen_onebyone.data_loader import get_feature_from_data
 from itertools import combinations
 from torch.nn.functional import softmax
-from math import log, exp
-from utility.loss import *
-from utility.tok import *
+from math import log
+import tfkit.utility.tok as tok
+from tfkit.utility import NegativeCElLoss
 import numpy as np
 
 
@@ -88,7 +86,7 @@ class OneByOne(nn.Module):
                 break
 
     def predict(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1, filtersim=True,
-                reserved_len=0, task=None):
+                reserved_len=0, task=None, handle_exceed='start_slice'):
         filtersim = json.loads(str(filtersim).lower())
         topK = int(topK)
         topP = float(topP)
@@ -102,10 +100,12 @@ class OneByOne(nn.Module):
                 all_candidates = list()
                 exceed = False
                 for seq in sequences:
-                    if tok_sep(self.tokenizer) not in seq[0]:
+                    if tok.tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
+
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
-                                                             reserved_len=reserved_len)
+                                                             reserved_len=reserved_len,
+                                                             handle_exceed=handle_exceed)[-1]
                         # check input exceed
                         if len(feature_dict['input']) > self.maxlen:
                             exceed = True
@@ -116,10 +116,9 @@ class OneByOne(nn.Module):
                             feature_dict[k] = [v]
                         predictions = self.forward(feature_dict, eval=True)
                         token_prob_list = predictions['label_prob_all'][0]
-
                         # topK topP
                         if 'top' in mode:
-                            prob_list = [prob for tok, prob in token_prob_list]
+                            prob_list = [prob for _, prob in token_prob_list]
                             if 'topk' in mode:
                                 sample_list = prob_list[:topK]
                                 decode_range = max(decodenum, topK)
@@ -158,7 +157,7 @@ class OneByOne(nn.Module):
                 stop = 0
                 for i in sequences:
                     # i[0] - sequence,i[1] - sequence score
-                    if tok_sep(self.tokenizer) in i[0] \
+                    if tok.tok_sep(self.tokenizer) in i[0] \
                             or len(i[0]) > 3 and i[0][-1] == i[0][-2] == i[0][-3] \
                             or i[1] > 300:
                         stop += 1
@@ -166,10 +165,10 @@ class OneByOne(nn.Module):
                     break
 
             for i in range(len(sequences)):
-                if tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
-                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok_sep(self.tokenizer))]
+                if tok.tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
+                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok.tok_sep(self.tokenizer))]
                 sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
             result_dict = {
                 'label_map': sequences
             }
-            return [i[0] for i in sequences], result_dict
+            return [i[0] for i in sequences], [result_dict]

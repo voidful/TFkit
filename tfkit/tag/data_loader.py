@@ -14,11 +14,11 @@ import numpy as np
 from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoTokenizer, BertTokenizer
-from utility.tok import *
+import tfkit.utility.tok as tok
 
 
 class loadColTaggerDataset(data.Dataset):
-    def __init__(self, fpath, pretrained, maxlen=368, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=368, cache=False, handle_exceed='slide'):
         samples = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
@@ -31,12 +31,18 @@ class loadColTaggerDataset(data.Dataset):
                 samples = savedict["samples"]
                 labels = savedict["labels"]
         else:
+            total_data = 0
             for i in get_data_from_file_col(fpath):
                 tasks, task, input, target = i
                 labels = tasks[task]
-                feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) <= maxlen:
-                    samples.append(feature)
+                for feature in get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen,
+                                                     handle_exceed=handle_exceed):
+                    if len(feature['input']) == len(feature['target']):
+                        samples.append(feature)
+                        total_data += 1
+
+            print("Processed " + str(total_data) + " data.")
+
             if cache:
                 with open(cache_path, 'wb') as cf:
                     pickle.dump({'samples': samples, 'labels': labels}, cf)
@@ -56,7 +62,7 @@ class loadColTaggerDataset(data.Dataset):
 
 
 class loadRowTaggerDataset(data.Dataset):
-    def __init__(self, fpath, pretrained, maxlen=512, separator=" ", cache=False):
+    def __init__(self, fpath, pretrained, maxlen=512, separator=" ", cache=False, handle_exceed='slide'):
         samples = []
         labels = []
         if 'albert_chinese' in pretrained:
@@ -71,24 +77,22 @@ class loadRowTaggerDataset(data.Dataset):
                 labels = savedict["labels"]
         else:
             total_data = 0
-            data_exceed_maxlen = 0
 
             for i in get_data_from_file_row(fpath):
                 tasks, task, input, target = i
                 labels = tasks[task]
-                feature = get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen)
-                if len(feature['input']) == len(feature['target']) <= maxlen:
-                    samples.append(feature)
-                else:
-                    data_exceed_maxlen += 1
-                total_data += 1
+                for feature in get_feature_from_data(tokenizer, labels, input, target, maxlen=maxlen,
+                                                     handle_exceed=handle_exceed):
+                    if len(feature['input']) == len(feature['target']):
+                        samples.append(feature)
+                        total_data += 1
 
-            print("Processed " + str(total_data) + " data, removed " + str(
-                data_exceed_maxlen) + " data that exceed the maximum length.")
+        print("Processed " + str(total_data) + " data.")
 
-            if cache:
-                with open(cache_path, 'wb') as cf:
-                    pickle.dump({'samples': samples, 'labels': labels}, cf)
+        if cache:
+            with open(cache_path, 'wb') as cf:
+                pickle.dump({'samples': samples, 'labels': labels}, cf)
+
         self.sample = samples
         self.label = labels
 
@@ -149,16 +153,12 @@ def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, sep
                     y += rows[label_index].replace(" ", "_") + separator
 
 
-def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, separator=" "):
-    # ``1`` for tokens that are NOT MASKED, ``0`` for MASKED tokens.
-    row_dict = dict()
-    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
-    input = input.split()
-    mapping_index = []
+def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, separator=" ", handle_exceed='slide'):
+    feature_dict_list = []
 
+    mapping_index = []
     pos = 1  # cls as start 0
-    for i in input:
+    for i in input.split(" "):
         for _ in range(len(tokenizer.tokenize(i))):
             if _ < 1:
                 mapping_index.append({'char': i, 'pos': pos})
@@ -166,37 +166,49 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
 
     if target is not None:
         target = target.split(separator)
-        target_token = []
 
-        for i, t in zip(input, target):
-            for _ in range(len(tokenizer.tokenize(i))):
-                target_token += [labels.index(t)]
+    t_input_list, t_pos_list = tok.handle_exceed(tokenizer, input, maxlen - 2, mode=handle_exceed)
+    for t_input, t_pos in zip(t_input_list, t_pos_list):  # -2 for cls and sep
+        # ``1`` for tokens that are NOT MASKED, ``0`` for MASKED tokens.
+        row_dict = dict()
+        tokenized_input = [tok.tok_begin(tokenizer)] + t_input + [tok.tok_sep(tokenizer)]
+        input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
 
-        if "O" in labels:
-            target_id = [labels.index("O")] + target_token + [labels.index("O")]
-        else:
-            target_id = [target_token[0]] + target_token + [target_token[-1]]
+        if target is not None:
+            target_token = []
 
-        if len(input_id) != len(target_id):
-            print("input target len not equal", len(input_id), len(target_id), len(input), len(target),
-                  len(tokenized_input), len(target_token))
-        target_id.extend([0] * (maxlen - len(target_id)))
-        row_dict['target'] = target_id
+            pev = 0
+            for tok_map, target_label in zip(mapping_index, target):
+                if t_pos[0] < tok_map['pos'] <= t_pos[1]:
+                    for _ in range(tok_map['pos'] - pev):
+                        target_token += [labels.index(target_label)]
+                pev = tok_map['pos']
 
-    row_dict['mapping'] = json.dumps(mapping_index, ensure_ascii=False)
-    mask_id = [1] * len(input_id)
-    mask_id.extend([0] * (maxlen - len(mask_id)))
-    row_dict['mask'] = mask_id
-    row_dict['end'] = len(input_id)
-    input_id.extend([0] * (maxlen - len(input_id)))
-    row_dict['input'] = input_id
+            if "O" in labels:
+                target_id = [labels.index("O")] + target_token + [labels.index("O")]
+            else:
+                target_id = [target_token[0]] + target_token + [target_token[-1]]
 
-    # if debug:
-    #     print("*** Example ***")
-    #     print(f"input: {len(input_id)}, {list(zip(enumerate(input_id)))} ")
-    #     print(f"mask: {len(mask_id)}, {list(zip(enumerate(mask_id)))} ")
-    #     if target is not None:
-    #         print(f"target: {len(target_id)}, {list(zip(enumerate(mask_id)))} ")
-    #     print(f"mapping: {row_dict['mapping']} ")
+            if len(input_id) != len(target_id):
+                print("input target len not equal", len(input_id), len(target_id), len(input), len(target),
+                      len(tokenized_input), len(target_token))
+            target_id.extend([0] * (maxlen - len(target_id)))
+            row_dict['target'] = target_id
 
-    return row_dict
+        map_start = 0
+        map_end = len(mapping_index)
+        for pos, tok_map in enumerate(mapping_index):
+            if t_pos[0] == tok_map['pos']:
+                map_start = pos
+            elif t_pos[1] == tok_map['pos']:
+                map_end = pos
+        row_dict['mapping'] = json.dumps(mapping_index[map_start:map_end], ensure_ascii=False)
+        mask_id = [1] * len(input_id)
+        mask_id.extend([0] * (maxlen - len(mask_id)))
+        row_dict['mask'] = mask_id
+        row_dict['end'] = len(input_id)
+        input_id.extend([0] * (maxlen - len(input_id)))
+        row_dict['input'] = input_id
+        row_dict['pos'] = [map_start, map_end]
+        feature_dict_list.append(row_dict)
+    return feature_dict_list

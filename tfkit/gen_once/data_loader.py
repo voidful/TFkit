@@ -8,11 +8,11 @@ import numpy as np
 from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoTokenizer, BertTokenizer
-from utility.tok import *
+import tfkit.utility.tok as tok
 
 
 class loadOnceDataset(data.Dataset):
-    def __init__(self, fpath, pretrained, maxlen=510, cache=False):
+    def __init__(self, fpath, pretrained, maxlen=510, cache=False, handle_exceed='start_slice'):
         sample = []
         if 'albert_chinese' in pretrained:
             tokenizer = BertTokenizer.from_pretrained(pretrained)
@@ -24,18 +24,12 @@ class loadOnceDataset(data.Dataset):
                 sample = pickle.load(cf)
         else:
             total_data = 0
-            data_exceed_maxlen = 0
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
-                feature = get_feature_from_data(tokenizer, maxlen, input, target)
-                if len(feature['input']) == len(feature['target']) == len(feature['ntarget']) <= maxlen:
+                for feature in get_feature_from_data(tokenizer, maxlen, input, target, handle_exceed):
                     sample.append(feature)
-                else:
-                    data_exceed_maxlen += 1
-                total_data += 1
-
-            print("Processed " + str(total_data) + " data, removed " + str(
-                data_exceed_maxlen) + " data that exceed the maximum length.")
+                    total_data += 1
+            print("Processed " + str(total_data) + " data")
 
             if cache:
                 with open(cache_path, 'wb') as cf:
@@ -68,53 +62,42 @@ def get_data_from_file(fpath):
             yield tasks, task, input, target
 
 
-def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None):
-    row_dict = dict()
-    tokenized_input = [tok_begin(tokenizer)] + tokenizer.tokenize(input) + [tok_sep(tokenizer)]
-    mask_id = [1] * len(tokenized_input)
-    type_id = [0] * len(tokenized_input)
+def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, handle_exceed='start_slice'):
+    feature_dict_list = []
+    t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2, handle_exceed)
+    for t_input in t_input_list:  # -2 for cls and sep
+        row_dict = dict()
+        tokenized_input = [tok.tok_begin(tokenizer)] + t_input + [tok.tok_sep(tokenizer)]
+        mask_id = [1] * len(tokenized_input)
+        type_id = [0] * len(tokenized_input)
 
-    row_dict['target'] = [-1] * maxlen
-    row_dict['ntarget'] = [-1] * maxlen
+        row_dict['target'] = [-1] * maxlen
+        row_dict['ntarget'] = [-1] * maxlen
 
-    tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
-    target_start = len(tokenized_input_id)
-    if target is not None:
-        tokenized_target = tokenizer.tokenize(target)
-        tokenized_target += [tok_sep(tokenizer)]
-        tokenized_target_id = [-1] * len(tokenized_input)
-        tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
-        tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
-        row_dict['target'] = tokenized_target_id
+        tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
+        target_start = len(tokenized_input_id)
+        if target is not None:
+            tokenized_target = tokenizer.tokenize(target)
+            tokenized_target += [tok.tok_sep(tokenizer)]
+            tokenized_target_id = [-1] * len(tokenized_input)
+            tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
+            tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
+            row_dict['target'] = tokenized_target_id
 
-    if ntarget is not None:
-        tokenized_ntarget = tokenizer.tokenize(ntarget)
-        tokenized_ntarget_id = [-1] * target_start
-        tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
-        tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
-        row_dict['ntarget'] = tokenized_ntarget_id
+        if ntarget is not None:
+            tokenized_ntarget = tokenizer.tokenize(ntarget)
+            tokenized_ntarget_id = [-1] * target_start
+            tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
+            tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
+            row_dict['ntarget'] = tokenized_ntarget_id
 
-    tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
-    mask_id.extend([0] * (maxlen - len(mask_id)))
-    type_id.extend([1] * (maxlen - len(type_id)))
+        tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
+        mask_id.extend([0] * (maxlen - len(mask_id)))
+        type_id.extend([1] * (maxlen - len(type_id)))
 
-    row_dict['input'] = tokenized_input_id
-    row_dict['type'] = type_id
-    row_dict['mask'] = mask_id
-    row_dict['start'] = target_start
-
-    # if True:
-    #     print("*** Example ***")
-    #     print("tokenized_input",input,tokenized_input)
-    #     print(f"input: {len(row_dict['input'])}, {row_dict['input']} ")
-    #     print(f"type: {len(row_dict['type'])}, {row_dict['type']} ")
-    #     print(f"mask: {len(row_dict['mask'])}, {row_dict['mask']} ")
-    #     if target is not None:
-    #         print(f"target: {len(row_dict['target'])}, {row_dict['target']} ")
-    #     if ntarget is not None:
-    #         print("POS", target_start, len(tokenized_ntarget))
-    #         print("STR", tokenized_target, tokenized_ntarget)
-    #         print("ANS", tokenized_target[target_start], tokenized_ntarget_id)
-    #         print(f"ntarget: {len(tokenized_ntarget_id)}, {row_dict['ntarget']} ")
-
-    return row_dict
+        row_dict['input'] = tokenized_input_id
+        row_dict['type'] = type_id
+        row_dict['mask'] = mask_id
+        row_dict['start'] = target_start
+        feature_dict_list.append(row_dict)
+    return feature_dict_list
