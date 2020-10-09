@@ -16,7 +16,6 @@ import tfkit.tag as tag
 import tfkit.qa as qa
 import tfkit.gen_mask as gen_mask
 from tfkit.utility import get_freqK_unk_token
-from tfkit.utility import BalancedDataParallel
 import tfkit.utility.tok as tok
 
 input_arg = {}
@@ -30,14 +29,14 @@ def write_log(*args):
 
 
 def optimizer(model, lr):
-    return AdamW(model.parameters(), lr=lr)
+    return torch.optim.AdamW(model.parameters(), lr=lr)
 
 
 def model_train(models_list, train_dataset, models_tag, input_arg, epoch, writer):
     optims = []
     models = []
     for i, m in enumerate(models_list):
-        model = BalancedDataParallel(input_arg.batch, m)
+        model = torch.nn.DataParallel(m)
         model.train()
         models.append(model)
         optims.append(optimizer(m, input_arg.lr[i] if i < len(input_arg.lr) else input_arg.lr[0]))

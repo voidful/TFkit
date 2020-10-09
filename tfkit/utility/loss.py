@@ -1,11 +1,7 @@
-import math
-
 import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.autograd import Variable
-import numpy as np
-from math import log, e
 
 
 class BCEFocalLoss(nn.Module):
@@ -18,23 +14,6 @@ class BCEFocalLoss(nn.Module):
         pt = torch.exp(-BCE_loss)  # prevents nans when probability 0
         focal_loss = (1 - pt) ** self.gamma * BCE_loss
         return focal_loss.mean()
-
-
-class BCEGWLoss(nn.Module):
-    def __init__(self):
-        super(BCEGWLoss, self).__init__()
-
-    def gaussian(self, x, mean=0.5, variance=0.25):
-        for i, v in enumerate(x.data):
-            x.data[i] = math.exp(-(v - mean) ** 2 / (2.0 * variance ** 2))
-        return x
-
-    def forward(self, input, target):
-        BCE_loss = F.binary_cross_entropy_with_logits(input, target, reduction='none')
-        BCE_loss = BCE_loss.view(-1)
-        pt = F.sigmoid(BCE_loss)  # prevents nans when probability 0
-        loss = (self.gaussian(pt, variance=0.1 * math.exp(1), mean=0.5) - 0.1 * pt) * BCE_loss
-        return loss.mean()
 
 
 class FocalLoss(nn.Module):
@@ -73,7 +52,7 @@ class DiceLoss(nn.Module):
         if self.reduction == 'mean':
             return dsc_i.mean()
         else:
-            return dsc_i
+            return dsc_i.view(-1)
 
 
 class NegativeCElLoss(nn.Module):

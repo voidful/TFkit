@@ -35,11 +35,24 @@ class TestLoss(unittest.TestCase):
         self.assertTrue(criterion(outputs, onen_targets).item() <
                         custom_criterion(outputs, onen_targets).item())
 
+        criterion = nn.CrossEntropyLoss()
+        custom_criterion = tfkit.utility.loss.LabelSmoothingLoss(3)
+        self.assertTrue(criterion(outputs, targets).item() <
+                        custom_criterion(outputs, targets).item())
+
+        custom_criterion = tfkit.utility.loss.LabelSmoothingLoss(3, reduction='none')
+        print(custom_criterion(self.outputs, self.targets))
+        self.assertTrue(list(custom_criterion(self.outputs, self.targets).shape) == [2])
+
     def testDiceLoss(self):
         custom_criterion = tfkit.utility.loss.DiceLoss(ignore_index=-1)
         self.assertTrue(0.8 < custom_criterion(self.outputs, self.targets).item() < 1)
         self.assertTrue(0.99 < custom_criterion(self.outputs, self.alln_targets).item() <= 1)
         self.assertTrue(0.8 < custom_criterion(self.outputs, self.onen_targets).item() < 1)
+
+        custom_criterion = tfkit.utility.loss.DiceLoss(reduction='none')
+        print(custom_criterion(self.outputs, self.targets))
+        self.assertTrue(list(custom_criterion(self.outputs, self.targets).shape) == [2])
 
     def testLossDrop(self):
         outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
@@ -51,6 +64,14 @@ class TestLoss(unittest.TestCase):
         masked_lm_loss = masked_lm_loss.sum(dim=0)
         masked_lm_loss = masked_lm_loss.mean()
         print(masked_lm_loss.mean(), norm_loss_fct(outputs, targets).mean())
+
+    def testBCEFocalLoss(self):
+        outputs = torch.Tensor([[0, 1, 0], [0.2, 0, 0]])
+        targets = torch.Tensor([[0, 1, 0], [1, 0, 0]])
+        criterion = nn.BCELoss()
+        custom_criterion = tfkit.utility.loss.BCEFocalLoss()
+        self.assertTrue(criterion(outputs, targets).item() >
+                        custom_criterion(outputs, targets).item())
 
     def testNegativeCElLoss(self):
         outputs = torch.Tensor([[0.00000000000009, 5, 0.5], [0.00000000000000000001, 69, 9]])
@@ -83,6 +104,8 @@ class TestLoss(unittest.TestCase):
 
 
 class TestTok(unittest.TestCase):
+    ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))
+    DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
     def testTok(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -101,13 +124,19 @@ class TestTok(unittest.TestCase):
         self.assertFalse(result)
         result = tfkit.utility.tok.get_freqK_unk_token(tokenizer, file_paths=[], freqK=10)
         self.assertFalse(result)
+        result = tfkit.utility.tok.get_freqK_unk_token(tokenizer, file_paths=[self.DATASET_DIR + '/unk_tok.csv'],
+                                                       freqK=1)
+        self.assertTrue(len(result) > 0)
+        result = tfkit.utility.tok.get_topP_unk_token(tokenizer, file_paths=[self.DATASET_DIR + '/unk_tok.csv'],
+                                                      topP=0.9)
+        self.assertTrue(len(result) > 0)
 
     def testHandleExceed(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         seq = " ".join([str(_) for _ in range(100)])
         maxlen = 50
         for mode in ['remove', 'slide', 'start_slice', 'end_slice']:
-            rlt,_ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
+            rlt, _ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
             print(mode, len(rlt))
             if mode == 'remove':
                 self.assertTrue(len(rlt) == 0)

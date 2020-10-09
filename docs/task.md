@@ -44,7 +44,6 @@ If some task have multiple label, use / to separate each label - label1/label2/l
 
 Example:      
 ```
-SENTENCE,LABEL,Task2
 "The prospective ultrasound findings were correlated with the final diagnoses , laparotomy findings , and pathology findings .",outcome/other,1
 ```
 ### tagRow
