@@ -5,19 +5,31 @@ from tqdm import tqdm
 
 
 def tok_begin(tokenizer):
-    return tokenizer._cls_token or tokenizer._bos_token or 'cls'
+    if isinstance(tokenizer._cls_token, str):
+        return tokenizer._cls_token
+    elif isinstance(tokenizer._bos_token, str):
+        return tokenizer._bos_token
+    return 'cls'
 
 
 def tok_sep(tokenizer):
-    return tokenizer._sep_token or tokenizer._eos_token or 'sep'
+    if isinstance(tokenizer._sep_token, str):
+        return tokenizer._sep_token
+    elif isinstance(tokenizer._eos_token, str):
+        return tokenizer._eos_token
+    return 'sep'
 
 
 def tok_mask(tokenizer):
-    return tokenizer._mask_token or 'msk'
+    if isinstance(tokenizer._mask_token, str):
+        return tokenizer._mask_token
+    return 'msk'
 
 
 def tok_pad(tokenizer):
-    return tokenizer._pad_token or 'pad'
+    if isinstance(tokenizer._pad_token, str):
+        return tokenizer._pad_token
+    return 'pad'
 
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice', 'end_slice']):

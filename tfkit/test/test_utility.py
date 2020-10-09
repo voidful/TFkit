@@ -118,6 +118,17 @@ class TestTok(unittest.TestCase):
         pad = tfkit.utility.tok.tok_pad(tokenizer)
         self.assertEqual(pad, "[PAD]")
 
+    def testTok(self):
+        tokenizer = AutoTokenizer.from_pretrained('distilroberta-base')
+        begin = tfkit.utility.tok.tok_begin(tokenizer)
+        self.assertEqual(begin, "cls")
+        sep = tfkit.utility.tok.tok_sep(tokenizer)
+        self.assertEqual(sep, "sep")
+        mask = tfkit.utility.tok.tok_mask(tokenizer)
+        self.assertEqual(mask, "msk")
+        pad = tfkit.utility.tok.tok_pad(tokenizer)
+        self.assertEqual(pad, "pad")
+
     def testGetXUnkToken(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         result = tfkit.utility.tok.get_topP_unk_token(tokenizer, file_paths=[], topP=0.5)
