@@ -3,7 +3,7 @@ import random
 import nlp2
 import torch
 from tqdm import tqdm
-from transformers import AdamW, BertTokenizer, AutoTokenizer, AutoModel
+from transformers import BertTokenizer, AutoTokenizer, AutoModel
 import numpy as np
 import tensorboardX as tensorboard
 from torch.utils import data

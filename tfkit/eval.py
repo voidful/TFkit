@@ -126,6 +126,7 @@ def main():
         for eval_pos, eval_metric in enumerate(eval_metrics):
             if 'QA' in model.__class__.__name__:
                 target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+                predicted = result[0][0] if len(result) > 0 else ''
             elif 'OneByOne' in model.__class__.__name__:
                 if len(result_dict['label_map']) < eval_pos:
                     print("Decode size smaller than decode num:", result_dict['label_map'])

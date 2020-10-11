@@ -60,8 +60,8 @@ class MtClassifier(nn.Module):
             task_lables = self.tasks_detail[task]
 
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
-            pooled_output = self.dropout(output)
-            classifier_output = self.classifier_list[task_id](pooled_output)[0, 0]
+            pooled_output = self.dropout(torch.mean(output, 1))
+            classifier_output = self.classifier_list[task_id](pooled_output)
             reshaped_logits = classifier_output.view(-1, len(task_lables))  # 0 for cls position
             result_logits.append(reshaped_logits)
             if eval is False:

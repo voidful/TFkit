@@ -86,8 +86,9 @@ def get_feature_from_data(tokenizer, input_text, target=None, maxlen=512, separa
             ori_start = start = int(start)
             ori_end = end = int(end)
             ori_ans = input_text_list[ori_start:ori_end]
-
-            if mapping_index[t_pos[0]]['pos'] > ori_end:
+            start -= t_pos[0]
+            end -= t_pos[0]
+            if mapping_index[start]['pos'] > ori_end or start < 0 or start > maxlen:
                 start = 0
                 end = 0
             else:
@@ -98,11 +99,11 @@ def get_feature_from_data(tokenizer, input_text, target=None, maxlen=512, separa
                             start += length - 1
                         if map_pos < ori_end:
                             end += length - 1
-
             if ori_ans != tokenized_input[start + 1:end + 1]:
                 if tokenizer.tokenize(" ".join(ori_ans)) != tokenized_input[start + 1:end + 1] and start != end != 0:
                     print("processed result change", "ORI ANS:", ori_ans, "TOK ANS:",
                           tokenized_input[start + 1:end + 1], ori_start, ori_end, start, end)
+                    continue
             row_dict['target'] = [start + 1, end + 1]  # cls +1
 
         mask_id = [1] * len(input_id)
