@@ -14,5 +14,5 @@ class TestEval(unittest.TestCase):
 
     def testDump(self):
         result = os.system(
-            'tfkit-dump --model ./cache/10.pt --dumpdir ./cache/dump')
-        print(result)
+            'tfkit-dump --model ./cache/1.pt --dumpdir ./cache/dump')
+        self.assertTrue(result == 0)

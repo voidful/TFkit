@@ -20,6 +20,9 @@
     <a href="https://www.codefactor.io/repository/github/voidful/tfkit/overview/master">
         <img src="https://www.codefactor.io/repository/github/voidful/tfkit/badge/master" alt="CodeFactor" />
     </a>
+    <a href="https://github.com/voidful/tfkit">
+        <img src="https://visitor-badge.glitch.me/badge?page_id=voidful.tfkit" alt="Visitor" />
+    </a>
     <a href="https://codecov.io/gh/voidful/TFkit">
       <img src="https://codecov.io/gh/voidful/TFkit/branch/master/graph/badge.svg" />
     </a>

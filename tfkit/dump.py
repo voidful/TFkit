@@ -1,12 +1,14 @@
 import argparse
 import torch
+from transformers import BertTokenizer, AutoTokenizer, AutoModel
+
 import tfkit.gen_once as gen_once
 import tfkit.gen_onebyone as gen_onebyone
 import tfkit.qa as qa
 import tfkit.classifier as classifier
 import tfkit.tag as tag
 import tfkit.gen_mask as mask
-
+import nlp2go
 
 def main():
     parser = argparse.ArgumentParser()
@@ -18,8 +20,9 @@ def main():
     package = torch.load(arg.model, map_location=device)
 
     maxlen = package['maxlen']
-    model_type = package['type']
+    model_type = (package['type'] if isinstance(package['type'], str) else package['type'])[0]
     config = package['model_config'] if 'model_config' in package else package['bert']
+    models_state = (package['models'] if 'models' in package else [package['model_state_dict']])[0]
     model_type = model_type.lower()
 
     print("===model info===")
@@ -28,21 +31,27 @@ def main():
     print("pretrain", config)
     print('==========')
 
+    if 'albert_chinese' in config:
+        tokenizer = BertTokenizer.from_pretrained(config)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(config)
+    pretrained = AutoModel.from_pretrained(config)
+
     if "once" in model_type:
-        model = gen_once.Once(model_config=config, maxlen=maxlen)
+        model = gen_once.Once(tokenizer, pretrained, maxlen=maxlen)
     elif "onebyone" in model_type:
-        model = gen_onebyone.OneByOne(model_config=config, maxlen=maxlen)
+        model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
     elif 'clas' in model_type:
-        model = classifier.MtClassifier(package['task'], model_config=config)
+        model = classifier.MtClassifier(package['task-label'], tokenizer, pretrained, maxlen=maxlen)
     elif 'tag' in model_type:
-        model = tag.Tagger(package['label'], model_config=config, maxlen=maxlen)
+        model = tag.Tagger(package['label'], tokenizer, pretrained, maxlen=maxlen)
     elif 'qa' in model_type:
-        model = qa.QA(model_config=config, maxlen=maxlen)
+        model = qa.QA(tokenizer, pretrained, maxlen=maxlen)
     elif 'mask' in model_type:
-        model = mask.Mask(model_config=config, maxlen=maxlen)
+        model = mask.Mask(tokenizer, pretrained, maxlen=maxlen)
 
     model = model.to(device)
-    model.load_state_dict(package['model_state_dict'], strict=False)
+    model.load_state_dict(models_state, strict=False)
     model.pretrained.save_pretrained(arg.dumpdir)
     print('==================')
     print("Finish model dump.")
