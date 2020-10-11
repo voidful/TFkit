@@ -141,6 +141,6 @@ class TestDataLoader(unittest.TestCase):
                                     pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
         print("before increase_with_sampling", ds.__len__())
-        ds.increase_with_sampling(12)
+        ds.increase_with_sampling(30)
         print("after increase_with_sampling", ds.__len__())
-        self.assertTrue(ds.__len__() == 12)
+        self.assertTrue(ds.__len__() == 30)
