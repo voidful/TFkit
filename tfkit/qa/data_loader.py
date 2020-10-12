@@ -101,7 +101,6 @@ def get_feature_from_data(tokenizer, input_text, target=None, maxlen=512, separa
                             end += length - 1
             if ori_ans != tokenized_input[start + 1:end + 1]:
                 if tokenizer.tokenize(" ".join(ori_ans)) != tokenized_input[start + 1:end + 1] and start != end != 0:
-                    print("okk", tokenized_input[start + 1:end + 1], ori_ans, start, end)
                     print("processed result change", "ORI ANS:", ori_ans, "TOK ANS:",
                           tokenized_input[start + 1:end + 1], ori_start, ori_end, start, end)
                     continue
