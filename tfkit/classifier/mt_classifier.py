@@ -41,6 +41,16 @@ class MtClassifier(nn.Module):
         self.loss_fct = self.loss_fct.to(self.device)
         self.loss_fct_mt = self.loss_fct_mt.to(self.device)
 
+    # from https://github.com/UKPLab/sentence-transformers
+    # Mean Pooling - Take attention mask into account for correct averaging
+    # modify - mask from -1 to 0
+    def mean_pooling(self, model_output, attention_mask):
+        input_mask_expanded = attention_mask.unsqueeze(-1).expand(model_output.size()).float()
+        input_mask_expanded[input_mask_expanded < 0] = 0
+        sum_embeddings = torch.sum(model_output * input_mask_expanded, 1)
+        sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
+        return sum_embeddings / sum_mask
+
     def forward(self, batch_data, eval=False):
         tasks = batch_data['task']
         inputs = torch.as_tensor(batch_data['input']).to(self.device)
@@ -60,7 +70,7 @@ class MtClassifier(nn.Module):
             task_lables = self.tasks_detail[task]
 
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
-            pooled_output = self.dropout(torch.mean(output, 1))
+            pooled_output = self.dropout(self.mean_pooling(output, mask.unsqueeze(0)))
             classifier_output = self.classifier_list[task_id](pooled_output)
             reshaped_logits = classifier_output.view(-1, len(task_lables))  # 0 for cls position
             result_logits.append(reshaped_logits)

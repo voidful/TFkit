@@ -17,11 +17,11 @@ class BCEFocalLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):
-    def __init__(self, gamma=2):
+    def __init__(self, gamma=2, ignore_index=-1):
         super(FocalLoss, self).__init__()
         self.gamma = gamma
         self.softmax = nn.Softmax(dim=1)
-        self.nll = nn.NLLLoss(ignore_index=-1)
+        self.nll = nn.NLLLoss(ignore_index=ignore_index)
 
     def forward(self, input, target):
         softmax = self.softmax(input)

@@ -25,8 +25,8 @@ class QA(nn.Module):
         self.maxlen = maxlen
 
         self.dropout = nn.Dropout(dropout)
-        self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
-        # self.loss_fct = FocalLoss()
+        # self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
+        self.loss_fct = FocalLoss(ignore_index=-1)
         # self.loss_fct = GWLoss()
 
         self.pretrained = self.pretrained.to(self.device)
@@ -103,29 +103,29 @@ class QA(nn.Module):
                     ret_detail.append(result)
 
             # apply different strategy to merge result after sliding windows
-            if merge_strategy == 'maxcount':  # should not be empty on count
-                non_empty_result = [r for r in ret_result if len(r[0]) != 0]
-                if len(non_empty_result) == 0:
-                    ret_result = ['']
-                else:
-                    ret_result = max(non_empty_result, key=non_empty_result.count)
+            non_empty_result = [r for r in ret_result if len(r[0]) != 0]
+            if len(non_empty_result) == 0:
+                ret_result = [[''] * topk]
             else:
-                results_prob = []
-                results_entropy = []
-                for detail in ret_detail:
-                    prob_start = detail['label_prob_all'][0]['start'][int(detail['label_map'][0]['start'])]
-                    prob_end = detail['label_prob_all'][0]['end'][int(detail['label_map'][0]['end'])]
-                    results_entropy.append(sum(
-                        Categorical(probs=torch.tensor([list(detail['label_prob_all'][0]['start'].values()),
-                                                        list(detail['label_prob_all'][0][
-                                                                 'end'].values())])).entropy().data.tolist()))
-                    results_prob.append(np.log(prob_start) + np.log(prob_end))
+                if merge_strategy == 'maxcount':  # should not be empty on count
+                    ret_result = max(non_empty_result, key=non_empty_result.count)
+                else:
+                    results_prob = []
+                    results_entropy = []
+                    for detail in ret_detail:
+                        prob_start = detail['label_prob_all'][0]['start'][int(detail['label_map'][0]['start'])]
+                        prob_end = detail['label_prob_all'][0]['end'][int(detail['label_map'][0]['end'])]
+                        results_entropy.append(sum(
+                            Categorical(probs=torch.tensor([list(detail['label_prob_all'][0]['start'].values()),
+                                                            list(detail['label_prob_all'][0][
+                                                                     'end'].values())])).entropy().data.tolist()))
+                        results_prob.append(np.log(prob_start) + np.log(prob_end))
 
-                min_entropy_index = results_entropy.index(min(results_entropy))
-                max_prob_index = results_prob.index(max(results_prob))
-                if merge_strategy == 'minentropy':
-                    ret_result = ret_result[min_entropy_index]
-                if merge_strategy == 'maxprob':
-                    ret_result = ret_result[max_prob_index]
+                    min_entropy_index = results_entropy.index(min(results_entropy))
+                    max_prob_index = results_prob.index(max(results_prob))
+                    if merge_strategy == 'minentropy':
+                        ret_result = ret_result[min_entropy_index]
+                    if merge_strategy == 'maxprob':
+                        ret_result = ret_result[max_prob_index]
 
             return ret_result, ret_detail

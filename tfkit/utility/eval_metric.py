@@ -74,7 +74,7 @@ class EvalMetric:
                 target[i] = self.tokenize_text(t)
             targets = target
 
-        if self.max_candidate - len(targets) > 0:
+        if self.max_candidate - len(targets) > 0 and "nlg" in task:
             targets.extend([""] * (self.max_candidate - len(targets)))
 
         for t in targets:
@@ -98,28 +98,25 @@ class EvalMetric:
                 total = 0
                 f1 = 0
                 for pos, predict in enumerate(task['predicted']):
-                    em_list = [0]
-                    f1_list = [0]
+                    em_list = []
+                    f1_list = []
                     for target in task['targets'][pos]:
-                        equal = False
                         if _normalize_answer(predict) == _normalize_answer(target) and len(
-                                _normalize_answer(predict)) > 0:
-                            equal = True
-                        if equal:
+                                _normalize_answer(predict)) > 0 or len(predict) == len(target) == 0:
                             em_score = 1
                             f1_score = 1
-                            em_list.append(em_score)
-                            f1_list.append(f1_score)
                         else:
                             em_score = 0
                             f1_score = _f1_score(predict, target)
-                            f1_list.append(f1_score)
-                        data_score.append([predict, target, {'em': em_score, 'f1': f1_score}])
+                        em_list.append(em_score)
+                        f1_list.append(f1_score)
                     em += max(em_list)
                     f1 += max(f1_list)
+                    data_score.append([predict, task['targets'][pos][em_list.index(max(em_list))],
+                                       {'em': max(em_list), 'f1': max(f1_list)}])
                     total += 1
                 result = {"EM": em / (total or not total), "F1": f1 / (total or not total)}
-                data_score = sorted(data_score, key=lambda i: i[2]['em'])
+                data_score = sorted(data_score, key=lambda i: i[2]['em'], reverse=True)
             if "nlg" in metric:
                 try:
                     from nlgeval import NLGEval
@@ -128,8 +125,6 @@ class EvalMetric:
                         "nlg-eval package not install, plz install it: pip install git+https://github.com/voidful/nlg-eval.git ; nlg-eval --setup ./nlg-eval-data/")
                     raise
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
-                nlgeval.compute_metrics(ref_list=['abc'],  # transpose
-                                        hyp_list='abc')
                 targets = task['targets']
                 predicted = task['predicted']
                 for t, p in zip(targets, predicted):

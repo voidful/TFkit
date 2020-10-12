@@ -91,6 +91,7 @@ def model_eval(models, test_dataset, fname, epoch, writer):
                 test_batch = next(batch, None)
                 if test_batch is not None:
                     loss = model(test_batch)
+                    loss = loss / input_arg.grad_accum
                     t_loss += loss.mean().item()
                     t_length += 1
                     pbar.update(1)

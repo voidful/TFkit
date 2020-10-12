@@ -82,7 +82,7 @@ class TestTrain(unittest.TestCase):
 
     def testClassify(self):
         result = os.system(
-            'tfkit-train --lr 1e-4 --grad_accum 2 --batch 2 --epoch 10 --train ' + os.path.join(self.DATASET_DIR,
+            'tfkit-train --lr 1e-4 --grad_accum 10 --batch 2 --epoch 10 --train ' + os.path.join(self.DATASET_DIR,
                                                                                                'classification.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'classification.csv') + ' --model clas --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
