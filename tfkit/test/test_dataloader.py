@@ -133,14 +133,14 @@ class TestDataLoader(unittest.TestCase):
         ds = tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                     pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
-        print(ds.__len__())
-        ds.increase_with_sampling(20)
-        self.assertTrue(ds.__len__() == 20)
+        old_len = ds.__len__()
+        ds.increase_with_sampling(10)
+        self.assertTrue(ds.__len__() == old_len)
 
         ds = tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                     pretrained='voidful/albert_chinese_small',
                                     maxlen=512)
         print("before increase_with_sampling", ds.__len__())
-        ds.increase_with_sampling(30)
+        ds.increase_with_sampling(50)
         print("after increase_with_sampling", ds.__len__())
-        self.assertTrue(ds.__len__() == 30)
+        self.assertTrue(ds.__len__() == 50)
