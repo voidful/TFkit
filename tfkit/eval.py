@@ -131,9 +131,9 @@ def main():
                 else:
                     predicted = ''
             elif 'OneByOne' in model.__class__.__name__:
-                if len(result_dict['label_map']) < eval_pos:
+                if len(result) < eval_pos:
                     print("Decode size smaller than decode num:", result_dict['label_map'])
-                predicted = result_dict['label_map'][eval_pos][0] if 'label_map' in result_dict else ''
+                predicted = result[eval_pos]
             elif 'Mask' in model.__class__.__name__:
                 target = target.split(" ")
                 predicted = result
@@ -158,11 +158,12 @@ def main():
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
         argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
-
         if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
             argtype += "_num_" + str(eval_pos)
         if 'mode' in predict_parameter:
-            argtype += "_mode_" + str(predict_parameter['mode'])
+            para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
+                predict_parameter['mode'].lower()
+            argtype += "_mode_" + str(para_mode)
         if 'filtersim' in predict_parameter:
             argtype += "_filtersim_" + str(predict_parameter['filtersim'])
         outfile_name = arg.model + argtype
