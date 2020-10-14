@@ -66,7 +66,7 @@ class TestTrain(unittest.TestCase):
 
     def testGenMask(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
+            'tfkit-train --batch 2 --epoch 1  --train ' + os.path.join(self.DATASET_DIR,
                                                                        'mask.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'mask.csv') + ' --model mask --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 512')
