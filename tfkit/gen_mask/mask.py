@@ -39,15 +39,12 @@ class Mask(nn.Module):
                 'label_prob': []
             }
             for tok_pos, text in enumerate(batch_data['input'][0]):
-                if text != self.tokenizer.convert_tokens_to_ids([tok.tok_sep(self.tokenizer)])[0]:
-                    if text == self.tokenizer.convert_tokens_to_ids([tok.tok_mask(self.tokenizer)])[0]:
-                        logit_prob = softmax(prediction_scores[0][tok_pos], dim=0).data.tolist()
-                        prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                        prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
-                        result_dict['label_prob'].append(prob_result[:10])
-                        result_dict['label_map'].append(prob_result[0])
-                else:
-                    break
+                if text == self.tokenizer.convert_tokens_to_ids([tok.tok_mask(self.tokenizer)])[0]:
+                    logit_prob = softmax(prediction_scores[0][tok_pos], dim=0).data.tolist()[:100]
+                    prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
+                    prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+                    result_dict['label_prob'].append(prob_result[:10])
+                    result_dict['label_map'].append(prob_result[0])
             return result_dict
         else:
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
@@ -69,5 +66,9 @@ class Mask(nn.Module):
                 predictions = self.forward(feature, eval=True)
                 ret_detail.append(predictions)
                 ret_result.append([i[0] for i in predictions['label_map']])
-            ret_result = max(ret_result, key=ret_result.count)
+            non_empty_result = [r for r in ret_result if len(r) != 0]
+            if len(non_empty_result) == 0:
+                ret_result = [['']]
+            else:
+                ret_result = max(non_empty_result, key=non_empty_result.count)
             return ret_result, ret_detail

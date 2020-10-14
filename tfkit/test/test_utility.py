@@ -121,13 +121,13 @@ class TestTok(unittest.TestCase):
     def testTok(self):
         tokenizer = AutoTokenizer.from_pretrained('distilroberta-base')
         begin = tfkit.utility.tok.tok_begin(tokenizer)
-        self.assertEqual(begin, "cls")
+        self.assertEqual(begin, "<s>")
         sep = tfkit.utility.tok.tok_sep(tokenizer)
-        self.assertEqual(sep, "sep")
+        self.assertEqual(sep, "</s>")
         mask = tfkit.utility.tok.tok_mask(tokenizer)
-        self.assertEqual(mask, "msk")
+        self.assertEqual(mask, "<mask>")
         pad = tfkit.utility.tok.tok_pad(tokenizer)
-        self.assertEqual(pad, "pad")
+        self.assertEqual(pad, "<pad>")
 
     def testGetXUnkToken(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')

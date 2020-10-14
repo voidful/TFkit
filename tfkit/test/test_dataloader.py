@@ -30,9 +30,9 @@ class TestDataLoader(unittest.TestCase):
 
     def testMask(self):
         for i in tfkit.gen_mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
-            print(i)
+            print("get_data_from_file", i)
 
-        maxlen = 100
+        maxlen = 512
         for i in tfkit.gen_mask.loadMaskDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv'),
                                                 pretrained_config='voidful/albert_chinese_tiny',
                                                 maxlen=maxlen):
@@ -96,7 +96,6 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.convert_tokens_to_string(output) + "\n")
 
     def testClassifier(self):
-
         for i in tfkit.classifier.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv')):
             print(i)
         for i in tfkit.classifier.loadClassifierDataset(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv'),

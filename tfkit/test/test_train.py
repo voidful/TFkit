@@ -69,7 +69,7 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
                                                                        'mask.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
-                'mask.csv') + ' --model mask --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
+                'mask.csv') + ' --model mask --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 512')
         self.assertTrue(result == 0)
 
     def testGenWithSentLoss(self):
@@ -82,7 +82,7 @@ class TestTrain(unittest.TestCase):
 
     def testClassify(self):
         result = os.system(
-            'tfkit-train --lr 1e-4 --grad_accum 10 --batch 2 --epoch 10 --train ' + os.path.join(self.DATASET_DIR,
+            'tfkit-train --lr 1e-4 --grad_accum 10 --batch 2 --epoch 2 --train ' + os.path.join(self.DATASET_DIR,
                                                                                                'classification.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'classification.csv') + ' --model clas --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')

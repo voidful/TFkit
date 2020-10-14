@@ -12,7 +12,7 @@ import tfkit.utility.tok as tok
 
 
 class loadMaskDataset(data.Dataset):
-    def __init__(self, fpath, pretrained_config, maxlen=510, cache=False, handle_exceed='slide'):
+    def __init__(self, fpath, pretrained_config, maxlen=510, cache=False, handle_exceed='end_slice'):
         sample = []
         if 'albert_chinese' in pretrained_config:
             tokenizer = BertTokenizer.from_pretrained(pretrained_config)
@@ -28,7 +28,6 @@ class loadMaskDataset(data.Dataset):
             for i in get_data_from_file(fpath):
                 tasks, task, input, target = i
                 for feature in get_feature_from_data(tokenizer, maxlen, input, target, handle_exceed=handle_exceed):
-                    print("feature", feature)
                     sample.append(feature)
                     total_data += 1
             print("Processed " + str(total_data) + " data.")
@@ -64,7 +63,7 @@ def get_data_from_file(fpath):
             yield tasks, task, input, target
 
 
-def get_feature_from_data(tokenizer, maxlen, input, target=None, handle_exceed='slide'):
+def get_feature_from_data(tokenizer, maxlen, input, target=None, handle_exceed='end_slice'):
     feature_dict_list = []
     t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep

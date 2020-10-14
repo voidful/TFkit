@@ -157,7 +157,7 @@ class TestModel(unittest.TestCase):
         # test exceed 512
         result, model_dict = model.predict(input="T " * 512)
         self.assertTrue(isinstance(result, list))
-        self.assertTrue(len(result) == 0)
+        self.assertTrue(len(result[0][0]) == 0)
 
     def testOnce(self):
         input = "See you next time"
