@@ -80,7 +80,6 @@ class Tagger(nn.Module):
                 merge_strategy=['minentropy', 'maxcount', 'maxprob']):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
-
         self.eval()
         with torch.no_grad():
             ret_detail = []

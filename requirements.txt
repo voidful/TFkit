@@ -3,6 +3,6 @@ tensorboardX
 torch
 sklearn
 matplotlib
-nlp2>=1.8.22
+nlp2>=1.8.26
 tqdm>=4.45.0
 inquirer

@@ -25,8 +25,8 @@ class QA(nn.Module):
         self.maxlen = maxlen
 
         self.dropout = nn.Dropout(dropout)
-        # self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
-        self.loss_fct = FocalLoss(ignore_index=-1)
+        self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
+        # self.loss_fct = FocalLoss(ignore_index=-1)
         # self.loss_fct = GWLoss()
 
         self.pretrained = self.pretrained.to(self.device)
@@ -70,7 +70,8 @@ class QA(nn.Module):
         return outputs
 
     def predict(self, input='', topk=1, task=None, handle_exceed='slide',
-                merge_strategy=['minentropy', 'maxcount', 'maxprob']):
+                merge_strategy=['minentropy', 'maxprob', 'maxcount']):
+        merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         topk = int(topk)
         self.eval()
         with torch.no_grad():
@@ -82,28 +83,31 @@ class QA(nn.Module):
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
-
-                if topk < 2:
-                    start = [i['start'] for i in result['label_map'] if 'start' in i][0]
-                    end = [i['end'] for i in result['label_map'] if 'end' in i][0]
-                    ret_result.append(["".join(self.tokenizer.convert_tokens_to_string(raw_input[start:end]))])
-                    ret_detail.append(result)
-                else:
-                    start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
-                    end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
-                    answers = []
-                    for start_index in start_dict:
-                        for end_index in end_dict:
-                            answers.append((start_index, end_index, start_dict[start_index] + end_dict[end_index]))
-                    answer_results = sorted(answers, key=lambda answers: answers[2],
-                                            reverse=True)[:topk]
-                    ret_result.append(
-                        ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
-                         answer_results])
-                    ret_detail.append(result)
+                start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
+                end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
+                answers = []
+                sorted_start = sorted(start_dict.items(), key=lambda item: item[1], reverse=True)[:50]
+                sorted_end = sorted(end_dict.items(), key=lambda item: item[1], reverse=True)[:50]
+                for start_index, start_prob in sorted_start:
+                    for end_index, end_prob in sorted_end:
+                        if start_index > end_index:
+                            continue
+                        answers.append((start_index, end_index, start_prob + end_prob))
+                answer_results = sorted(answers, key=lambda answers: answers[2],
+                                        reverse=True)[:topk]
+                ret_result.append(
+                    ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
+                     answer_results])
+                ret_detail.append(result)
 
             # apply different strategy to merge result after sliding windows
-            non_empty_result = [r for r in ret_result if len(r[0]) != 0]
+            non_empty_result = []
+            non_empty_detail = []
+            for r, d in zip(ret_result, ret_detail):
+                if len(r[0]) != 0:
+                    non_empty_result.append(r)
+                    non_empty_detail.append(d)
+
             if len(non_empty_result) == 0:
                 ret_result = [[''] * topk]
             else:
@@ -112,20 +116,18 @@ class QA(nn.Module):
                 else:
                     results_prob = []
                     results_entropy = []
-                    for detail in ret_detail:
+                    for detail in non_empty_detail:
                         prob_start = detail['label_prob_all'][0]['start'][int(detail['label_map'][0]['start'])]
                         prob_end = detail['label_prob_all'][0]['end'][int(detail['label_map'][0]['end'])]
-                        results_entropy.append(sum(
-                            Categorical(probs=torch.tensor([list(detail['label_prob_all'][0]['start'].values()),
-                                                            list(detail['label_prob_all'][0][
-                                                                     'end'].values())])).entropy().data.tolist()))
-                        results_prob.append(np.log(prob_start) + np.log(prob_end))
+                        prob_sum = [sum(x) for x in zip(list(detail['label_prob_all'][0]['start'].values()),
+                                                        list(detail['label_prob_all'][0]['end'].values()))]
+                        results_entropy.append(Categorical(probs=torch.tensor(prob_sum)).entropy().data.tolist())
+                        results_prob.append(-np.log(prob_start) + -np.log(prob_end))
 
-                    min_entropy_index = results_entropy.index(min(results_entropy))
+                    min_entropy_index = results_entropy.index(max(results_entropy))
                     max_prob_index = results_prob.index(max(results_prob))
                     if merge_strategy == 'minentropy':
-                        ret_result = ret_result[min_entropy_index]
+                        ret_result = non_empty_result[min_entropy_index]
                     if merge_strategy == 'maxprob':
-                        ret_result = ret_result[max_prob_index]
-
+                        ret_result = non_empty_result[max_prob_index]
             return ret_result, ret_detail

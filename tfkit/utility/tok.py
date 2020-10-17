@@ -34,13 +34,16 @@ def tok_pad(tokenizer):
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice', 'end_slice']):
     mode = mode[0] if isinstance(mode, list) else mode
-    seq = seq.replace("[MASK]", tok_mask(tokenizer)).replace("[SEP]", tok_sep(tokenizer)).replace("[CLS]", tok_begin(tokenizer))
-    t_seq = tokenizer.tokenize(seq)
+    seq = seq.replace("[MASK]", tok_mask(tokenizer)).replace("[SEP]", tok_sep(tokenizer)).replace("[CLS]",
+                                                                                                  tok_begin(tokenizer))
+    sep_split = seq.split(tok_sep(tokenizer))
+    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(sep_split[1]) if len(sep_split) > 1 else []
+    t_seq = tokenizer.tokenize(sep_split[0])
     if mode == 'remove':
         ret_list = [t_seq] if len(t_seq) <= maxlen else []
         return ret_list, [[0, 0]]
     if mode == 'slide':
-        return nlp2.sliding_windows(t_seq, maxlen)
+        return nlp2.sliding_windows(t_seq, maxlen - len(ext_seq), append_seq=ext_seq)
     if mode == 'start_slice':
         return [t_seq[:maxlen]], [[0, maxlen]]
     if mode == 'end_slice':

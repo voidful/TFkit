@@ -79,7 +79,7 @@ class TestModel(unittest.TestCase):
         print(top_k_label)
         print("test predict with top k 2, ", top_k_label[0][0])
         print("test predict with top k 2, ", top_k_label[0][1])
-        self.assertTrue(len(top_k_label[0]) == 2)
+        self.assertTrue(len(top_k_label) == 2)
 
         # test exceed 512
         for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:

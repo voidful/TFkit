@@ -120,6 +120,7 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
                                         pretrained='voidful/albert_chinese_small',
                                         maxlen=512):
+            print(i)
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
         for i in tfkit.qa.loadQADataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),

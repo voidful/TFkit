@@ -145,7 +145,7 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
             inputted_arg = {"pretrained_config": pretrained_config, "maxlen": input_arg.maxlen,
                             "cache": input_arg.cache, "likelihood": model_type}
             all_arg = nlp2.function_get_all_arg_with_value(gen_onebyone.loadOneByOneDataset)
-            if input_arg.enable_arg_panel:
+            if input_arg.panel:
                 for missarg in nlp2.function_check_missing_arg(gen_onebyone.loadOneByOneDataset,
                                                                inputted_arg):
                     panel.add_element(k=missarg, v=all_arg[missarg], msg=missarg, default=all_arg[missarg])
@@ -213,7 +213,7 @@ def main():
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
-    parser.add_argument("--enable_arg_panel", action='store_true', help="enable panel to input argument")
+    parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
     global input_arg
     input_arg = parser.parse_args()
 

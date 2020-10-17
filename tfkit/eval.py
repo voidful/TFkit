@@ -101,16 +101,21 @@ def main():
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
-    parser.add_argument("--enable_arg_panel", action='store_true', help="enable panel to input argument")
+    parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
     arg = parser.parse_args()
 
     valid = arg.valid[0]
     model, eval_dataset = load_model(arg.model, model_dataset=valid, pretrained_path=arg.config)
-    predict_parameter = load_predict_parameter(model, arg.enable_arg_panel)
+    predict_parameter = load_predict_parameter(model, arg.panel)
     if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
         eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['decodenum'])]
     else:
         eval_metrics = [EvalMetric(model.tokenizer)]
+
+    print("PREDICT PARAMETER")
+    print("=======================")
+    print(predict_parameter)
+    print("=======================")
 
     for i in tqdm(eval_dataset):
         tasks = i[0]

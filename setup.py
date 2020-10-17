@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.4.6',
+    version='0.4.7',
     description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -27,7 +27,7 @@ setup(
         "torch",
         "sklearn",
         "matplotlib",
-        "nlp2>=1.8.22",
+        "nlp2>=1.8.26",
         "tqdm>=4.45.0",
         "inquirer"
     ],
