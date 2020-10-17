@@ -100,8 +100,7 @@ def get_feature_from_data(tokenizer, input_text, target=None, maxlen=512, separa
                             end += length - 1
             if ori_ans != tokenized_input[start + 1:end + 1] and tokenizer.tokenize(
                     " ".join(ori_ans)) != tokenized_input[start + 1:end + 1] and start != end != 0:
-                start = 0
-                end = 0
+                continue
             row_dict['target'] = [start + 1, end + 1]  # cls +1
 
         mask_id = [1] * len(input_id)
