@@ -77,8 +77,8 @@ class TestModel(unittest.TestCase):
         # test eval top k = 2
         top_k_label, top_k_dict = model.predict(input=input, topk=2)
         print(top_k_label)
-        print("test predict with top k 2, ", top_k_label[0][0])
-        print("test predict with top k 2, ", top_k_label[0][1])
+        print("test predict with top k 2, ", top_k_label[0])
+        print("test predict with top k 2, ", top_k_label[1])
         self.assertTrue(len(top_k_label) == 2)
 
         # test exceed 512
