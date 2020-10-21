@@ -3,6 +3,7 @@ import sys
 import os
 from collections import defaultdict
 
+import nlp2
 from torch.distributions import Categorical
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -77,10 +78,11 @@ class Tagger(nn.Module):
         return outputs
 
     def predict(self, input='', neg="O", task=None, handle_exceed='slide',
-                merge_strategy=['minentropy', 'maxcount', 'maxprob'], minlen=1):
+                merge_strategy=['minentropy', 'maxprob', 'maxcount'], minlen=1, start_contain="B_", end_contain="I_"):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
+        input = " ".join(nlp2.split_sentence_to_array(input))
         with torch.no_grad():
             ret_detail = []
             predicted_pos_prob = defaultdict(lambda: defaultdict(list))
@@ -101,9 +103,8 @@ class Tagger(nn.Module):
                         predicted_pos_prob[str(ind + start)]['prob'].append(max_prob)
                         predicted_pos_prob[str(ind + start)]['entropy'].append(max_entropy)
                 ret_detail.append(result)
-
             ret_result = []
-            for key, value in sorted(predicted_pos_prob.items()):
+            for key, value in predicted_pos_prob.items():
                 if merge_strategy == 'maxcount':
                     label = max(value['labels'], key=value['labels'].count)
                 if merge_strategy == 'minentropy':
@@ -118,13 +119,14 @@ class Tagger(nn.Module):
             target_str = ["", ""]
             for mapping in ret_result:
                 for k, y in mapping.items():
-                    if y is not neg:
+                    if (y is not neg and len(target_str[0]) > 0) or start_contain in y:
                         target_str[0] += k
                         target_str[1] = y
                     else:
-                        if len(target_str[0]) > minlen:
+                        if len(target_str[0]) > minlen and target_str not in output:
                             output.append(target_str)
                         target_str = ["", ""]
-            if len(target_str[0]) > minlen:
+            if len(target_str[0]) > minlen and target_str not in output:
                 output.append(target_str)
+            output = [[ner, tag.replace(start_contain, "").replace(end_contain, "")] for ner, tag in output]
             return output, ret_detail

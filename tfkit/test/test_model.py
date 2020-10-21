@@ -1,6 +1,7 @@
 import os
 import unittest
 
+import torch
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel
 
@@ -90,10 +91,12 @@ class TestModel(unittest.TestCase):
     def testTag(self):
         input = "在 歐 洲 , 梵 語 的 學 術 研 究 , 由 德 國 學 者 陸 特 和 漢 斯 雷 頓 開 創 。 後 來 威 廉 · 瓊 斯 發 現 印 歐 語 系 , 也 要 歸 功 於 對 梵 語 的 研 究 。 此 外 , 梵 語 研 究 , 也 對 西 方 文 字 學 及 歷 史 語 言 學 的 發 展 , 貢 獻 不 少 。 1 7 8 6 年 2 月 2 日 , 亞 洲 協 會 在 加 爾 各 答 舉 行 。 [SEP] 陸 特 和 漢 斯 雷 頓 開 創 了 哪 一 地 區 對 梵 語 的 學 術 研 究 ?"
         target = "O A A O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O"
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
-        model = tfkit.tag.Tagger(["O", "A"],
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
+
+        model = tfkit.tag.Tagger(['O', 'A'],
                                  tokenizer, pretrained)
+
         for feature in tfkit.tag.get_feature_from_data(tokenizer, labels=["O", "A"], input=input, target=target,
                                                        maxlen=512):
             for k, v in feature.items():
@@ -109,18 +112,17 @@ class TestModel(unittest.TestCase):
             self.assertTrue('label_map' in model_dict)
 
         # test predict
-        result, model_dict = model.predict(input=input)
+        result, model_dict = model.predict(input=input, start_contain="A", end_contain="A")
         print("model_dict", model_dict)
         self.assertTrue('label_prob_all' in model_dict[0])
         self.assertTrue('label_map' in model_dict[0])
         print("result", result, len(result))
         self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0][0], str))
 
         # test exceed 512
         for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
             result, model_dict = model.predict(input=" ".join([str(i) for i in range(1000)]),
-                                               merge_strategy=merge_strategy)
+                                               merge_strategy=merge_strategy, start_contain="A", end_contain="A")
             print(result)
             self.assertTrue(isinstance(result, list))
 
