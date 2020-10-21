@@ -77,7 +77,7 @@ class Tagger(nn.Module):
         return outputs
 
     def predict(self, input='', neg="O", task=None, handle_exceed='slide',
-                merge_strategy=['minentropy', 'maxcount', 'maxprob']):
+                merge_strategy=['minentropy', 'maxcount', 'maxprob'], minlen=1):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
@@ -122,10 +122,9 @@ class Tagger(nn.Module):
                         target_str[0] += k
                         target_str[1] = y
                     else:
-                        if len(target_str[0]) > 0:
+                        if len(target_str[0]) > minlen:
                             output.append(target_str)
                         target_str = ["", ""]
-            if len(target_str[0]) > 0:
+            if len(target_str[0]) > minlen:
                 output.append(target_str)
-
             return output, ret_detail

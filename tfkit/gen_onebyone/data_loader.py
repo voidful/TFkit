@@ -143,6 +143,8 @@ class loadOneByOneDataset(data.Dataset):
         self.sample.extend(inc_samp)
 
     def check_feature_valid(self, feature):
+        if feature['start'] >= self.maxlen:
+            return False
         if feature['target'][feature['start']] == feature['ntarget'][feature['start']]:
             feature['ntarget'][feature['start']] = -1
         return True
