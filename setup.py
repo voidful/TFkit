@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.4.10',
+    version='0.4.11',
     description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -22,7 +22,7 @@ setup(
     keywords='transformer huggingface nlp multi-task multi-class multi-label classification generation tagging deep learning machine reading',
     packages=find_packages(),
     install_requires=[
-        "transformers>=2.5.1",
+        "transformers==3.3.0",
         "tensorboardX",
         "torch",
         "sklearn",
