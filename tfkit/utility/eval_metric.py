@@ -101,8 +101,8 @@ class EvalMetric:
                     em_list = []
                     f1_list = []
                     for target in task['targets'][pos]:
-                        if _normalize_answer(predict) == _normalize_answer(target) and len(
-                                _normalize_answer(predict)) > 0 or len(predict) == len(target) == 0:
+                        if _normalize_answer(str(predict)) == _normalize_answer(str(target)) and len(
+                                _normalize_answer(str(predict))) > 0 or len(str(predict)) == len(str(target)) == 0:
                             em_score = 1
                             f1_score = 1
                         else:

@@ -148,12 +148,12 @@ class TestTok(unittest.TestCase):
         maxlen = 50
         for mode in ['remove', 'slide', 'start_slice', 'end_slice']:
             rlt, _ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
-            print(mode, len(rlt))
             if mode == 'remove':
                 self.assertTrue(len(rlt) == 0)
             if mode == 'slide':
                 self.assertTrue(len(rlt) > 1)
             for i in rlt:
+                print(i)
                 self.assertTrue(len(i) == 50)
 
 

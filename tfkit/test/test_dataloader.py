@@ -40,6 +40,17 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['input']) == maxlen)
             self.assertTrue(len(i['target']) == maxlen)
 
+    def testMCQ(self):
+        for i in tfkit.mcq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mcq.csv')):
+            print("get_data_from_file", i)
+
+        maxlen = 512
+        for i in tfkit.mcq.loadMCQDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mcq.csv'),
+                                          pretrained_config='voidful/albert_chinese_tiny',
+                                          maxlen=maxlen):
+            print(i)
+            self.assertTrue(len(i['input']) == maxlen)
+
     def testOnce(self):
         tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
         for i in tfkit.gen_once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv')):

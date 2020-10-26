@@ -3,6 +3,7 @@ import argparse
 import torch
 import tfkit.gen_once as gen_once
 import tfkit.gen_mask as gen_mask
+import tfkit.mcq as mcq
 import tfkit.gen_onebyone as gen_onebyone
 import tfkit.qa as qa
 import tfkit.classifier as classifier
@@ -60,6 +61,9 @@ def load_model(model_path, pretrained_path=None, model_type=None, model_dataset=
     elif "mask" in type:
         eval_dataset = gen_mask.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_mask.Mask(tokenizer, pretrained, maxlen=maxlen)
+    elif "mcq" in type:
+        eval_dataset = mcq.get_data_from_file(model_dataset) if model_dataset else None
+        model = mcq.MCQ(tokenizer, pretrained, maxlen=maxlen)
     elif "onebyone" in type:
         eval_dataset = gen_once.get_data_from_file(model_dataset) if model_dataset else None
         model = gen_onebyone.OneByOne(tokenizer, pretrained, maxlen=maxlen)
@@ -141,6 +145,9 @@ def main():
                 predicted = result[eval_pos]
             elif 'Mask' in model.__class__.__name__:
                 target = target.split(" ")
+                predicted = result
+            elif 'MCQ' in model.__class__.__name__:
+                target = [str(target)]
                 predicted = result
             elif 'Tagger' in model.__class__.__name__:
                 target = target.split(" ")

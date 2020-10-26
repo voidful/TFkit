@@ -45,9 +45,14 @@ def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice'
     if mode == 'slide':
         return nlp2.sliding_windows(t_seq, maxlen - len(ext_seq), append_seq=ext_seq)
     if mode == 'start_slice':
-        return [t_seq[:maxlen]], [[0, maxlen]]
+        slices = t_seq[:maxlen - len(ext_seq)]
+        slices.extend(ext_seq)
+        return [slices], [[0, maxlen - len(ext_seq)]]
     if mode == 'end_slice':
-        return [t_seq[len(t_seq) - maxlen:]], [[max(0, len(t_seq) - 512), len(t_seq)]]
+        start_pos = len(t_seq) + len(ext_seq) - maxlen
+        slices = t_seq[start_pos:]
+        slices.extend(ext_seq)
+        return [slices], [[max(0, start_pos), len(t_seq)]]
 
 
 def get_topP_unk_token(tokenizer, file_paths: list, topP: float):

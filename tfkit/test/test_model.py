@@ -159,6 +159,39 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result, list))
         self.assertTrue(len(result[0][0]) == 0)
 
+    def testMCQ(self):
+        input = "你 是 誰 [SEP] [MASK] 我 [MASK] 你 [MASK] 他"
+        target = 1
+
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
+        model = tfkit.mcq.MCQ(tokenizer, pretrained)
+
+        for feature in tfkit.mcq.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+            for k, v in feature.items():
+                feature[k] = [v]
+
+            print(feature)
+            self.assertTrue(isinstance(model(feature), Tensor))
+
+            model_dict = model(feature, eval=True)
+            print(model_dict)
+            self.assertTrue('label_map' in model_dict)
+            self.assertTrue('label_max' in model_dict)
+
+        result, model_dict = model.predict(input=input)
+        self.assertTrue('label_max' in model_dict[0])
+        self.assertTrue('label_map' in model_dict[0])
+        print("predict", result, len(result))
+
+        self.assertTrue(isinstance(result, list))
+        print(result)
+        self.assertTrue(isinstance(result[0], str))
+
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 300 + "[MASK]" + "T " * 300)
+        self.assertTrue(isinstance(result, list))
+
     def testOnce(self):
         input = "See you next time"
         target = "下 次 見"

@@ -72,6 +72,14 @@ class TestTrain(unittest.TestCase):
                 'mask.csv') + ' --model mask --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 512')
         self.assertTrue(result == 0)
 
+    def testMCQ(self):
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 10  --train ' + os.path.join(self.DATASET_DIR,
+                                                                       'mcq.csv') + ' --test ' + os.path.join(
+                self.DATASET_DIR,
+                'mcq.csv') + ' --model mcq --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 512 --handle_exceed start_slice')
+        self.assertTrue(result == 0)
+
     def testGenWithSentLoss(self):
         result = os.system(
             'tfkit-train --batch 2 --epoch 2  --train ' + os.path.join(self.DATASET_DIR,
@@ -83,7 +91,7 @@ class TestTrain(unittest.TestCase):
     def testClassify(self):
         result = os.system(
             'tfkit-train --lr 1e-4 --grad_accum 10 --batch 2 --epoch 2 --train ' + os.path.join(self.DATASET_DIR,
-                                                                                               'classification.csv') + ' --test ' + os.path.join(
+                                                                                                'classification.csv') + ' --test ' + os.path.join(
                 self.DATASET_DIR,
                 'classification.csv') + ' --model clas --config voidful/albert_chinese_tiny  --savedir ./cache/ --maxlen 50')
         self.assertTrue(result == 0)

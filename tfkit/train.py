@@ -15,6 +15,7 @@ import tfkit.classifier as classifier
 import tfkit.tag as tag
 import tfkit.qa as qa
 import tfkit.gen_mask as gen_mask
+from tfkit import mcq
 from tfkit.utility import get_freqK_unk_token
 import tfkit.utility.tok as tok
 
@@ -140,6 +141,13 @@ def _load_model_and_data(pretrained_config, tokenizer, pretrained, device):
             test_ds = gen_mask.loadMaskDataset(test_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
                                                cache=input_arg.cache, handle_exceed=input_arg.handle_exceed)
             model = gen_mask.Mask(tokenizer, pretrained, maxlen=input_arg.maxlen)
+        elif "mcq" in model_type:
+            train_ds = mcq.loadMCQDataset(train_file, pretrained_config=pretrained_config,
+                                          maxlen=input_arg.maxlen, cache=input_arg.cache,
+                                          handle_exceed=input_arg.handle_exceed)
+            test_ds = mcq.loadMCQDataset(test_file, pretrained_config=pretrained_config, maxlen=input_arg.maxlen,
+                                         cache=input_arg.cache, handle_exceed=input_arg.handle_exceed)
+            model = mcq.MCQ(tokenizer, pretrained, maxlen=input_arg.maxlen)
         elif "onebyone" in model_type:
             panel = nlp2.Panel()
             inputted_arg = {"pretrained_config": pretrained_config, "maxlen": input_arg.maxlen,
@@ -203,7 +211,7 @@ def main():
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=['once', 'twice', 'onebyone', 'clas', 'tagRow', 'tagCol', 'qa',
-                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both', 'mask'], help="model task")
+                                 'onebyone-neg', 'onebyone-pos', 'onebyone-both', 'mask', 'mcq'], help="model task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
