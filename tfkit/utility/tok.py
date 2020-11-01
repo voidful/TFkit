@@ -32,12 +32,12 @@ def tok_pad(tokenizer):
     return 'pad'
 
 
-def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice', 'end_slice']):
+def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice', 'end_slice'],keep_after_sep=True):
     mode = mode[0] if isinstance(mode, list) else mode
     seq = seq.replace("[MASK]", tok_mask(tokenizer)).replace("[SEP]", tok_sep(tokenizer)).replace("[CLS]",
                                                                                                   tok_begin(tokenizer))
     sep_split = seq.split(tok_sep(tokenizer))
-    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(sep_split[1]) if len(sep_split) > 1 else []
+    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(sep_split[1]) if len(sep_split) > 1 and keep_after_sep else []
     t_seq = tokenizer.tokenize(sep_split[0])
     if mode == 'remove':
         ret_list = [t_seq] if len(t_seq) <= maxlen else []

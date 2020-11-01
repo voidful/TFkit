@@ -107,7 +107,7 @@ class EvalMetric:
                             f1_score = 1
                         else:
                             em_score = 0
-                            f1_score = _f1_score(predict, target)
+                            f1_score = _f1_score(str(predict), str(target))
                         em_list.append(em_score)
                         f1_list.append(f1_score)
                     em += max(em_list)

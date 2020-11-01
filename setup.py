@@ -1,9 +1,8 @@
 from setuptools import setup, find_packages
 
-
 setup(
     name='tfkit',
-    version='0.4.12',
+    version='0.5.00',
     description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -27,9 +26,10 @@ setup(
         "torch",
         "sklearn",
         "matplotlib",
-        "nlp2>=1.8.26",
+        "nlp2>=1.8.28",
         "tqdm>=4.45.0",
-        "inquirer"
+        "inquirer",
+        "numpy"
     ],
     entry_points={
         'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']

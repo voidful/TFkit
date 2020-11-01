@@ -1,7 +1,6 @@
 import os
 import unittest
 
-import torch
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel
 
@@ -10,14 +9,14 @@ import tfkit
 
 class TestModel(unittest.TestCase):
 
-    def testClassifier(self):
+    def testClas(self):
         input = "One hundred thirty-four patients suspected of having pancreas cancer successfully underwent gray scale ultrasound examination of the pancreas ."
         target = "a"
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
 
-        model = tfkit.classifier.MtClassifier({"taskA": ["a", "b"]}, tokenizer, pretrained)
-        for feature in tfkit.classifier.get_feature_from_data(tokenizer, task_lables={"taskA": ["a", "b"]},
+        model = tfkit.model.clas.Model(tokenizer, pretrained, tasks_detail={"taskA": ["a", "b"]})
+        for feature in tfkit.model.clas.get_feature_from_data(tokenizer, tasks={"taskA": ["a", "b"]},
                                                               task="taskA",
                                                               input=input, target=target, maxlen=512):
             for k, v in feature.items():
@@ -53,9 +52,9 @@ class TestModel(unittest.TestCase):
         target = [201, 205]
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
-        model = tfkit.qa.QA(tokenizer, pretrained, maxlen=512)
+        model = tfkit.model.qa.Model(tokenizer, pretrained, maxlen=512)
 
-        for feature in tfkit.qa.get_feature_from_data(tokenizer, input, target, maxlen=512):
+        for feature in tfkit.model.qa.get_feature_from_data(tokenizer, input, target, maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v, v]
 
@@ -94,11 +93,10 @@ class TestModel(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
 
-        model = tfkit.tag.Tagger(['O', 'A'],
-                                 tokenizer, pretrained)
+        model = tfkit.model.tag.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail={"default": ["O", "A"]})
 
-        for feature in tfkit.tag.get_feature_from_data(tokenizer, labels=["O", "A"], input=input, target=target,
-                                                       maxlen=512):
+        for feature in tfkit.model.tag.get_feature_from_data(tokenizer, labels=["O", "A"], input=input, target=target,
+                                                             maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v, v]
             print(feature)
@@ -132,9 +130,9 @@ class TestModel(unittest.TestCase):
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
-        model = tfkit.gen_mask.Mask(tokenizer, pretrained)
+        model = tfkit.model.mask.Model(tokenizer, pretrained)
 
-        for feature in tfkit.gen_mask.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.mask.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v]
 
@@ -165,9 +163,9 @@ class TestModel(unittest.TestCase):
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
-        model = tfkit.mcq.MCQ(tokenizer, pretrained)
+        model = tfkit.model.mcq.Model(tokenizer, pretrained)
 
-        for feature in tfkit.mcq.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.mcq.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v]
 
@@ -200,10 +198,10 @@ class TestModel(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
 
-        for feature in tfkit.gen_once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v, v]
-            model = tfkit.gen_once.Once(tokenizer, pretrained)
+            model = tfkit.model.once.Model(tokenizer, pretrained)
             self.assertTrue(isinstance(model(feature), Tensor))
             model_dict = model(feature, eval=True)
             self.assertTrue('label_prob_all' in model_dict)
@@ -228,7 +226,7 @@ class TestModel(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
 
-        model = tfkit.gen_onebyone.OneByOne(tokenizer, pretrained)
+        model = tfkit.model.onebyone.Model(tokenizer, pretrained)
         # package = torch.load('./cache/model.pt', map_location='cpu')
         # for model_tag, state_dict in zip(package['tags'], package['models']):
         #     model.load_state_dict(state_dict)
@@ -245,11 +243,12 @@ class TestModel(unittest.TestCase):
         model._filterSimilar(dummy_result, 2)
         self.assertTrue(len(dummy_result), 2)
 
-        for feature in tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input,
-                                                                tokenized_previous=tokenizer.tokenize(
-                                                                    " ".join(previous)),
-                                                                tokenized_target=tokenizer.tokenize(" ".join(target)),
-                                                                maxlen=512):
+        for feature in tfkit.model.onebyone.get_feature_from_data(tokenizer, input=input,
+                                                                  previous=tokenizer.tokenize(
+                                                                      " ".join(previous)),
+                                                                  target=tokenizer.tokenize(
+                                                                      " ".join(target)),
+                                                                  maxlen=512):
             for k, v in feature.items():
                 feature[k] = [v, v]
 
@@ -309,20 +308,20 @@ class TestModel(unittest.TestCase):
         self.assertTrue(result)
 
     def testOnebyoneWithReservedLen(self):
-        ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../"))
+        ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../../"))
         DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
-        for i in tfkit.gen_onebyone.get_data_from_file(os.path.join(DATASET_DIR, 'generate.csv')):
-            tasks, task, input, target, negative_text = i
+        for i in tfkit.model.onebyone.get_data_from_file(os.path.join(DATASET_DIR, 'generate.csv')):
+            tasks, task, input, [target, negative_text] = i
             input = input.strip()
             tokenized_target = tokenizer.tokenize(" ".join(target))
             for j in range(1, len(tokenized_target) + 1):
-                feature = tfkit.gen_onebyone.get_feature_from_data(tokenizer, input=input,
-                                                                   tokenized_previous=tokenized_target[:j - 1],
-                                                                   tokenized_target=tokenized_target[:j],
-                                                                   maxlen=20, reserved_len=0)[-1]
+                feature = tfkit.model.onebyone.get_feature_from_data(tokenizer, input=input,
+                                                                     previous=tokenized_target[:j - 1],
+                                                                     target=tokenized_target[:j],
+                                                                     maxlen=20, reserved_len=0)[-1]
                 target_start = feature['start']
                 print(f"input: {len(feature['input'])}, {tokenizer.decode(feature['input'][:target_start])} ")
                 print(f"type: {len(feature['type'])}, {feature['type'][:target_start]} ")

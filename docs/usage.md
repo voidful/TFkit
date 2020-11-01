@@ -60,14 +60,14 @@ tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --test ./cl
 nlp2go --model ./checkpoints/3.pt  --cli     
 ```
 
-### Use Albert to train DRCD QA Model
+### Use Albert to train DRCD Model Model
 ```bash
 nlprep --dataset qa_zh --outdir ./zhqa/   
 tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
 nlp2go --model ./drcd_qa_model/3.pt --cli 
 ```
 
-### Use Albert to train both DRCD QA and NER Model
+### Use Albert to train both DRCD Model and NER Model
 ```bash
 nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 nlprep --dataset qa_zh --outdir ./zhqa/ 

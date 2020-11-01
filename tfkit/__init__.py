@@ -1,9 +1,5 @@
-import tfkit.tag
-import tfkit.gen_onebyone
-import tfkit.gen_once
-import tfkit.gen_mask
-import tfkit.qa
-import tfkit.classifier
-import tfkit.utility
-import tfkit.mcq
-from tfkit.eval import load_model, load_predict_parameter
+from tfkit.model import *
+from tfkit.utility import *
+import tfkit.dump
+import tfkit.train
+import tfkit.eval

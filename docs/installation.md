@@ -13,7 +13,7 @@ python setup.py install
 
 ## Running tfkit
 
-Once you've installed tfkit, you can run with  
+Model you've installed tfkit, you can run with  
 
 ### pip installed version: 
 `tfkit-train`   
