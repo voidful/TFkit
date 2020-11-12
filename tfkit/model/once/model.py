@@ -26,6 +26,8 @@ class Model(nn.Module):
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
         masks = batch_data['mask']
+        starts = batch_data['start']
+        ends = batch_data['end']
 
         tokens_tensor = torch.as_tensor(inputs).to(self.device)
         mask_tensors = torch.as_tensor(masks).to(self.device)
@@ -43,9 +45,9 @@ class Model(nn.Module):
                 'prob_list': []
             }
             start = batch_data['start'][0]
-            end = False
+            stop = False
             outputs = result_dict
-            while start < self.maxlen and not end:
+            while start < self.maxlen and not stop:
                 predicted_index = torch.argmax(prediction_scores[0][start]).item()
                 predicted_token = self.tokenizer.decode([predicted_index])
                 logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
@@ -57,7 +59,7 @@ class Model(nn.Module):
                 result_dict['label_map'].append(prob_result[0])
 
                 if tok_sep(self.tokenizer) in predicted_token:
-                    end = True
+                    stop = True
                 start += 1
                 outputs = result_dict
         else:

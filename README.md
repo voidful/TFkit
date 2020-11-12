@@ -70,8 +70,8 @@ train model with albert
 tfkit-train --batch 20 \
 --epoch 5 \
 --lr 5e-5 \
---train ./clner_row/train.csv \
---test ./clner_row/test.csv \
+--train ./clner_row/clner-train.csv \
+--test ./clner_row/clner-test.csv \
 --maxlen 512 \
 --model tagRow \
 --savedir ./albert_ner \

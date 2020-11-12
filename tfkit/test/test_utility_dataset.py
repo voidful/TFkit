@@ -15,9 +15,9 @@ class TestDataset(unittest.TestCase):
     GEN_DATASET = os.path.join(DATASET_DIR, 'generate.csv')
 
     def test_check_type_for_dataloader(self):
-        self.assertTrue(tfkit.utility.check_type_for_dataloader(['a']))
         self.assertTrue(tfkit.utility.check_type_for_dataloader('a'))
         self.assertTrue(tfkit.utility.check_type_for_dataloader(123))
+        self.assertFalse(tfkit.utility.check_type_for_dataloader(['a']))
         self.assertFalse(tfkit.utility.check_type_for_dataloader([{'a'}]))
 
     def test_get_dataset(self):

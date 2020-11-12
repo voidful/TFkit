@@ -13,6 +13,7 @@ class TestTrain(unittest.TestCase):
     ONCE_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'once/')
     MASK_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'mask/')
     MCQ_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'mcq/')
+    QA_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'qa/')
     MTTASK_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'mttask/')
     DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
     CLAS_DATASET = os.path.join(DATASET_DIR, 'classification.csv')
@@ -20,6 +21,7 @@ class TestTrain(unittest.TestCase):
     GEN_DATASET = os.path.join(DATASET_DIR, 'generate.csv')
     MASK_DATASET = os.path.join(DATASET_DIR, 'mask.csv')
     MCQ_DATASET = os.path.join(DATASET_DIR, 'mcq.csv')
+    QA_DATASET = os.path.join(DATASET_DIR, 'qa.csv')
 
     def testHelp(self):
         result = os.system('tfkit-train -h')
@@ -95,6 +97,15 @@ class TestTrain(unittest.TestCase):
              'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
         result = os.system(
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MCQ_MODEL_PATH + ' --train ' + self.MCQ_DATASET + ' --test ' + self.MCQ_DATASET + ' --model mcq --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
+        self.assertTrue(result == 0)
+
+    def testQA(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '2', '--savedir', self.QA_MODEL_PATH, '--train',
+             self.QA_DATASET, '--lr', '5e-5', '--test', self.QA_DATASET, '--model', 'qa', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.QA_MODEL_PATH + ' --train ' + self.QA_DATASET + ' --test ' + self.QA_DATASET + ' --model qa --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
         self.assertTrue(result == 0)
 
     def testGenWithSentLoss(self):

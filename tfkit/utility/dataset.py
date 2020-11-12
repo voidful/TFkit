@@ -11,7 +11,7 @@ from transformers import AutoTokenizer, BertTokenizer
 
 
 def check_type_for_dataloader(data_item):
-    if (isinstance(data_item, list) and check_type_for_dataloader(data_item[-1])) or \
+    if (isinstance(data_item, list) and not isinstance(data_item[-1], str) and check_type_for_dataloader(data_item[-1])) or \
             isinstance(data_item, str) or \
             isinstance(data_item, numpy.ndarray) or \
             isinstance(data_item, int):
