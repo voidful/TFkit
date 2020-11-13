@@ -23,7 +23,6 @@ def parse_train_args(args):
     parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
     parser.add_argument("--maxlen", type=int, default=512, help="max tokenized sequence length, default 512")
     parser.add_argument("--handle_exceed", choices=exceed_mode,
-                        default=exceed_mode[0],
                         help='select ways to handle input exceed max length')
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
     parser.add_argument("--add_tokens", type=int, default=0,
@@ -39,13 +38,15 @@ def parse_train_args(args):
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
-    parser.add_argument("--resume", help='resume training')
+    parser.add_argument("--resume", action='store_true', help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
 
     input_arg, model_arg = parser.parse_known_args(args)
+    input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
     model_arg = {k.replace("--", ""): v for k, v in zip(model_arg[:-1:2], model_arg[1::2])}
-    return vars(input_arg), model_arg
+
+    return input_arg, model_arg
 
 
 def optimizer(model, lr):

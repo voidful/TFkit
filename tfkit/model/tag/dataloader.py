@@ -98,7 +98,9 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
                 target_id = [target_token[0]] + target_token + [target_token[-1]]
 
             if len(input_id) != len(target_id):
+                print(input, target)
                 print("input target len not equal ", len(input_id), len(target_id))
+                continue
             target_id.extend([0] * (maxlen - len(target_id)))
             row_dict['target'] = target_id
 

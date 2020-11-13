@@ -35,7 +35,27 @@ class TestDataLoader(unittest.TestCase):
                              input_arg={'maxlen': maxlen}):
             self.assertTrue(len(i['input']) == 512)
             self.assertTrue(len(i['target']) == 512)
+        #
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                        target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                        handle_exceed='slide')
+        for _ in feature:
+            print(_)
 
+        print("start_slice")
+        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                                  handle_exceed='start_slice')
+        for _ in feature:
+            print(_)
+
+        print("end_slice")
+        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                                  handle_exceed='end_slice')
+        for _ in feature:
+            print(_)
     def testMask(self):
         for i in tfkit.mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
             print("get_data_from_file", i)
@@ -85,8 +105,8 @@ class TestDataLoader(unittest.TestCase):
 
         maxlen = 10
         feature = tfkit.onebyone.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                             target=["hi"],
-                                                             reserved_len=3)[-1]
+                                                       target=["hi"],
+                                                       reserved_len=3)[-1]
         print(feature)
         self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
 

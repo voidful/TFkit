@@ -85,6 +85,7 @@ class Model(nn.Module):
                 result = self.forward(feature_dict, eval=True)
                 start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
                 end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
+
                 answers = []
                 sorted_start = sorted(start_dict.items(), key=lambda item: item[1], reverse=True)[:50]
                 sorted_end = sorted(end_dict.items(), key=lambda item: item[1], reverse=True)[:50]
@@ -95,6 +96,7 @@ class Model(nn.Module):
                         answers.append((start_index, end_index, start_prob + end_prob))
                 answer_results = sorted(answers, key=lambda answers: answers[2],
                                         reverse=True)[:topk]
+
                 ret_result.append(
                     ["".join(self.tokenizer.convert_tokens_to_string(raw_input[ans[0]:ans[1]])) for ans in
                      answer_results])

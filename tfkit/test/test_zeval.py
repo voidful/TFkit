@@ -14,11 +14,13 @@ class TestEval(unittest.TestCase):
     MASK_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mask/2.pt')
     MCQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mcq/2.pt')
     TAG_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/tag/2.pt')
+    QA_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/qa/2.pt')
     TAG_DATASET = os.path.join(DATASET_DIR, 'tag_row.csv')
     CLAS_DATASET = os.path.join(DATASET_DIR, 'classification.csv')
     GEN_DATASET = os.path.join(DATASET_DIR, 'generate.csv')
     MASK_DATASET = os.path.join(DATASET_DIR, 'mask.csv')
     MCQ_DATASET = os.path.join(DATASET_DIR, 'mcq.csv')
+    QA_DATASET = os.path.join(DATASET_DIR, 'qa.csv')
 
     def testHelp(self):
         result = os.system('tfkit-eval -h')
@@ -49,6 +51,13 @@ class TestEval(unittest.TestCase):
             ['--model', self.MCQ_MODEL_PATH, '--valid', self.MCQ_DATASET, '--metric', 'clas', '--print'])
         result = os.system(
             'tfkit-eval --model ' + self.MCQ_MODEL_PATH + ' --valid ' + self.MCQ_DATASET + ' --metric clas --print')
+        self.assertTrue(result == 0)
+
+    def testEvalQA(self):
+        tfkit.eval.main(
+            ['--model', './cache/2.pt', '--valid', self.QA_DATASET, '--metric', 'emf1', '--print'])
+        result = os.system(
+            'tfkit-eval --model ' + self.QA_MODEL_PATH + ' --valid ' + self.QA_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
 
     def testEvalClassify(self):
