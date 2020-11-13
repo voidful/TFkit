@@ -53,6 +53,7 @@ class Model(nn.Module):
             ilogit = softmax(reshaped_logits[0], dim=1)
             result_labels = ilogit.data.tolist()
             result_items = []
+
             for pos_logit_prob in result_labels:
                 max_index = pos_logit_prob.index(max(pos_logit_prob))
                 result_items.append(
@@ -62,7 +63,7 @@ class Model(nn.Module):
             start, end = batch_data['pos'][0]
             for map_token in mapping:
                 char, pos = map_token['char'], map_token['pos']
-                if pos > end:
+                if pos > end + 1:  # start from 1
                     break
                 result_dict['label_map'].append({char: result_items[pos - start][0]})
                 result_dict['label_prob_all'].append({char: result_items[pos - start][1]})

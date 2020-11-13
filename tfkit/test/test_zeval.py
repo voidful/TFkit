@@ -34,7 +34,7 @@ class TestEval(unittest.TestCase):
 
     def testEvalGen(self):
         tfkit.eval.main(
-            ['--model',  self.ONEBYONE_MODEL_PATH , '--valid', self.GEN_DATASET, '--metric', 'emf1', '--print'])
+            ['--model', self.ONEBYONE_MODEL_PATH, '--valid', self.GEN_DATASET, '--metric', 'emf1', '--print'])
         result = os.system(
             'tfkit-eval --model ' + self.ONEBYONE_MODEL_PATH + ' --valid ' + self.GEN_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
@@ -55,7 +55,7 @@ class TestEval(unittest.TestCase):
 
     def testEvalQA(self):
         tfkit.eval.main(
-            ['--model', './cache/2.pt', '--valid', self.QA_DATASET, '--metric', 'emf1', '--print'])
+            ['--model', self.QA_MODEL_PATH, '--valid', self.QA_DATASET, '--metric', 'emf1', '--print'])
         result = os.system(
             'tfkit-eval --model ' + self.QA_MODEL_PATH + ' --valid ' + self.QA_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)

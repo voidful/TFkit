@@ -64,11 +64,9 @@ def main(arg=None):
                 target = target[0].split(" ")
                 predicted = result
             elif 'tag' in model_type:
-                if 'label_map' in result_dict:
-                    predicted = " ".join([list(d.values())[0] for d in result_dict['label_map']])
-                    predicted = predicted.split(" ")
-                else:
-                    predicted = [""] * len(target)
+                predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
+                target = target[0].split(" ")
+                predicted = predicted.split(" ")
 
             if eval_arg.get('print'):
                 print('===eval===')
