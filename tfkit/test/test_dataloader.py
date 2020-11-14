@@ -110,10 +110,10 @@ class TestDataLoader(unittest.TestCase):
         print(feature)
         self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
 
-        maxlen = 100
         for i in tfkit.onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
 
+        maxlen = 10
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
             for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),

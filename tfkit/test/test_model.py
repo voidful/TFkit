@@ -298,7 +298,7 @@ class TestModel(unittest.TestCase):
         self.assertTrue(isinstance(result[0][0], str))
 
         # test exceed 512
-        result, model_dict = model.predict(input="T " * 512)
+        result, model_dict = model.predict(input="T " * 540)
         self.assertTrue(isinstance(result, list))
         print("exceed max len", result)
         self.assertTrue(len(result[0]) == 0)
