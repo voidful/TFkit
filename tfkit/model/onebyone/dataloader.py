@@ -87,8 +87,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
                           handle_exceed='start_slice', **kwargs):
     feature_dict_list = []
-    target_len = len(tokenizer.convert_tokens_to_ids(target)) if target is not None else 0
-    t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - target_len, handle_exceed)
+    t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - len(previous) -1, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep
         row_dict = dict()
         t_input = [tok.tok_begin(tokenizer)] + \

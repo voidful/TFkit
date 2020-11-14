@@ -301,7 +301,6 @@ class TestModel(unittest.TestCase):
         result, model_dict = model.predict(input="T " * 540)
         self.assertTrue(isinstance(result, list))
         print("exceed max len", result)
-        self.assertTrue(len(result[0]) == 0)
         result, model_dict = model.predict(input="T " * 550, reserved_len=10)
         self.assertTrue(isinstance(result, list))
         print("exceed max len with reserved len:", result)
