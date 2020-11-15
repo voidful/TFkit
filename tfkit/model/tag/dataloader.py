@@ -66,7 +66,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
     feature_dict_list = []
 
     mapping_index = []
-    pos = 1  # cls as start 0
+    pos = 0
     for i in input.split(" "):
         for _ in range(len(tokenizer.tokenize(i))):
             if _ < 1:
@@ -85,7 +85,6 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
         if target is not None:
             target_token = []
             pev = 0
-
             for tok_map, target_label in zip(mapping_index, target):
                 if t_pos[0] < tok_map['pos'] <= t_pos[1]:
                     for _ in range(tok_map['pos'] - pev):
@@ -112,7 +111,7 @@ def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, sep
             elif t_pos[1] == tok_map['pos']:
                 map_end = pos
 
-        row_dict['mapping'] = mapping_index[map_start:map_end + 1]
+        row_dict['mapping'] = mapping_index[map_start:map_end]
         mask_id = [1] * len(input_id)
         mask_id.extend([0] * (maxlen - len(mask_id)))
         row_dict['mask'] = mask_id

@@ -9,7 +9,6 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 from torch.nn.functional import softmax
-from nlp2 import *
 from tfkit.utility.loss import *
 from tfkit.model.tag.dataloader import get_feature_from_data
 
@@ -63,10 +62,8 @@ class Model(nn.Module):
             start, end = batch_data['pos'][0]
             for map_token in mapping:
                 char, pos = map_token['char'], map_token['pos']
-                if pos > end + 1:  # start from 1
-                    break
-                result_dict['label_map'].append({char: result_items[pos - start][0]})
-                result_dict['label_prob_all'].append({char: result_items[pos - start][1]})
+                result_dict['label_map'].append({char: result_items[pos - start + 1][0]})
+                result_dict['label_prob_all'].append({char: result_items[pos - start + 1][1]})
 
             outputs = result_dict
         else:
@@ -117,15 +114,22 @@ class Model(nn.Module):
 
             output = []
             target_str = ["", ""]
+            after_start = False
             for mapping in ret_result:
                 for k, y in mapping.items():
-                    if (y is not neg and len(target_str[0]) > 0) or start_contain in y:
+                    if start_contain in y:
+                        after_start = True
+                        if len(target_str[0]) > 0:
+                            if len(target_str[0]) > minlen:
+                                output.append(target_str)
+                            target_str = ["", ""]
+                        target_str[0] += k
+                        target_str[1] = y
+                    elif y is not neg and after_start:
                         target_str[0] += k
                         target_str[1] = y
                     else:
-                        if len(target_str[0]) > minlen and target_str not in output:
-                            output.append(target_str)
-                        target_str = ["", ""]
+                        after_start = False
             if len(target_str[0]) > minlen and target_str not in output:
                 output.append(target_str)
             output = [[ner, tag.replace(start_contain, "").replace(end_contain, "")] for ner, tag in output]
