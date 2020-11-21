@@ -38,7 +38,7 @@ def parse_train_args(args):
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
     parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
-    parser.add_argument("--resume", action='store_true', help='resume training')
+    parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
 

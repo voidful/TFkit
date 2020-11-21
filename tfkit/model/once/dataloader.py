@@ -50,7 +50,6 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
             tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(tokenized_target))
             target_end = len(tokenized_target_id) - 1
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
-            print(len(tokenized_target_id), len(tokenized_input), len(t_input), tokenized_target_id)
             row_dict['target'] = tokenized_target_id
 
         if ntarget is not None:
@@ -58,7 +57,8 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
             tokenized_ntarget_id = [-1] * target_start
             tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids(tokenized_ntarget))
             tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
-            row_dict['ntarget'] = tokenized_ntarget_id
+            if len(tokenized_ntarget_id) <= maxlen:
+                row_dict['ntarget'] = tokenized_ntarget_id
 
         tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
         mask_id.extend([0] * (maxlen - len(mask_id)))

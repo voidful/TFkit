@@ -42,7 +42,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
             # adding neg data
             for neg_text in ntext_arr:
                 yield once.get_feature_from_data, {
-                    **{'input': input + " " + " ".join(tokenized_target[:j - 1]),
+                    **{'input': input + " " + " ".join(tokenized_target[:j]),
                        'target': tokenized_target[:j][-1], 'ntarget': neg_text, "add_end_tok": False},
                     **param_dict}
         else:
@@ -53,7 +53,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     if "neg" in likelihood or 'both' in likelihood:
         # formatting neg data in csv
         if n_target is None:
-            ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]
+            ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j])]
         elif "[SEP]" in n_target:
             ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
         else:
@@ -69,10 +69,10 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     # whole sentence masking
     if 'pos' in likelihood:
         yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target)}, **param_dict}
-    elif 'both' in likelihood or "neg" in likelihood:
+    elif 'both' in likelihood:
         # formatting neg data in csv
         if n_target is None:
-            ntext_arr = [tokenizer.convert_tokens_to_string(tokenized_target[:j - 1])]
+            ntext_arr = []
         elif "[SEP]" in n_target:
             ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
         else:
@@ -87,7 +87,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
                           handle_exceed='start_slice', **kwargs):
     feature_dict_list = []
-    t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - len(previous) -1, handle_exceed)
+    t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - len(previous) - 1, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep
         row_dict = dict()
         t_input = [tok.tok_begin(tokenizer)] + \
@@ -100,7 +100,6 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         target_start = len(t_input_id) - 1
         target_end = maxlen
         t_input_id.extend([0] * (maxlen - len(t_input_id)))
-
         row_dict['target'] = [-1] * maxlen
         row_dict['ntarget'] = [-1] * maxlen
 
@@ -111,13 +110,12 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
             target_end = len(tokenized_target_id) - 1
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
-        if ntarget is not None:
-            tokenized_ntarget = tokenizer.tokenize(ntarget)
+        if ntarget is not None and len(tokenizer.tokenize(ntarget)) > 0:
+            tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(ntarget))
             tokenized_ntarget_id = [-1] * target_start
-            ntarget_token_id = tokenizer.convert_tokens_to_ids(tokenized_ntarget)[-1]
-            tokenized_ntarget_id.append(ntarget_token_id)
+            tokenized_ntarget_id.extend(tokenized_ntarget)
             tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
-            if tokenized_target_id is None or tokenized_ntarget_id != tokenized_target_id:
+            if len(tokenized_ntarget_id) <= maxlen:
                 row_dict['ntarget'] = tokenized_ntarget_id
 
         mask_id.extend([0] * (maxlen - len(mask_id)))

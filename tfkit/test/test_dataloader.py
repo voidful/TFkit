@@ -38,8 +38,8 @@ class TestDataLoader(unittest.TestCase):
         #
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
-                                        target="O O O O O O O O O O", maxlen=5, separator=" ",
-                                        handle_exceed='slide')
+                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                                  handle_exceed='slide')
         for _ in feature:
             print(_)
 
@@ -56,6 +56,7 @@ class TestDataLoader(unittest.TestCase):
                                                   handle_exceed='end_slice')
         for _ in feature:
             print(_)
+
     def testMask(self):
         for i in tfkit.mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
             print("get_data_from_file", i)
@@ -122,7 +123,7 @@ class TestDataLoader(unittest.TestCase):
                                  preprocessing_data=tfkit.onebyone.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 start_pos = i['start']
-                print(i)
+                print(likelihood, i)
                 self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
                 if 'neg' in likelihood and i['target'][start_pos] == -1:
                     self.assertTrue(i['ntarget'][start_pos] != -1)
