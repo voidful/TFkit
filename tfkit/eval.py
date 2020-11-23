@@ -49,33 +49,34 @@ def main(arg=None):
             # predicted can be list of string or string
             # target should be list of string
             predicted = result
+            processed_target = target
             if 'qa' in model_type:
-                target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+                processed_target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
                 if len(result) > 0:
                     predicted = result[0][0] if isinstance(result[0], list) else result[0]
                 else:
                     predicted = ''
             elif 'onebyone' in model_type:
-                target = " ".join(target[0])
+                processed_target = " ".join(target[0])
                 if len(result) < eval_pos:
                     print("Decode size smaller than decode num:", result_dict['label_map'])
                 predicted = result[eval_pos]
             elif 'mask' in model_type:
-                target = target[0].split(" ")
+                processed_target = target[0].split(" ")
                 predicted = result
             elif 'tag' in model_type:
                 predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
-                target = target[0].split(" ")
+                processed_target = target[0].split(" ")
                 predicted = predicted.split(" ")
 
             if eval_arg.get('print'):
                 print('===eval===')
                 print("input: ", input)
-                print("target: ", target)
+                print("target: ", processed_target)
                 print("predicted: ", predicted)
                 print('==========')
 
-            eval_metric.add_record(input, predicted, target)
+            eval_metric.add_record(input, predicted, processed_target)
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
         argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
