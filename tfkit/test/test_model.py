@@ -75,9 +75,9 @@ class TestModel(unittest.TestCase):
         self.assertTrue(len(result) == 1)
 
         # test eval top k = 2
-        top_k_label, top_k_dict = model.predict(input=input, topk=10)
+        top_k_label, top_k_dict = model.predict(input=input, topk=2)
         print("top_k_label", top_k_label)
-        self.assertTrue(len(top_k_label) == 10)
+        self.assertTrue(len(top_k_label) == 2)
 
         # test exceed 512
         for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
