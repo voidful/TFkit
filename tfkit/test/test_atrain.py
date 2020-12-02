@@ -72,15 +72,6 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.ONEBYONE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
-    def testGenSeq2Seq(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '2', '--savedir', self.ONEBYONE_MODEL_PATH, '--train',
-             self.GEN_DATASET, '--lr', '5e-5', '--test', self.GEN_DATASET, '--model', 'seq2seq', '--config',
-             'uer/chinese_roberta_L-2_H-128', '--maxlen', '50'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.ONEBYONE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model seq2seq --config uer/chinese_roberta_L-2_H-128 --maxlen 50')
-        self.assertTrue(result == 0)
-
     def testGenOnce(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '2', '--savedir', self.ONCE_MODEL_PATH, '--train',
