@@ -35,7 +35,7 @@ def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, sep
     with open(fpath, 'r', encoding='utf-8') as f:
         lines = f.read().splitlines()
         for line in tqdm(lines):
-            rows = line.split(' ')
+            rows = line.split(separator)
             if len(rows) > 1:
                 if rows[label_index] not in labels and len(rows[label_index]) > 0:
                     labels.append(rows[label_index])
@@ -45,7 +45,7 @@ def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, sep
         lines = f.read().splitlines()
         x, y = "", ""
         for line in tqdm(lines):
-            rows = line.split(' ')
+            rows = line.split(separator)
             if len(rows) == 1:
                 yield tasks, task, x.strip(), [y.strip()]
                 x, y = "", ""
@@ -65,60 +65,56 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='slide', separ
 def get_feature_from_data(tokenizer, labels, input, target=None, maxlen=512, separator=" ", handle_exceed='slide'):
     feature_dict_list = []
 
-    mapping_index = []
+    word_token_mapping = []
+    token_word_mapping = []
     pos = 0
-    for i in input.split(" "):
-        for _ in range(len(tokenizer.tokenize(i))):
-            if _ < 1:
-                mapping_index.append({'char': i, 'pos': pos})
+    for word_i, word in enumerate(input.split(separator)):
+        tokenize_word = tokenizer.tokenize(word)
+        for _ in range(len(tokenize_word)):
+            if _ < 1:  # only record first token (one word one record)
+                word_token_mapping.append({'char': word, 'pos': pos, 'len': len(tokenize_word)})
+            token_word_mapping.append({'tok': tokenize_word[_], 'word': word, 'pos': len(word_token_mapping) - 1})
             pos += 1
-    if target is not None:
-        target = target.split(separator)
 
-    t_input_list, t_pos_list = tok.handle_exceed(tokenizer, input, maxlen - 2, mode=handle_exceed, keep_after_sep=False)
-    for t_input, t_pos in zip(t_input_list, t_pos_list):  # -2 for cls and sep
+    t_input_list, t_pos_list = tok.handle_exceed(tokenizer, input, maxlen - 1, mode=handle_exceed, keep_after_sep=False)
+    for t_input, t_pos in zip(t_input_list, t_pos_list):  # -1 for cls
         # ``1`` for tokens that are NOT MASKED, ``0`` for MASKED tokens.
         row_dict = dict()
-        tokenized_input = [tok.tok_begin(tokenizer)] + t_input + [tok.tok_sep(tokenizer)]
+        tokenized_input = [tok.tok_begin(tokenizer)] + t_input
         input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
 
         if target is not None:
             target_token = []
-            pev = 0
-            for tok_map, target_label in zip(mapping_index, target):
-                if t_pos[0] < tok_map['pos'] <= t_pos[1]:
-                    for _ in range(tok_map['pos'] - pev):
+            for input_word, target_label in zip(word_token_mapping, target.split(separator)):
+                if t_pos[0] <= input_word['pos'] < t_pos[1]:
+                    for _ in range(input_word['len']):
                         target_token += [labels.index(target_label)]
-                pev = tok_map['pos']
 
             if "O" in labels:
-                target_id = [labels.index("O")] + target_token + [labels.index("O")]
+                target_id = [labels.index("O")] + target_token
             else:
-                target_id = [target_token[0]] + target_token + [target_token[-1]]
+                target_id = [target_token[0]] + target_token
 
             if len(input_id) != len(target_id):
-                print(input, target)
+                print(list(zip(input.split(separator), target.split(separator))))
+                print(tokenizer.decode(input_id))
+                print(input_id)
+                print(target_id)
                 print("input target len not equal ", len(input_id), len(target_id))
                 continue
+
             target_id.extend([0] * (maxlen - len(target_id)))
             row_dict['target'] = target_id
 
-        map_start = 0
-        map_end = len(mapping_index)
-        for pos, tok_map in enumerate(mapping_index):
-            if t_pos[0] == tok_map['pos']:
-                map_start = pos
-            elif t_pos[1] == tok_map['pos']:
-                map_end = pos
-
-        row_dict['mapping'] = mapping_index[map_start:map_end]
+        row_dict['word_token_mapping'] = word_token_mapping
+        row_dict['token_word_mapping'] = token_word_mapping
         mask_id = [1] * len(input_id)
         mask_id.extend([0] * (maxlen - len(mask_id)))
         row_dict['mask'] = mask_id
         row_dict['end'] = len(input_id)
+        row_dict['pos'] = t_pos
         input_id.extend([0] * (maxlen - len(input_id)))
         row_dict['input'] = input_id
-        row_dict['pos'] = [map_start, map_end]
         feature_dict_list.append(row_dict)
 
     return feature_dict_list

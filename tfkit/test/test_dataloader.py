@@ -132,6 +132,8 @@ class TestDataLoader(unittest.TestCase):
                 self.assertTrue(len(i['input']) == maxlen)
                 self.assertTrue(len(i['target']) == maxlen)
 
+
+
     def testGPT(self):
         tokenizer = AutoTokenizer.from_pretrained('openai-gpt')
         maxlen = 512

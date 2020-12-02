@@ -51,20 +51,16 @@ class Model(nn.Module):
 
             ilogit = softmax(reshaped_logits[0], dim=1)
             result_labels = ilogit.data.tolist()
-            result_items = []
-
-            for pos_logit_prob in result_labels:
-                max_index = pos_logit_prob.index(max(pos_logit_prob))
-                result_items.append(
-                    [self.labels[max_index], dict(zip(self.labels, pos_logit_prob))])
-
-            mapping = batch_data['mapping'][0]
+            token_word_mapping = batch_data['token_word_mapping'][0]
             start, end = batch_data['pos'][0]
-            for map_token in mapping:
-                char, pos = map_token['char'], map_token['pos']
-                result_dict['label_map'].append({char: result_items[pos - start + 1][0]})
-                result_dict['label_prob_all'].append({char: result_items[pos - start + 1][1]})
-
+            for pos, logit_prob in enumerate(result_labels[1:]):  # skip cls and sep
+                if pos >= len(token_word_mapping):
+                    break
+                word = token_word_mapping[start + pos]['word']
+                max_index = logit_prob.index(max(logit_prob))
+                result_dict['label_map'].append({word: self.labels[max_index]})
+                result_dict['label_prob_all'].append({word: dict(zip(self.labels, logit_prob))})
+            result_dict['token_word_mapping'] = token_word_mapping[start:end]
             outputs = result_dict
         else:
             targets = batch_data["target"]
@@ -75,7 +71,7 @@ class Model(nn.Module):
         return outputs
 
     def predict(self, input='', neg="O", task=None, handle_exceed='slide',
-                merge_strategy=['minentropy', 'maxprob', 'maxcount'], minlen=1, start_contain="B_", end_contain="I_"):
+                merge_strategy=['minentropy', 'maxprob', 'maxcount'], minlen=1, start_contain="B", end_contain="I"):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
@@ -85,21 +81,21 @@ class Model(nn.Module):
             predicted_pos_prob = defaultdict(lambda: defaultdict(list))
             for feature_dict in get_feature_from_data(tokenizer=self.tokenizer, labels=self.labels, input=input.strip(),
                                                       maxlen=self.maxlen, handle_exceed=handle_exceed):
-                start, end = feature_dict['pos']
                 for k, v in feature_dict.items():
                     feature_dict[k] = [v]
                 result = self.forward(feature_dict, eval=True)
-                pos_to_char = feature_dict['mapping'][0]
-                for ind, mapping in enumerate(result['label_prob_all']):
-                    for map_pos, map_dict in mapping.items():
-                        max_label = max(map_dict, key=map_dict.get)
-                        max_prob = map_dict[max_label]
-                        max_entropy = Categorical(probs=torch.tensor(list(map_dict.values()))).entropy().data.tolist()
-                        predicted_pos_prob[str(ind + start)]['char'] = pos_to_char[ind]['char']
-                        predicted_pos_prob[str(ind + start)]['labels'].append(max_label)
-                        predicted_pos_prob[str(ind + start)]['prob'].append(max_prob)
-                        predicted_pos_prob[str(ind + start)]['entropy'].append(max_entropy)
+                for token_pred, token_map in zip(result['label_prob_all'], result['token_word_mapping']):
+                    token_prob = list(token_pred.values())[0]
+                    max_label = max(token_prob, key=token_prob.get)
+                    max_prob = token_prob[max_label]
+                    max_entropy = Categorical(probs=torch.tensor(list(token_prob.values()))).entropy().data.tolist()
+                    predicted_pos_prob[token_map['pos']]['char'] = token_map['word']
+                    predicted_pos_prob[token_map['pos']]['labels'].append(max_label)
+                    predicted_pos_prob[token_map['pos']]['prob'].append(max_prob)
+                    predicted_pos_prob[token_map['pos']]['entropy'].append(max_entropy)
+
                 ret_detail.append(result)
+
             ret_result = []
             for key, value in predicted_pos_prob.items():
                 if merge_strategy == 'maxcount':
