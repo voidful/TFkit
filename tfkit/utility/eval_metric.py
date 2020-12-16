@@ -55,13 +55,13 @@ class EvalMetric:
             input = self.tokenize_text(input.strip())
         if isinstance(input, list):
             for i, t in enumerate(input):
-                input[i] = self.tokenize_text(t)
+                input[i] = self.tokenize_text(t.strip())
 
         if isinstance(predicted, str):
             predicted = self.tokenize_text(predicted)
         if isinstance(predicted, list):
             for i, t in enumerate(predicted):
-                predicted[i] = self.tokenize_text(t)
+                predicted[i] = self.tokenize_text(t.strip())
 
         if isinstance(target, str):
             targets = []
@@ -71,7 +71,7 @@ class EvalMetric:
                 targets.append(self.tokenize_text(target.strip()))
         if isinstance(target, list):
             for i, t in enumerate(target):
-                target[i] = self.tokenize_text(t)
+                target[i] = self.tokenize_text(t.strip())
             targets = target
 
         if self.max_candidate - len(targets) > 0 and "nlg" in task:
@@ -154,6 +154,7 @@ class EvalMetric:
                                      precision_recall_fscore_support(mlb.transform([t]), mlb.transform([p]),
                                                                      average='weighted')))
                     data_score.append([p, t, score])
+                print(mlb.classes_)
                 result = classification_report(
                     mlb.transform(targets),
                     mlb.transform(predicted),

@@ -7,7 +7,7 @@ from torch import nn
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-from torch.nn.functional import softmax, sigmoid
+from torch import softmax, sigmoid
 from tfkit.model.clas.dataloader import get_feature_from_data
 from tfkit.utility.loss import FocalLoss, BCEFocalLoss
 from torch.distributions import Categorical

@@ -144,6 +144,19 @@ class TestEval(unittest.TestCase):
             print(s6)
         self.assertTrue(s1[0] == s3[0] == s6[0])
 
+    def testTag(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        eval.add_record("input", ['O', 'B_Location', 'I_Location', 'I_Location', 'I_Location', 'I_Location', 'O'],
+                        ['O', 'B_Location', 'I_Location', 'B_Location', 'I_Thing', 'I_Location', 'O'],
+                        task='default')
+        for s in eval.cal_score('classification'):
+            print(s[0])
+            print(s[1])
+
     def testClassify(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)

@@ -95,11 +95,28 @@ class TestDataLoader(unittest.TestCase):
                              get_data_from_file=tfkit.once.get_data_from_file,
                              preprocessing_data=tfkit.once.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
-            # print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
-            # print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
             print(len(i['target']))
             self.assertTrue(len(i['input']) == 512)
             self.assertTrue(len(i['target']) == 512)
+
+    def testOnceCTC(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        for i in tfkit.once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+            print(i)
+        maxlen = 10
+        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+                             pretrained_config='voidful/albert_chinese_tiny',
+                             get_data_from_file=tfkit.once.get_data_from_file,
+                             preprocessing_data=tfkit.once.preprocessing_data,
+                             input_arg={'maxlen': maxlen}):
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
+            print(i)
+            print(len(i['target']))
+            self.assertTrue(len(i['input']) == maxlen)
+            self.assertTrue(len(i['target']) == maxlen)
 
     def testOnebyone(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -131,8 +148,6 @@ class TestDataLoader(unittest.TestCase):
                     self.assertTrue(i['target'][start_pos] != -1)
                 self.assertTrue(len(i['input']) == maxlen)
                 self.assertTrue(len(i['target']) == maxlen)
-
-
 
     def testGPT(self):
         tokenizer = AutoTokenizer.from_pretrained('openai-gpt')
@@ -207,3 +222,27 @@ class TestDataLoader(unittest.TestCase):
         ds.increase_with_sampling(50)
         print("after increase_with_sampling", ds.__len__())
         self.assertTrue(ds.__len__() == 50)
+
+    def testSeq2seq(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+
+        maxlen = 10
+        feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
+                                                      target=["hi"],
+                                                      reserved_len=3)[-1]
+        print(feature)
+
+        for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+            print(i)
+
+        maxlen = 10
+        for likelihood in ['none']:
+            print(likelihood)
+            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_eng.csv'),
+                                 pretrained_config='prajjwal1/bert-small',
+                                 get_data_from_file=tfkit.seq2seq.get_data_from_file,
+                                 preprocessing_data=tfkit.seq2seq.preprocessing_data,
+                                 input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
+                print(likelihood, i)
+                self.assertTrue(len(i['input']) == maxlen)
+                self.assertTrue(len(i['target']) == maxlen)

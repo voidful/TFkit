@@ -9,8 +9,11 @@ class TestTrain(unittest.TestCase):
     MODEL_SAVE_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/')
     CLAS_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'clas/')
     TAG_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'tag/')
+    TAGCRF_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'tagcrf/')
     ONEBYONE_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'onebyone/')
+    SEQ2SEQ_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'seq2seq/')
     ONCE_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'once/')
+    ONCECTC_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'oncectc/')
     MASK_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'mask/')
     MCQ_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'mcq/')
     QA_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'qa/')
@@ -19,6 +22,7 @@ class TestTrain(unittest.TestCase):
     CLAS_DATASET = os.path.join(DATASET_DIR, 'classification.csv')
     TAG_DATASET = os.path.join(DATASET_DIR, 'tag_row.csv')
     GEN_DATASET = os.path.join(DATASET_DIR, 'generate.csv')
+    SEQ2SEQ_DATASET = os.path.join(DATASET_DIR, 'gen_eng.csv')
     MASK_DATASET = os.path.join(DATASET_DIR, 'mask.csv')
     MCQ_DATASET = os.path.join(DATASET_DIR, 'mcq.csv')
     QA_DATASET = os.path.join(DATASET_DIR, 'qa.csv')
@@ -81,10 +85,19 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.ONCE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model once --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
+    def testGenOnceCTC(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '20', '--savedir', self.ONCECTC_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'oncectc', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50'])
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 10 --savedir ' + self.ONCE_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model oncectc --config voidful/albert_chinese_tiny --maxlen 50')
+        self.assertTrue(result == 0)
+
     def testGenMask(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '2', '--savedir', self.MASK_MODEL_PATH, '--train',
-             self.MASK_DATASET, '--lr', '5e-5', '--test', self.MASK_DATASET, '--model', 'mask', '--config',
+             self.MASK_DATASET, '--lr', '3e-2', '--test', self.MASK_DATASET, '--model', 'mask', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512'])
         result = os.system(
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MASK_MODEL_PATH + ' --train ' + self.MASK_DATASET + ' --test ' + self.MASK_DATASET + ' --model mask --config voidful/albert_chinese_tiny --maxlen 512')
@@ -135,6 +148,15 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
         self.assertTrue(result == 0)
 
+    def testTagCRF(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '2', '--savedir', self.TAGCRF_MODEL_PATH, '--train',
+             self.TAG_DATASET, '--lr', '5e-5', '--test', self.TAG_DATASET, '--model', 'tagcrf', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'slide'])
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
+        self.assertTrue(result == 0)
+
     def testAddToken(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '2', '--savedir', self.MODEL_SAVE_PATH, '--train',
@@ -142,4 +164,13 @@ class TestTrain(unittest.TestCase):
              'voidful/albert_chinese_tiny', '--maxlen', '50', '--add_tokens', '5'])
         result = os.system(
             'tfkit-train --batch 2 --add_tokens 5  --savedir ' + self.MODEL_SAVE_PATH + ' --epoch 2  --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny --maxlen 50')
+        self.assertTrue(result == 0)
+
+    def testGenSeq2Seq(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '2', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '5e-5', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
+             'prajjwal1/bert-small', '--maxlen', '10'])
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.SEQ2SEQ_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')
         self.assertTrue(result == 0)

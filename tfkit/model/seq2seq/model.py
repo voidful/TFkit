@@ -2,12 +2,15 @@ import json
 import sys
 import os
 
+from transformers import AutoModelForCausalLM, AutoConfig
+from typing import List
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 from torch import nn
-from tfkit.model.onebyone.dataloader import get_feature_from_data
+from tfkit.model.seq2seq.dataloader import get_feature_from_data
 from itertools import combinations
 from torch.nn.functional import softmax
 from math import log
@@ -17,28 +20,53 @@ import numpy as np
 
 
 class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
+    def __init__(self, tokenizer, pretrained, maxlen=512, share_embedding=False, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
+        decoder_config = AutoConfig.from_pretrained(pretrained.name_or_path)
+        decoder_config.is_decoder = True
+        decoder_config.add_cross_attention = True
+        decoder_config.num_hidden_layers = 1
+        self.model = AutoModelForCausalLM.from_config(decoder_config)  # decoder
+        if share_embedding:
+            decoder_base_model_prefix = self.model.base_model_prefix
+            self._tie_encoder_decoder_weights(
+                self.pretrained, self.model._modules[decoder_base_model_prefix], self.model.base_model_prefix
+            )
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         print('Using device:', self.device)
         self.model.to(self.device)
+        self.encoder_hidden = None
 
-    def forward(self, batch_data, eval=False):
+    def forward(self, batch_data, eval=False, use_prev=False):
         inputs = batch_data['input']
         targets = batch_data['target']
+        previous = batch_data['previous']
         negative_targets = batch_data['ntarget']
-        masks = batch_data['mask']
+        input_mask = batch_data['input_mask']
+        target_mask = batch_data['target_mask']
 
-        tokens_tensor = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
+        token_previous = torch.as_tensor(previous).to(self.device)
+        tokens_input = torch.as_tensor(inputs).to(self.device)
+        input_mask_tensors = torch.as_tensor(input_mask).to(self.device)
+        target_mask_tensors = torch.as_tensor(target_mask).to(self.device)
 
-        outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
-        prediction_scores = self.model(outputs[0])
+        if use_prev and self.encoder_hidden is not None:
+            encoder_hidden_states = self.encoder_hidden
+        else:
+            outputs = self.pretrained(tokens_input, attention_mask=input_mask_tensors)
+            encoder_hidden_states = outputs[0]
+            self.encoder_hidden = encoder_hidden_states
 
+        # Decode
+        prediction_scores = self.model(
+            input_ids=token_previous,
+            attention_mask=target_mask_tensors,
+            encoder_hidden_states=encoder_hidden_states,
+            encoder_attention_mask=input_mask_tensors
+        )[0]
         if eval:
             result_dict = {
                 'label_prob_all': [],
@@ -65,6 +93,78 @@ class Model(nn.Module):
             masked_lm_loss += negative_loss
             outputs = masked_lm_loss
         return outputs
+
+    def _tie_encoder_decoder_weights(self, encoder, decoder, base_model_prefix):
+        uninitialized_encoder_weights: List[str] = []
+        if decoder.__class__ != encoder.__class__:
+            print(
+                f"{decoder.__class__} and {encoder.__class__} are not equal. In this case make sure that all encoder weights are correctly initialized."
+            )
+
+        def tie_encoder_to_decoder_recursively(
+                decoder_pointer: nn.Module,
+                encoder_pointer: nn.Module,
+                module_name: str,
+                uninitialized_encoder_weights: List[str],
+                depth=0,
+        ):
+            assert isinstance(decoder_pointer, nn.Module) and isinstance(
+                encoder_pointer, nn.Module
+            ), f"{decoder_pointer} and {encoder_pointer} have to be of type torch.nn.Module"
+            if hasattr(decoder_pointer, "weight"):
+                assert hasattr(encoder_pointer, "weight")
+                encoder_pointer.weight = decoder_pointer.weight
+                if hasattr(decoder_pointer, "bias"):
+                    assert hasattr(encoder_pointer, "bias")
+                    encoder_pointer.bias = decoder_pointer.bias
+                return
+
+            encoder_modules = encoder_pointer._modules
+            decoder_modules = decoder_pointer._modules
+            if len(decoder_modules) > 0:
+                assert (
+                        len(encoder_modules) > 0
+                ), f"Encoder module {encoder_pointer} does not match decoder module {decoder_pointer}"
+
+                all_encoder_weights = set([module_name + "/" + sub_name for sub_name in encoder_modules.keys()])
+                encoder_layer_pos = 0
+                for name, module in decoder_modules.items():
+                    if name.isdigit():
+                        encoder_name = str(int(name) + encoder_layer_pos)
+                        decoder_name = name
+                        if not isinstance(decoder_modules[decoder_name], type(encoder_modules[encoder_name])) and len(
+                                encoder_modules
+                        ) != len(decoder_modules):
+                            # this can happen if the name corresponds to the position in a list module list of layers
+                            # in this case the decoder has added a cross-attention that the encoder does not have
+                            # thus skip this step and subtract one layer pos from encoder
+                            encoder_layer_pos -= 1
+                            continue
+                    elif name not in encoder_modules:
+                        continue
+                    elif depth > 500:
+                        raise ValueError(
+                            "Max depth of recursive function `tie_encoder_to_decoder` reached. It seems that there is a circular dependency between two or more `nn.Modules` of your model."
+                        )
+                    else:
+                        decoder_name = encoder_name = name
+                    tie_encoder_to_decoder_recursively(
+                        decoder_modules[decoder_name],
+                        encoder_modules[encoder_name],
+                        module_name + "/" + name,
+                        uninitialized_encoder_weights,
+                        depth=depth + 1,
+                    )
+                    all_encoder_weights.remove(module_name + "/" + encoder_name)
+
+                uninitialized_encoder_weights += list(all_encoder_weights)
+
+        # tie weights recursively
+        tie_encoder_to_decoder_recursively(decoder, encoder, base_model_prefix, uninitialized_encoder_weights)
+        if len(uninitialized_encoder_weights) > 0:
+            print(
+                f"The following encoder weights were not tied to the decoder {uninitialized_encoder_weights}"
+            )
 
     def _jaccard_similarity(self, list1, list2):
         s1 = set(list1)
@@ -102,7 +202,6 @@ class Model(nn.Module):
                 for seq in sequences:
                     if tok.tok_sep(self.tokenizer) not in seq[0]:
                         tokens, score = seq
-
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
                                                              reserved_len=reserved_len,
                                                              handle_exceed=handle_exceed)[-1]
@@ -114,7 +213,7 @@ class Model(nn.Module):
 
                         for k, v in feature_dict.items():
                             feature_dict[k] = [v]
-                        predictions = self.forward(feature_dict, eval=True)
+                        predictions = self.forward(feature_dict, eval=True, use_prev=True)
                         token_prob_list = predictions['label_prob_all'][0]
                         # topK topP
                         if 'top' in mode:
@@ -169,4 +268,5 @@ class Model(nn.Module):
             result_dict = {
                 'label_map': sequences
             }
+            self.encoder_hidden = None
             return [i[0] for i in sequences], [result_dict]

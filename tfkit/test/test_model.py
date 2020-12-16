@@ -5,6 +5,7 @@ from torch import Tensor
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
 
 import tfkit
+import timeit
 
 
 class TestModel(unittest.TestCase):
@@ -115,6 +116,7 @@ class TestModel(unittest.TestCase):
             for k, v in feature.items():
                 feature[k] = [v, v]
             self.assertTrue(isinstance(model(feature), Tensor))
+            print(model(feature))
             # test eval
             model_dict = model(feature, eval=True)
             self.assertTrue('label_prob_all' in model_dict)
@@ -142,7 +144,7 @@ class TestModel(unittest.TestCase):
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
         model = tfkit.model.mask.Model(tokenizer, pretrained)
 
-        for feature in tfkit.model.mask.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.mask.get_feature_from_data(tokenizer, input=input, target=target, maxlen=20):
             for k, v in feature.items():
                 feature[k] = [v]
 
@@ -175,7 +177,7 @@ class TestModel(unittest.TestCase):
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
         model = tfkit.model.mcq.Model(tokenizer, pretrained)
 
-        for feature in tfkit.model.mcq.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.mcq.get_feature_from_data(tokenizer, input=input, target=target, maxlen=20):
             for k, v in feature.items():
                 feature[k] = [v]
 
@@ -208,11 +210,12 @@ class TestModel(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
 
-        for feature in tfkit.model.once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=512):
+        for feature in tfkit.model.once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=20):
             for k, v in feature.items():
                 feature[k] = [v, v]
-            model = tfkit.model.once.Model(tokenizer, pretrained)
+            model = tfkit.model.once.Model(tokenizer, pretrained,maxlen=20)
             self.assertTrue(isinstance(model(feature), Tensor))
+            print(model(feature))
             model_dict = model(feature, eval=True)
             self.assertTrue('label_prob_all' in model_dict)
             self.assertTrue('label_map' in model_dict)
@@ -226,6 +229,34 @@ class TestModel(unittest.TestCase):
         # test exceed 512
         result, model_dict = model.predict(input="T " * 512)
         self.assertTrue(isinstance(result, list))
+
+    def testOnceCTC(self):
+        input = "See you next time"
+        target = "下 次 見"
+        ntarget = "不 見 不 散"
+
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
+
+        for feature in tfkit.model.oncectc.get_feature_from_data(tokenizer, input=input, target=target, maxlen=50):
+            for k, v in feature.items():
+                feature[k] = [v, v]
+            model = tfkit.model.oncectc.Model(tokenizer, pretrained)
+            self.assertTrue(isinstance(model(feature), Tensor))
+            print(model(feature))
+            model_dict = model(feature, eval=True)
+            self.assertTrue('label_prob_all' in model_dict)
+            self.assertTrue('label_map' in model_dict)
+
+        # result, model_dict = model.predict(input=input)
+        # self.assertTrue('label_prob_all' in model_dict[0])
+        # self.assertTrue('label_map' in model_dict[0])
+        # print(result, len(result))
+        # self.assertTrue(isinstance(result, list))
+        # self.assertTrue(isinstance(result[0][0], str))
+        # # test exceed 512
+        # result, model_dict = model.predict(input="T " * 512)
+        # self.assertTrue(isinstance(result, list))
 
     def testOnebyone(self):
         input = "See you next time"
@@ -258,7 +289,7 @@ class TestModel(unittest.TestCase):
                                                                       " ".join(previous)),
                                                                   target=tokenizer.tokenize(
                                                                       " ".join(target)),
-                                                                  maxlen=512):
+                                                                  maxlen=10):
             for k, v in feature.items():
                 feature[k] = [v, v]
 
@@ -338,3 +369,96 @@ class TestModel(unittest.TestCase):
                 if tokenized_target is not None:
                     print(
                         f"target: {len(feature['target'])}, {tokenizer.convert_ids_to_tokens(feature['target'][target_start])} ")
+
+    def testSeq2seq(self):
+        input = "See you next time"
+        previous = "ok sure"
+        target = "ok sure bye"
+        maxlen = 10
+        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
+
+        model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        for feature in tfkit.model.seq2seq.get_feature_from_data(tokenizer, input=input,
+                                                                 previous=tokenizer.tokenize(
+                                                                     " ".join(previous)),
+                                                                 target=tokenizer.tokenize(
+                                                                     " ".join(target)),
+                                                                 maxlen=maxlen):
+            for k, v in feature.items():
+                feature[k] = [v, v]
+
+            print(model(feature))
+            self.assertTrue(isinstance(model(feature), Tensor))
+            model_dict = model(feature, eval=True)
+            self.assertTrue('label_map' in model_dict)
+
+        # greedy
+        result, model_dict = model.predict(input=input)
+        print(result, model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 1)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
+        print("TopK no filter sim", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # beamsearch
+        result, model_dict = model.predict(input=input, decodenum=3)
+        print("beamsaerch", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
+        print("TopK", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopP
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
+        print("TopP", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 540)
+        self.assertTrue(isinstance(result, list))
+        print("exceed max len", result)
+        result, model_dict = model.predict(input="T " * 550, reserved_len=10)
+        self.assertTrue(isinstance(result, list))
+        print("exceed max len with reserved len:", result)
+        self.assertTrue(result)
+
+    def testOnebyoneSeq2seqTime(self):
+        maxlen = 512
+        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
+
+        seq2seq_model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
+        onebyone_model = tfkit.model.onebyone.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        # test exceed 512
+        start = timeit.default_timer()
+        seq2seq_model.predict(input="T " * 256)
+        stop = timeit.default_timer()
+        print('Seq2Seq Time: ', stop - start)
+
+        # test exceed 512
+        start = timeit.default_timer()
+        onebyone_model.predict(input="T " * 256)
+        stop = timeit.default_timer()
+        print('Once Time: ', stop - start)

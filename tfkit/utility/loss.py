@@ -30,6 +30,26 @@ class FocalLoss(nn.Module):
         return self.nll((1 - pt) ** self.gamma * logpt, target)
 
 
+class SeqCTCLoss(nn.Module):
+    def __init__(self, blank_index):
+        super(SeqCTCLoss, self).__init__()
+        self.blank_index = blank_index
+
+    def forward(self, logits, input_lengths, targets, target_lengths):
+        # lengths : (batch_size, )
+        # log_logits : (T, batch_size, n_class), this kind of shape is required for ctc_loss
+        # log_logits = logits + (logit_mask.unsqueeze(-1) + 1e-45).log()
+        log_logits = logits.log_softmax(-1).transpose(0, 1)
+        loss = F.ctc_loss(log_logits,
+                          targets,
+                          input_lengths,
+                          target_lengths,
+                          blank=self.blank_index,
+                          reduction='mean',
+                          zero_infinity=True)
+        return loss
+
+
 class DiceLoss(nn.Module):
     """From 'Dice Loss for Data-imbalanced NLP Tasks'"""
 
