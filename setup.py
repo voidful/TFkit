@@ -21,7 +21,7 @@ setup(
     keywords='transformer huggingface nlp multi-task multi-class multi-label classification generation tagging deep learning machine reading',
     packages=find_packages(),
     install_requires=[
-        "transformers<=4.0.0,>=3.5.1",
+        "transformers<=4.0.1,>=3.5.1",
         "tensorboardX",
         "torch",
         "sklearn",

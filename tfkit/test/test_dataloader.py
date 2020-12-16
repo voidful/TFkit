@@ -160,7 +160,7 @@ class TestDataLoader(unittest.TestCase):
                                  preprocessing_data=tfkit.onebyone.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 start_pos = i['start']
-                output.append(tokenizer.convert_ids_to_tokens(i['target'])[start_pos])
+                output.extend(tokenizer.convert_ids_to_tokens([i['target'][start_pos]]))
                 print(output)
             print(tokenizer.convert_tokens_to_string(output) + "\n")
 
