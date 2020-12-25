@@ -24,6 +24,7 @@ class TestEval(unittest.TestCase):
     MASK_DATASET = os.path.join(DATASET_DIR, 'mask.csv')
     MCQ_DATASET = os.path.join(DATASET_DIR, 'mcq.csv')
     QA_DATASET = os.path.join(DATASET_DIR, 'qa.csv')
+    ADDED_TOK_MODEL = os.path.join(ROOT_DIR, 'tfkit/test/cache/voidful/albert_chinese_tiny_added_tok')
 
     def testHelp(self):
         result = os.system('tfkit-eval -h')
