@@ -107,7 +107,7 @@ class Model(nn.Module):
                                                              reserved_len=reserved_len,
                                                              handle_exceed=handle_exceed)[-1]
                         # check input exceed
-                        if len(tokens) > self.maxlen:
+                        if len(tokens) >= self.maxlen or feature_dict['start'] >= self.maxlen:
                             exceed = True
                             all_candidates.append(seq)
                             continue
@@ -157,7 +157,7 @@ class Model(nn.Module):
                 stop = 0
                 for i in sequences:
                     # i[0] - sequence,i[1] - sequence score
-                    if tok.tok_sep(self.tokenizer) in i[0] or i[1] > self.maxlen:
+                    if tok.tok_sep(self.tokenizer) in i[0] or i[1] >= self.maxlen:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break

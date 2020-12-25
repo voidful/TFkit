@@ -213,7 +213,7 @@ class TestModel(unittest.TestCase):
         for feature in tfkit.model.once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=20):
             for k, v in feature.items():
                 feature[k] = [v, v]
-            model = tfkit.model.once.Model(tokenizer, pretrained,maxlen=20)
+            model = tfkit.model.once.Model(tokenizer, pretrained, maxlen=20)
             self.assertTrue(isinstance(model(feature), Tensor))
             print(model(feature))
             model_dict = model(feature, eval=True)
@@ -266,8 +266,8 @@ class TestModel(unittest.TestCase):
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_small')
-
-        model = tfkit.model.onebyone.Model(tokenizer, pretrained)
+        maxlen = 10
+        model = tfkit.model.onebyone.Model(tokenizer, pretrained, maxlen=maxlen)
         # package = torch.load('./cache/model.pt', map_location='cpu')
         # for model_tag, state_dict in zip(package['tags'], package['models']):
         #     model.load_state_dict(state_dict)
@@ -289,7 +289,7 @@ class TestModel(unittest.TestCase):
                                                                       " ".join(previous)),
                                                                   target=tokenizer.tokenize(
                                                                       " ".join(target)),
-                                                                  maxlen=10):
+                                                                  maxlen=maxlen):
             for k, v in feature.items():
                 feature[k] = [v, v]
 

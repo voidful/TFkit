@@ -35,7 +35,7 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
         tokenized_input = [tok.tok_begin(tokenizer)] + t_input[:maxlen - reserved_len - 3] + [tok.tok_sep(tokenizer)]
 
         row_dict['target'] = [-1] * maxlen
-        row_dict['target_nopad'] = [-1] * maxlen
+        row_dict['target_once'] = [-1] * maxlen
         tokenized_input_id = tokenizer.convert_tokens_to_ids(tokenized_input)
         target_start = len(tokenized_input_id)
         target_end = maxlen
@@ -45,12 +45,16 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
             if add_end_tok:
                 tokenized_target += [tok.tok_sep(tokenizer)]
             tokenized_target_id = []
+            tokenized_target_once_id = [-1] * len(tokenized_input)
             target_ids = tokenizer.convert_tokens_to_ids(tokenized_target)
             target_length = len(target_ids)
             tokenized_target_id.extend(target_ids)
+            tokenized_target_once_id.extend(target_ids)
             target_end = len(tokenized_target_id) - 1
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
+            tokenized_target_once_id.extend([-1] * (maxlen - len(tokenized_target_once_id)))
             row_dict['target'] = tokenized_target_id
+            row_dict['target_once'] = tokenized_target_once_id
 
         input_length = min(maxlen, target_start * 3)
         tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))

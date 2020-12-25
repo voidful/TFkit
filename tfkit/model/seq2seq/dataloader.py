@@ -113,7 +113,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         if target is not None:
             t_target_id = []
             if len(previous) > 0:
-                t_target_id.extend([-1] * len(tokenized_previous_id))
+                t_target_id.extend(tokenized_previous_id)
             target_start = len(t_target_id)
             t_target_id.append(tokenizer.convert_tokens_to_ids(target)[-1])
             target_mask_id = [1] * (len(t_target_id))

@@ -265,6 +265,7 @@ class Model(nn.Module):
                 if tok.tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok.tok_sep(self.tokenizer))]
                 sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
+
             result_dict = {
                 'label_map': sequences
             }

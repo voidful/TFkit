@@ -8,11 +8,10 @@ import tfkit
 class TestEval(unittest.TestCase):
     ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../../"))
     DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
-    ADDED_TOK_MODEL = os.path.join(ROOT_DIR, 'tfkit/test/cache/voidful/albert_chinese_tiny_added_tok')
     ONEBYONE_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/onebyone/2.pt')
     ONCE_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/once/2.pt')
-    ONCECTC_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/oncectc/20.pt')
-    SEQ2SEQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/seq2seq/2.pt')
+    ONCECTC_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/oncectc/30.pt')
+    SEQ2SEQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/seq2seq/10.pt')
     CLAS_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/clas/2.pt')
     MASK_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mask/2.pt')
     MCQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mcq/2.pt')

@@ -87,8 +87,8 @@ class TestTrain(unittest.TestCase):
 
     def testGenOnceCTC(self):
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '20', '--savedir', self.ONCECTC_MODEL_PATH, '--train',
-             self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'oncectc', '--config',
+            ['--batch', '2', '--epoch', '30', '--savedir', self.ONCECTC_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '3e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'oncectc', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
             'tfkit-train --batch 2 --epoch 10 --savedir ' + self.ONCE_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model oncectc --config voidful/albert_chinese_tiny --maxlen 50')
@@ -168,8 +168,8 @@ class TestTrain(unittest.TestCase):
 
     def testGenSeq2Seq(self):
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '2', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
-             self.SEQ2SEQ_DATASET, '--lr', '5e-5', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
+            ['--batch', '2', '--epoch', '10', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '3e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
              'prajjwal1/bert-small', '--maxlen', '10'])
         result = os.system(
             'tfkit-train --batch 2 --epoch 2 --savedir ' + self.SEQ2SEQ_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')

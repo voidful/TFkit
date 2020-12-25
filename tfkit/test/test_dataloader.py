@@ -103,15 +103,16 @@ class TestDataLoader(unittest.TestCase):
 
     def testOnceCTC(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        for i in tfkit.once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        for i in tfkit.oncectc.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print(i)
         maxlen = 10
         for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                              pretrained_config='voidful/albert_chinese_tiny',
-                             get_data_from_file=tfkit.once.get_data_from_file,
-                             preprocessing_data=tfkit.once.preprocessing_data,
+                             get_data_from_file=tfkit.oncectc.get_data_from_file,
+                             preprocessing_data=tfkit.oncectc.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+            print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target_once'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
             print(i)
             print(len(i['target']))
