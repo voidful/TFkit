@@ -158,6 +158,26 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
     return models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen
 
 
+def save_model(models, input_arg, models_tag, epoch, fname, logger):
+    save_model = {
+        'models': [m.state_dict() for m in models],
+        'model_config': input_arg.get('config'),
+        'tags': models_tag,
+        'type': input_arg.get('model'),
+        'maxlen': input_arg.get('maxlen'),
+        'epoch': epoch
+    }
+
+    for ind, m in enumerate(input_arg.get('model')):
+        if 'tag' in m:
+            save_model['label'] = models[ind].labels
+        if "clas" in m:
+            save_model['task-label'] = models[ind].tasks_detail
+
+    torch.save(save_model, f"{fname}.pt")
+    logger.write_log(f"weights were saved to {fname}.pt")
+
+
 def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
@@ -234,26 +254,14 @@ def main(arg=None):
         fname = os.path.join(input_arg.get('savedir'), str(epoch))
 
         logger.write_log(f"=========train at epoch={epoch}=========")
-        train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
+        try:
+            train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
+        except KeyboardInterrupt:
+            save_model(models, input_arg, models_tag, epoch, fname+"_interrupt", logger)
+            pass
 
         logger.write_log(f"=========save at epoch={epoch}=========")
-        save_model = {
-            'models': [m.state_dict() for m in models],
-            'model_config': input_arg.get('config'),
-            'tags': models_tag,
-            'type': input_arg.get('model'),
-            'maxlen': input_arg.get('maxlen'),
-            'epoch': epoch
-        }
-
-        for ind, m in enumerate(input_arg.get('model')):
-            if 'tag' in m:
-                save_model['label'] = models[ind].labels
-            if "clas" in m:
-                save_model['task-label'] = models[ind].tasks_detail
-
-        torch.save(save_model, f"{fname}.pt")
-        logger.write_log(f"weights were saved to {fname}.pt")
+        save_model(models, input_arg, models_tag, epoch, fname, logger)
 
         logger.write_log(f"=========eval at epoch={epoch}=========")
         eval_avg_loss = model_eval(models, test_dataset, fname, input_arg, epoch, logger)
