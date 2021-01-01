@@ -13,7 +13,8 @@ import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
 from tfkit.utility.model_loader import load_model_class
-
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+os.environ["OMP_NUM_THREADS"] = "1"
 
 def parse_train_args(args):
     parser = argparse.ArgumentParser()

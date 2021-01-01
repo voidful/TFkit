@@ -65,4 +65,5 @@ class TestTok(unittest.TestCase):
                 self.assertTrue(len(rlt) > 1)
             for i in rlt:
                 print(i)
-                self.assertTrue(len(i) == 50)
+                if mode != 'noop':
+                    self.assertTrue(len(i) == 50)

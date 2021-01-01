@@ -206,7 +206,7 @@ class Model(nn.Module):
                                                              reserved_len=reserved_len,
                                                              handle_exceed=handle_exceed)[-1]
                         # check input exceed
-                        if len(tokens) > self.maxlen:
+                        if len(tokens) >= self.maxlen or feature_dict['start'] >= self.maxlen:
                             exceed = True
                             all_candidates.append(seq)
                             continue
