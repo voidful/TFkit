@@ -57,7 +57,7 @@ class TestTok(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         seq = " ".join([str(_) for _ in range(100)])
         maxlen = 50
-        for mode in ['remove', 'slide', 'start_slice', 'end_slice']:
+        for mode in ['noop', 'remove', 'slide', 'start_slice', 'end_slice']:
             rlt, _ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
             if mode == 'remove':
                 self.assertTrue(len(rlt) == 0)

@@ -32,16 +32,20 @@ def tok_pad(tokenizer):
     return 'pad'
 
 
-def handle_exceed(tokenizer, seq, maxlen, mode=['remove', 'slide', 'start_slice', 'end_slice'], keep_after_sep=True):
+def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],
+                  keep_after_sep=True):
     mode = mode[0] if isinstance(mode, list) else mode
     seq = seq.replace("[MASK]", tok_mask(tokenizer)).replace("[SEP]", tok_sep(tokenizer)).replace("[CLS]",
                                                                                                   tok_begin(tokenizer))
     sep_split = seq.split(tok_sep(tokenizer))
-    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(sep_split[1]) if len(sep_split) > 1 and keep_after_sep else []
+    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(tok_sep(tokenizer).join(sep_split[1:])) \
+        if len(sep_split) > 1 and keep_after_sep else []
     t_seq = tokenizer.tokenize(sep_split[0])
+    if mode == 'noop':
+        return [t_seq + ext_seq], [[0, len(t_seq + ext_seq)]]
     if mode == 'remove':
-        if len(t_seq) <= maxlen:
-            return [t_seq], [[0, len(t_seq)]]
+        if len(t_seq + ext_seq) <= maxlen:
+            return [t_seq + ext_seq], [[0, len(t_seq + ext_seq)]]
         else:
             return [], [[0, 0]]
     if mode == 'slide':

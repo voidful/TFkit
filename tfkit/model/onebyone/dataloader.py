@@ -41,9 +41,9 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
                 ntext_arr = [n_target.strip()]
             # adding neg data
             for neg_text in ntext_arr:
-                yield once.get_feature_from_data, {
-                    **{'input': input + " " + " ".join(tokenized_target[:j]),
-                       'target': tokenized_target[:j][-1], 'ntarget': neg_text, "add_end_tok": False},
+                yield get_feature_from_data, {
+                    **{'input': input + " " + " ".join(tokenized_target[:j]), 'previous': tokenized_target[:j - 1],
+                       'target': tokenized_target[:j], 'ntarget': neg_text, "add_end_tok": False},
                     **param_dict}
         else:
             yield get_feature_from_data, {**{'input': input, 'previous': tokenized_target[:j - 1],

@@ -86,7 +86,7 @@ class Model(nn.Module):
                 break
 
     def predict(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1, filtersim=True,
-                reserved_len=0, task=None, handle_exceed='start_slice'):
+                reserved_len=0, task=None, handle_exceed='noop'):
         filtersim = json.loads(str(filtersim).lower())
         topK = int(topK)
         topP = float(topP)
