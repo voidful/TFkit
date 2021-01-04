@@ -98,7 +98,6 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         t_input_id = tokenizer.convert_tokens_to_ids(t_input)
         mask_id = [1] * len(t_input)
         target_start = len(t_input_id) - 1
-        print(target_start, t_input_id)
         target_end = maxlen
         t_input_id.extend([0] * (maxlen - len(t_input_id)))
         row_dict['target'] = [-1] * maxlen
