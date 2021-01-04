@@ -42,7 +42,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
             # adding neg data
             for neg_text in ntext_arr:
                 yield get_feature_from_data, {
-                    **{'input': input + " " + " ".join(tokenized_target[:j]), 'previous': tokenized_target[:j - 1],
+                    **{'input': input, 'previous': tokenized_target[:j - 1],
                        'target': tokenized_target[:j], 'ntarget': neg_text, "add_end_tok": False},
                     **param_dict}
         else:
@@ -85,7 +85,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 
 
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
-                          handle_exceed='start_slice', **kwargs):
+                          handle_exceed='noop', **kwargs):
     feature_dict_list = []
     t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - len(previous) - 1, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep
@@ -98,11 +98,11 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
         t_input_id = tokenizer.convert_tokens_to_ids(t_input)
         mask_id = [1] * len(t_input)
         target_start = len(t_input_id) - 1
+        print(target_start, t_input_id)
         target_end = maxlen
         t_input_id.extend([0] * (maxlen - len(t_input_id)))
         row_dict['target'] = [-1] * maxlen
         row_dict['ntarget'] = [-1] * maxlen
-
         tokenized_target_id = None
         if target is not None:
             tokenized_target_id = [-1] * target_start

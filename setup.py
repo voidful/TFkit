@@ -2,8 +2,8 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.6.3',
-    description='Transformers kit - NLP library for different downstream tasks, built on huggingface project ',
+    version='0.6.4',
+    description='Transformers kit - Multi-task QA/Tagging/Multi-label Multi-Class Classification/Generation with BERT/ALBERT/T5/BERT',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
     author_email='voidful.stack@gmail.com',
