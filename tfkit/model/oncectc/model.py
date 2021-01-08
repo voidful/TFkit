@@ -66,13 +66,15 @@ class Model(nn.Module):
                     continue
                 if predicted_token == tok_sep(self.tokenizer):
                     break
+
+                topK = torch.topk(softmax(prediction_scores[0][pos], dim=0), 50)
                 logit_prob = softmax(prediction_scores[0][pos], dim=0).data.tolist()
-                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
-                output.append(predicted_index)
-                result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
-                result_dict['label_prob_all'].append(dict(prob_result))
+                prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
+                               zip(topK.values.data.tolist(), topK.indices.data.tolist())]
+                result_dict['prob_list'].append(logit_prob)
+                result_dict['label_prob_all'].append(prob_result)
                 result_dict['label_map'].append(prob_result[0])
+
             outputs = result_dict
         else:
             ctc_lm_loss = self.loss(prediction_scores,

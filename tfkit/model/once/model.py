@@ -50,9 +50,10 @@ class Model(nn.Module):
             while start < self.maxlen and not stop:
                 predicted_index = torch.argmax(prediction_scores[0][start]).item()
                 predicted_token = self.tokenizer.decode([predicted_index])
+                topK = torch.topk(softmax(prediction_scores[0][start], dim=0), 50)
                 logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
-                prob_result = {self.tokenizer.decode([id]): prob for id, prob in enumerate(logit_prob)}
-                prob_result = sorted(prob_result.items(), key=lambda x: x[1], reverse=True)
+                prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
+                               zip(topK.values.data.tolist(), topK.indices.data.tolist())]
 
                 result_dict['prob_list'].append(sorted(logit_prob, reverse=True))
                 result_dict['label_prob_all'].append(dict(prob_result))
