@@ -13,8 +13,10 @@ import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
 from tfkit.utility.model_loader import load_model_class
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["OMP_NUM_THREADS"] = "1"
+
 
 def parse_train_args(args):
     parser = argparse.ArgumentParser()
@@ -30,6 +32,7 @@ def parse_train_args(args):
                         help="auto add freq > x UNK token to word table")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
+    parser.add_argument("--no_eval", action='store_true', help="not running evaluation")
     parser.add_argument("--model", type=str, required=True, nargs='+',
                         choices=tfkit.model_loader.list_all_model(), help="model task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
@@ -257,18 +260,18 @@ def main(arg=None):
         logger.write_log(f"=========train at epoch={epoch}=========")
         try:
             train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
+            logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
-            save_model(models, input_arg, models_tag, epoch, fname+"_interrupt", logger)
+            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger)
             pass
 
         logger.write_log(f"=========save at epoch={epoch}=========")
         save_model(models, input_arg, models_tag, epoch, fname, logger)
 
-        logger.write_log(f"=========eval at epoch={epoch}=========")
-        eval_avg_loss = model_eval(models, test_dataset, fname, input_arg, epoch, logger)
-
-        logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
-        logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
+        if input_arg.get('no_eval') is False:
+            logger.write_log(f"=========eval at epoch={epoch}=========")
+            eval_avg_loss = model_eval(models, test_dataset, fname, input_arg, epoch, logger)
+            logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
 
 
 if __name__ == "__main__":

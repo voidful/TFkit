@@ -46,11 +46,11 @@ class Model(nn.Module):
                 'prob_list': []
             }
             start = batch_data['start'][0]
-            topK = torch.topk(softmax(prediction_scores[0][start], dim=0), 50)
-            logit_prob = softmax(prediction_scores[0][start], dim=0).data.tolist()
+            logit_prob = softmax(prediction_scores[0][start], dim=0)
+            topK = torch.topk(logit_prob, 50)
             prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
                            zip(topK.values.data.tolist(), topK.indices.data.tolist())]
-            result_dict['prob_list'].append(logit_prob)
+            result_dict['prob_list'].append(logit_prob.data.tolist())
             result_dict['label_prob_all'].append(prob_result)
             result_dict['label_map'].append(prob_result[0])
             outputs = result_dict
