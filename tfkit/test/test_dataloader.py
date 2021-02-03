@@ -231,10 +231,10 @@ class TestDataLoader(unittest.TestCase):
         feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
                                                       target=["hi"],
                                                       reserved_len=3)[-1]
-        print(feature)
+        print("feature", feature)
 
         for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
-            print(i)
+            print("data", i)
 
         maxlen = 10
         for likelihood in ['none']:

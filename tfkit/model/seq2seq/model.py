@@ -27,7 +27,7 @@ class Model(nn.Module):
         decoder_config = AutoConfig.from_pretrained(pretrained.name_or_path)
         decoder_config.is_decoder = True
         decoder_config.add_cross_attention = True
-        decoder_config.num_hidden_layers = 1
+        decoder_config.num_hidden_layers = int(decoder_config.num_hidden_layers / 2)
         self.model = AutoModelForCausalLM.from_config(decoder_config)  # decoder
         if share_embedding:
             decoder_base_model_prefix = self.model.base_model_prefix
@@ -43,31 +43,24 @@ class Model(nn.Module):
     def forward(self, batch_data, eval=False, use_prev=False):
         inputs = batch_data['input']
         targets = batch_data['target']
-        previous = batch_data['previous']
-        negative_targets = batch_data['ntarget']
-        input_mask = batch_data['input_mask']
-        target_mask = batch_data['target_mask']
+        mask = batch_data['mask']
 
-        token_previous = torch.as_tensor(previous).to(self.device)
         tokens_input = torch.as_tensor(inputs).to(self.device)
-        input_mask_tensors = torch.as_tensor(input_mask).to(self.device)
-        target_mask_tensors = torch.as_tensor(target_mask).to(self.device)
+        mask_tensors = torch.as_tensor(mask).to(self.device)
+        target_tensors = torch.as_tensor(targets).to(self.device)
 
         if use_prev and self.encoder_hidden is not None:
             encoder_hidden_states = self.encoder_hidden
         else:
-            outputs = self.pretrained(tokens_input, attention_mask=input_mask_tensors)
+            outputs = self.pretrained(tokens_input, attention_mask=mask_tensors)
             encoder_hidden_states = outputs[0]
             self.encoder_hidden = encoder_hidden_states
 
-        # Decode
-        prediction_scores = self.model(
-            input_ids=token_previous,
-            attention_mask=target_mask_tensors,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_attention_mask=input_mask_tensors
-        )[0]
+        # Decoder
         if eval:
+            prediction_scores = self.model(
+                input_ids=tokens_input,
+            )[0]
             result_dict = {
                 'label_prob_all': [],
                 'label_map': [],
@@ -83,16 +76,13 @@ class Model(nn.Module):
             result_dict['label_map'].append(prob_result[0])
             outputs = result_dict
         else:
-            loss_tensors = torch.as_tensor(targets).to(self.device)
-            negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
-                                      loss_tensors.view(-1))
-            negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
-                                              negativeloss_tensors.view(-1))
-            masked_lm_loss += negative_loss
-            outputs = masked_lm_loss
+            prediction_scores = self.model(
+                input_ids=tokens_input,
+                labels=target_tensors,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=mask_tensors
+            )[0]
+            outputs = prediction_scores
         return outputs
 
     def _tie_encoder_decoder_weights(self, encoder, decoder, base_model_prefix):

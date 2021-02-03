@@ -372,23 +372,22 @@ class TestModel(unittest.TestCase):
 
     def testSeq2seq(self):
         input = "See you next time"
-        previous = "ok sure"
+        previous = ""
         target = "ok sure bye"
-        maxlen = 10
+        maxlen = 20
+        # tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
         tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
         pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
 
         model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
 
         for feature in tfkit.model.seq2seq.get_feature_from_data(tokenizer, input=input,
-                                                                 previous=tokenizer.tokenize(
-                                                                     " ".join(previous)),
-                                                                 target=tokenizer.tokenize(
-                                                                     " ".join(target)),
+                                                                 previous=tokenizer.tokenize(previous),
+                                                                 target=tokenizer.tokenize(target),
                                                                  maxlen=maxlen):
             for k, v in feature.items():
                 feature[k] = [v, v]
-
+            print("feature", feature)
             print(model(feature))
             self.assertTrue(isinstance(model(feature), Tensor))
             model_dict = model(feature, eval=True)
