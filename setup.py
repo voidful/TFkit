@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.6.8',
+    version='0.6.10',
     description='Transformers kit - Multi-task QA/Tagging/Multi-label Multi-Class Classification/Generation with BERT/ALBERT/T5/BERT',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -21,7 +21,7 @@ setup(
     keywords='transformer huggingface nlp multi-task multi-class multi-label classification generation tagging deep learning machine reading',
     packages=find_packages(),
     install_requires=[
-        "transformers<=4.0.1,>=3.3.0",
+        "transformers<=4.3.2,>=3.3.0",
         "tensorboardX",
         "torch",
         "sklearn",

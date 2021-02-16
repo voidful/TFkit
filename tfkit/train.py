@@ -191,7 +191,7 @@ def main(arg=None):
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
     logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard'))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    backend = 'gloo' if device == 'cpu' and input_arg.get('dist_backend') is not 'gloo' else input_arg.get(
+    backend = 'gloo' if device == 'cpu' and input_arg.get('dist_backend') != 'gloo' else input_arg.get(
         'dist_backend')
     torch.distributed.init_process_group(backend=backend, init_method=input_arg.get('dist_init'),
                                          world_size=int(input_arg.get('dist_size')), rank=int(input_arg.get('dist_rank')))
