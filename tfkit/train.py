@@ -45,10 +45,6 @@ def parse_train_args(args):
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
-    parser.add_argument("--dist_backend", default="nccl", help='distributed backend')
-    parser.add_argument("--dist_init", default='tcp://127.0.0.1:34455', help='distributed init method')
-    parser.add_argument("--dist_size", default=1, help='distributed world size')
-    parser.add_argument("--dist_rank", default=0, help='distributed rank')
 
     input_arg, model_arg = parser.parse_known_args(args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
@@ -65,7 +61,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
     optims = []
     models = []
     for i, m in enumerate(models_list):
-        model = torch.nn.parallel.DistributedDataParallel(m, find_unused_parameters=True)
+        model = torch.nn.DataParallel(m)
         model.train()
         models.append(model)
         optims.append(optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0]))
@@ -191,10 +187,6 @@ def main(arg=None):
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
     logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard'))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    backend = 'gloo' if device == 'cpu' and input_arg.get('dist_backend') != 'gloo' else input_arg.get(
-        'dist_backend')
-    torch.distributed.init_process_group(backend=backend, init_method=input_arg.get('dist_init'),
-                                         world_size=int(input_arg.get('dist_size')), rank=int(input_arg.get('dist_rank')))
     nlp2.set_seed(input_arg.get('seed'))
 
     logger.write_log("TRAIN PARAMETER")
@@ -235,24 +227,17 @@ def main(arg=None):
     # balance sample for multi-task
     for ds in train_dataset:
         ds.increase_with_sampling(train_ds_maxlen)
-
     for ds in test_dataset:
         ds.increase_with_sampling(test_ds_maxlen)
 
     train_dataset = [data.DataLoader(dataset=ds,
                                      batch_size=input_arg.get('batch'),
-                                     num_workers=input_arg.get('worker'),
-                                     pin_memory=True,
-                                     drop_last=True,
-                                     sampler=torch.utils.data.distributed.DistributedSampler(ds))
-                     for ds in train_dataset]
+                                     shuffle=True,
+                                     num_workers=input_arg.get('worker')) for ds in train_dataset]
     test_dataset = [data.DataLoader(dataset=ds,
                                     batch_size=input_arg.get('batch'),
-                                    num_workers=input_arg.get('worker'),
-                                    pin_memory=True,
-                                    drop_last=True,
-                                    sampler=torch.utils.data.distributed.DistributedSampler(ds,shuffle=False))
-                    for ds in test_dataset]
+                                    shuffle=True,
+                                    num_workers=input_arg.get('worker')) for ds in test_dataset]
 
     # loading model back
     start_epoch = 1
