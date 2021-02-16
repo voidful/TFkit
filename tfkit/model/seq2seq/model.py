@@ -27,7 +27,6 @@ class Model(nn.Module):
         decoder_config = AutoConfig.from_pretrained(pretrained.name_or_path)
         decoder_config.is_decoder = True
         decoder_config.add_cross_attention = True
-        decoder_config.num_hidden_layers = int(decoder_config.num_hidden_layers / 2)
         self.model = AutoModelForCausalLM.from_config(decoder_config)  # decoder
         if share_embedding:
             decoder_base_model_prefix = self.model.base_model_prefix
@@ -60,6 +59,8 @@ class Model(nn.Module):
         if eval:
             prediction_scores = self.model(
                 input_ids=tokens_input,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=mask_tensors
             )[0]
             result_dict = {
                 'label_prob_all': [],
