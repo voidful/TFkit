@@ -17,14 +17,14 @@ from math import log
 import tfkit.utility.tok as tok
 from tfkit.utility.loss import NegativeCElLoss
 import numpy as np
-
+import copy
 
 class Model(nn.Module):
     def __init__(self, tokenizer, pretrained, maxlen=512, share_embedding=False, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-        decoder_config = AutoConfig.from_pretrained(pretrained.name_or_path)
+        decoder_config = copy.deepcopy(pretrained.config)
         decoder_config.is_decoder = True
         decoder_config.add_cross_attention = True
         self.model = AutoModelForCausalLM.from_config(decoder_config)  # decoder
@@ -41,26 +41,28 @@ class Model(nn.Module):
 
     def forward(self, batch_data, eval=False, use_prev=False):
         inputs = batch_data['input']
-        targets = batch_data['target']
-        mask = batch_data['mask']
+        prevs = batch_data['prev']
+        encoder_mask = batch_data['encoder_mask']
+        decoder_mask = batch_data['decoder_mask']
 
-        tokens_input = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(mask).to(self.device)
-        target_tensors = torch.as_tensor(targets).to(self.device)
+        input_tensors = torch.as_tensor(inputs).to(self.device)
+        prev_tensors = torch.as_tensor(prevs).to(self.device)
+        encoder_mask_tensors = torch.as_tensor(encoder_mask).to(self.device)
+        decoder_mask_tensors = torch.as_tensor(decoder_mask).to(self.device)
 
         if use_prev and self.encoder_hidden is not None:
             encoder_hidden_states = self.encoder_hidden
         else:
-            outputs = self.pretrained(tokens_input, attention_mask=mask_tensors)
+            outputs = self.pretrained(input_tensors, attention_mask=encoder_mask_tensors)
             encoder_hidden_states = outputs[0]
             self.encoder_hidden = encoder_hidden_states
 
         # Decoder
         if eval:
             prediction_scores = self.model(
-                input_ids=tokens_input,
+                input_ids=prev_tensors,
                 encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=mask_tensors
+                encoder_attention_mask=encoder_mask_tensors
             )[0]
             result_dict = {
                 'label_prob_all': [],
@@ -77,11 +79,14 @@ class Model(nn.Module):
             result_dict['label_map'].append(prob_result[0])
             outputs = result_dict
         else:
+            targets = batch_data['target']
+            target_tensors = torch.as_tensor(targets).to(self.device)
             prediction_scores = self.model(
-                input_ids=tokens_input,
+                input_ids=prev_tensors,
                 labels=target_tensors,
+                attention_mask=decoder_mask_tensors,
                 encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=mask_tensors
+                encoder_attention_mask=encoder_mask_tensors
             )[0]
             outputs = prediction_scores
         return outputs

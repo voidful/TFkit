@@ -383,13 +383,10 @@ class TestModel(unittest.TestCase):
 
         for feature in tfkit.model.seq2seq.get_feature_from_data(tokenizer, input=input,
                                                                  previous=tokenizer.tokenize(previous),
-                                                                 target=tokenizer.tokenize(target),
                                                                  maxlen=maxlen):
             for k, v in feature.items():
                 feature[k] = [v, v]
-            print("feature", feature)
-            print(model(feature))
-            self.assertTrue(isinstance(model(feature), Tensor))
+            self.assertTrue(isinstance(model(feature, eval=True), dict))
             model_dict = model(feature, eval=True)
             self.assertTrue('label_map' in model_dict)
 

@@ -12,6 +12,7 @@ class TestEval(unittest.TestCase):
     ONCE_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/once/2.pt')
     ONCECTC_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/oncectc/30.pt')
     SEQ2SEQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/seq2seq/10.pt')
+    CLM_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/clm/20.pt')
     CLAS_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/clas/2.pt')
     MASK_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mask/2.pt')
     MCQ_MODEL_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/mcq/2.pt')
@@ -62,6 +63,13 @@ class TestEval(unittest.TestCase):
             ['--model', self.SEQ2SEQ_MODEL_PATH, '--valid', self.SEQ2SEQ_DATASET, '--metric', 'emf1', '--print'])
         result = os.system(
             'tfkit-eval --model ' + self.SEQ2SEQ_MODEL_PATH + ' --valid ' + self.SEQ2SEQ_DATASET + ' --metric emf1 --print')
+        self.assertTrue(result == 0)
+
+    def testEvalCLM(self):
+        tfkit.eval.main(
+            ['--model', self.CLM_MODEL_PATH, '--valid', self.SEQ2SEQ_DATASET, '--metric', 'emf1', '--print'])
+        result = os.system(
+            'tfkit-eval --model ' + self.CLM_MODEL_PATH + ' --valid ' + self.SEQ2SEQ_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
 
     def testEvalMask(self):

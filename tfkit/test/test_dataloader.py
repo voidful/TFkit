@@ -119,6 +119,36 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['input']) == maxlen)
             self.assertTrue(len(i['target']) == maxlen)
 
+    def testCLM(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+
+        maxlen = 10
+        feature = tfkit.clm.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
+                                                       target=["hi"],
+                                                       reserved_len=3)[-1]
+        print(feature)
+
+        for i in tfkit.clm.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+            print(i)
+
+        maxlen = 10
+        for likelihood in ['none', 'neg', 'pos', 'both']:
+            print(likelihood)
+            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+                                 pretrained_config='voidful/albert_chinese_tiny',
+                                 get_data_from_file=tfkit.clm.get_data_from_file,
+                                 preprocessing_data=tfkit.clm.preprocessing_data,
+                                 input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
+                start_pos = i['start']
+                print(likelihood, i)
+                # self.assertTrue(tokenizer.mask_token_id == i['input'][start_pos])
+                if 'neg' in likelihood and i['target'][start_pos] == -1:
+                    self.assertTrue(i['ntarget'][start_pos] != -1)
+                else:
+                    self.assertTrue(i['target'][start_pos] != -1)
+                self.assertTrue(len(i['input']) == maxlen)
+                self.assertTrue(len(i['target']) == maxlen)
+
     def testOnebyone(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
@@ -237,7 +267,7 @@ class TestDataLoader(unittest.TestCase):
             print("data", i)
 
         maxlen = 10
-        for likelihood in ['none']:
+        for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
             for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_eng.csv'),
                                  pretrained_config='prajjwal1/bert-small',

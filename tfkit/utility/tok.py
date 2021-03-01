@@ -5,30 +5,32 @@ from tqdm import tqdm
 
 
 def tok_begin(tokenizer):
-    if isinstance(tokenizer.cls_token, str):
-        return tokenizer.cls_token
-    elif isinstance(tokenizer.bos_token, str):
-        return tokenizer.bos_token
+    if isinstance(tokenizer._bos_token, str):
+        return tokenizer._bos_token
+    elif isinstance(tokenizer._cls_token, str):
+        return tokenizer._cls_token
     return 'cls'
 
 
 def tok_sep(tokenizer):
-    if isinstance(tokenizer.sep_token, str):
-        return tokenizer.sep_token
-    elif isinstance(tokenizer.eos_token, str):
-        return tokenizer.eos_token
+    if isinstance(tokenizer._eos_token, str):
+        return tokenizer._eos_token
+    elif isinstance(tokenizer._sep_token, str):
+        return tokenizer._sep_token
     return 'sep'
 
 
 def tok_mask(tokenizer):
-    if isinstance(tokenizer.mask_token, str):
+    if isinstance(tokenizer._mask_token, str):
+        return tokenizer._mask_token
+    elif isinstance(tokenizer.mask_token, str):
         return tokenizer.mask_token
     return 'msk'
 
 
 def tok_pad(tokenizer):
-    if isinstance(tokenizer.pad_token, str):
-        return tokenizer.pad_token
+    if isinstance(tokenizer._pad_token, str):
+        return tokenizer._pad_token
     return 'pad'
 
 

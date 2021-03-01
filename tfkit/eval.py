@@ -56,7 +56,7 @@ def main(arg=None):
                     predicted = result[0][0] if isinstance(result[0], list) else result[0]
                 else:
                     predicted = ''
-            elif 'onebyone' in model_type or 'seq2seq' in model_type:
+            elif 'onebyone' in model_type or 'seq2seq' in model_type or 'clm' in model_type:
                 processed_target = " ".join(target[0])
                 if len(result) < eval_pos:
                     print("Decode size smaller than decode num:", result_dict['label_map'])

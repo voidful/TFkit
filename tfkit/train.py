@@ -5,7 +5,7 @@ import nlp2
 import tfkit
 import torch
 from tqdm import tqdm
-from transformers import BertTokenizer, AutoTokenizer, AutoModel
+from transformers import BertTokenizer, AutoTokenizer, AutoModel, AutoConfig
 from torch.utils import data
 from itertools import zip_longest
 import os
@@ -200,7 +200,11 @@ def main(arg=None):
         tokenizer = BertTokenizer.from_pretrained(pretrained_config)
     else:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
-    pretrained = AutoModel.from_pretrained(pretrained_config)
+
+    model_config = AutoConfig.from_pretrained(pretrained_config)
+    if 'clm' in input_arg.get('model'):
+        model_config.is_decoder = True
+    pretrained = AutoModel.from_config(model_config)
 
     # handling add tokens
     if input_arg.get('add_tokens'):

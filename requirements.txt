@@ -1,4 +1,4 @@
-transformers<=4.3.2,>=3.3.0
+transformers<=4.4.0,>=3.3.0
 tensorboardX
 torch
 sklearn

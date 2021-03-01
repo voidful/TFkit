@@ -11,6 +11,7 @@ class TestTrain(unittest.TestCase):
     TAG_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'tag/')
     TAGCRF_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'tagcrf/')
     ONEBYONE_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'onebyone/')
+    CLM_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'clm/')
     SEQ2SEQ_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'seq2seq/')
     ONCE_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'once/')
     ONCECTC_MODEL_PATH = os.path.join(MODEL_SAVE_PATH, 'oncectc/')
@@ -173,4 +174,13 @@ class TestTrain(unittest.TestCase):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '10', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
              self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
+             'prajjwal1/bert-small', '--maxlen', '20'])
+
+    def testGenCLM(self):
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small --maxlen 50')
+        self.assertTrue(result == 0)
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'clm', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
