@@ -90,6 +90,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
             row_dict['prev'] = tokenized_prev_id
+            row_dict['ntarget'] = [-1] * maxlen
             if ntarget is not None and len(tokenizer.tokenize(ntarget)) > 0:
                 tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(ntarget))
                 tokenized_ntarget_id = tokenized_ntarget
