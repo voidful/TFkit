@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='tfkit',
-    version='0.6.20',
+    version='0.6.21',
     description='Transformers kit - Multi-task QA/Tagging/Multi-label Multi-Class Classification/Generation with BERT/ALBERT/T5/BERT',
     url='https://github.com/voidful/TFkit',
     author='Voidful',

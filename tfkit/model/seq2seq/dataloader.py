@@ -60,6 +60,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
             yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target), 'ntarget': neg_text},
                                                **param_dict}
 
+    return get_feature_from_data, param_dict
 
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
                           handle_exceed='noop', **kwargs):
@@ -86,13 +87,13 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
             decoder_mask_id.extend([0] * (maxlen - len(decoder_mask_id)))
             tokenized_prev_id.extend(
                 tokenizer.convert_tokens_to_ids([tok.tok_pad(tokenizer)]) * (maxlen - len(tokenized_prev_id)))
-            tokenized_target_id.extend([-100] * (maxlen - len(tokenized_target_id)))
+            tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
             row_dict['prev'] = tokenized_prev_id
             if ntarget is not None and len(tokenizer.tokenize(ntarget)) > 0:
                 tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(ntarget))
                 tokenized_ntarget_id = tokenized_ntarget
-                tokenized_ntarget_id.extend([-100] * (maxlen - len(tokenized_ntarget_id)))
+                tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
                 if len(tokenized_ntarget_id) <= maxlen:
                     row_dict['ntarget'] = tokenized_ntarget_id
         else:

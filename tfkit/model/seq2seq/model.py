@@ -58,12 +58,13 @@ class Model(nn.Module):
             self.encoder_hidden = encoder_hidden_states
 
         # Decoder
+        prediction_scores = self.model(
+            input_ids=prev_tensors,
+            attention_mask=decoder_mask_tensors,
+            encoder_hidden_states=encoder_hidden_states,
+            encoder_attention_mask=encoder_mask_tensors
+        )[0]
         if eval:
-            prediction_scores = self.model(
-                input_ids=prev_tensors,
-                encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=encoder_mask_tensors
-            )[0]
             result_dict = {
                 'label_prob_all': [],
                 'label_map': [],
@@ -80,15 +81,17 @@ class Model(nn.Module):
             outputs = result_dict
         else:
             targets = batch_data['target']
-            target_tensors = torch.as_tensor(targets).to(self.device)
-            prediction_scores = self.model(
-                input_ids=prev_tensors,
-                labels=target_tensors,
-                attention_mask=decoder_mask_tensors,
-                encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=encoder_mask_tensors
-            )[0]
-            outputs = prediction_scores
+            negative_targets = batch_data['ntarget']
+            loss_tensors = torch.as_tensor(targets).to(self.device)
+            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                                      loss_tensors.view(-1))
+            negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
+            negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
+            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                                              negativeloss_tensors.view(-1))
+            lm_loss += negative_loss
+            outputs = lm_loss
         return outputs
 
     def _tie_encoder_decoder_weights(self, encoder, decoder, base_model_prefix):
