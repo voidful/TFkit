@@ -201,7 +201,7 @@ def main(arg=None):
     else:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
 
-    model_config = AutoConfig.from_pretrain(pretrained_config)
+    model_config = AutoConfig.from_pretrained(pretrained_config)
     if 'clm' in input_arg.get('model'):
         model_config.is_decoder = True
     pretrained = AutoModel.from_config(model_config)
