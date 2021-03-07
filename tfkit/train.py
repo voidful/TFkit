@@ -13,6 +13,10 @@ import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
 from tfkit.utility.model_loader import load_model_class
+from accelerate import Accelerator
+
+accelerator = Accelerator()
+device = accelerator.device
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["OMP_NUM_THREADS"] = "1"
@@ -57,14 +61,12 @@ def optimizer(model, lr):
     return torch.optim.AdamW(model.parameters(), lr=lr)
 
 
-def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger):
-    optims = []
+def model_train(models_list, train_dataset, optims, models_tag, input_arg, epoch, logger):
     models = []
     for i, m in enumerate(models_list):
         model = torch.nn.DataParallel(m)
         model.train()
         models.append(model)
-        optims.append(optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0]))
 
     total_iter = 0
     t_loss = 0
@@ -79,7 +81,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
             if train_batch is not None:
                 loss = model(train_batch)
                 loss = loss / input_arg.get('grad_accum')
-                loss.mean().backward()
+                accelerator.backward(loss)
                 if (total_iter + 1) % input_arg.get('grad_accum') == 0:
                     optim.step()
                     optim.zero_grad()
@@ -129,15 +131,16 @@ def model_eval(models, test_dataset, fname, input_arg, epoch, logger):
     return avg_t_loss
 
 
-def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
+def load_model_data_optim(tokenizer, pretrained, model_arg, input_arg):
     models = []
+    optims = []
     train_dataset = []
     test_dataset = []
     train_ds_maxlen = 0
     test_ds_maxlen = 0
-    for model_class_name, train_file, test_file in zip_longest(input_arg.get('model'), input_arg.get('train'),
-                                                               input_arg.get('test'),
-                                                               fillvalue=""):
+    for model_class_name, train_file, test_file, lr in zip_longest(input_arg.get('model'), input_arg.get('train'),
+                                                                   input_arg.get('test'), input_arg.get('lr'),
+                                                                   fillvalue=""):
         # get model class
         model_class = load_model_class(model_class_name)
 
@@ -145,21 +148,24 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
         ds_parameter = {**model_arg, **input_arg}
         train_ds = get_dataset(train_file, model_class, ds_parameter)
         test_ds = get_dataset(test_file, model_class, ds_parameter)
-
-        # load model
-        model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
-                                  maxlen=input_arg.get('maxlen'))
-        model = model.to(device)
-
         # append to max len
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
         test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
 
+        # load model
+        model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
+                                  maxlen=input_arg.get('maxlen'))
+
+        # load optimizer
+        optim = optimizer(model, lr if isinstance(lr, float) else input_arg.get('lr')[0])
+
+        model, optim, train_ds, test_ds = accelerator.prepare(model, optim, train_ds, test_ds)
         train_dataset.append(train_ds)
         test_dataset.append(test_ds)
         models.append(model)
+        optims.append(optim)
 
-    return models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen
+    return models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen, optims
 
 
 def save_model(models, input_arg, models_tag, epoch, fname, logger):
@@ -186,7 +192,6 @@ def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
     logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard'))
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     nlp2.set_seed(input_arg.get('seed'))
 
     logger.write_log("TRAIN PARAMETER")
@@ -225,14 +230,15 @@ def main(arg=None):
                                                                                       ind, m in
                                                                                       enumerate(input_arg.get('model'))]
 
-    models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen = load_model_and_datas(tokenizer, pretrained,
-                                                                                                device, model_arg,
-                                                                                                input_arg)
+    models, train_dataset, test_dataset, train_maxlen, test_maxlen, optims = load_model_data_optim(tokenizer,
+                                                                                                   pretrained,
+                                                                                                   model_arg,
+                                                                                                   input_arg)
     # balance sample for multi-task
     for ds in train_dataset:
-        ds.increase_with_sampling(train_ds_maxlen)
+        ds.increase_with_sampling(train_maxlen)
     for ds in test_dataset:
-        ds.increase_with_sampling(test_ds_maxlen)
+        ds.increase_with_sampling(test_maxlen)
 
     train_dataset = [data.DataLoader(dataset=ds,
                                      batch_size=input_arg.get('batch'),
@@ -247,7 +253,7 @@ def main(arg=None):
     start_epoch = 1
     if input_arg.get('resume'):
         logger.write_log("Loading back:", input_arg.get('resume'))
-        package = torch.load(input_arg.get('resume'), map_location=device)
+        package = torch.load(input_arg.get('resume'))
         if 'model_state_dict' in package:
             models[0].load_state_dict(package['model_state_dict'])
         else:
@@ -263,7 +269,7 @@ def main(arg=None):
 
         logger.write_log(f"=========train at epoch={epoch}=========")
         try:
-            train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
+            train_avg_loss = model_train(models, train_dataset, optims, models_tag, input_arg, epoch, logger)
             logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
             save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger)
