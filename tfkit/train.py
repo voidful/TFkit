@@ -24,7 +24,7 @@ def parse_train_args(args):
     parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
     parser.add_argument("--lr", type=float, nargs='+', default=[5e-5], help="learning rate, default 5e-5")
     parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
-    parser.add_argument("--maxlen", type=int, default=512, help="max tokenized sequence length, default 512")
+    parser.add_argument("--maxlen", type=int, default=0, help="max tokenized sequence length, default model max len")
     parser.add_argument("--handle_exceed", choices=exceed_mode,
                         help='select ways to handle input exceed max length')
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
@@ -189,11 +189,6 @@ def main(arg=None):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     nlp2.set_seed(input_arg.get('seed'))
 
-    logger.write_log("TRAIN PARAMETER")
-    logger.write_log("=======================")
-    [logger.write_log(str(key) + " : " + str(value)) for key, value in input_arg.items()]
-    logger.write_log("=======================")
-
     # load pre-train model
     pretrained_config = input_arg.get('config')
     if 'albert_chinese' in pretrained_config:
@@ -205,6 +200,8 @@ def main(arg=None):
     if 'clm' in input_arg.get('model'):
         model_config.is_decoder = True
     pretrained = AutoModel.from_config(model_config)
+    if input_arg.get('maxlen') == 0:
+        input_arg.update({'maxlen': model_config.max_position_embeddings})
 
     # handling add tokens
     if input_arg.get('add_tokens'):
@@ -233,6 +230,11 @@ def main(arg=None):
         ds.increase_with_sampling(train_ds_maxlen)
     for ds in test_dataset:
         ds.increase_with_sampling(test_ds_maxlen)
+
+    logger.write_log("TRAIN PARAMETER")
+    logger.write_log("=======================")
+    [logger.write_log(str(key) + " : " + str(value)) for key, value in input_arg.items()]
+    logger.write_log("=======================")
 
     train_dataset = [data.DataLoader(dataset=ds,
                                      batch_size=input_arg.get('batch'),

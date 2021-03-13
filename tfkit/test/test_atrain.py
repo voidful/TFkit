@@ -184,3 +184,12 @@ class TestTrain(unittest.TestCase):
             ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',
              self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'clm', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
+
+    def testMaxlen(self):
+        result = os.system(
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small')
+        self.assertTrue(result == 0)
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'clm', '--config',
+             'prajjwal1/bert-small'])
