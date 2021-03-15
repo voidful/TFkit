@@ -32,7 +32,7 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
     t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 3 - len(tokenized_target), handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep and prediction end sep
         row_dict = dict()
-        tokenized_input = [tok.tok_begin(tokenizer)] + t_input[:maxlen - reserved_len - 3] + [tok.tok_sep(tokenizer)]
+        tokenized_input = [tok.tok_begin(tokenizer)] + t_input[:maxlen - reserved_len - 3]
         mask_id = [1] * len(tokenized_input)
         type_id = [0] * len(tokenized_input)
 
@@ -61,7 +61,7 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
                 row_dict['ntarget'] = tokenized_ntarget_id
 
         tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
-        mask_id.extend([0] * (maxlen - len(mask_id)))
+        mask_id.extend([1] * (maxlen - len(mask_id)))
         type_id.extend([1] * (maxlen - len(type_id)))
 
         row_dict['input'] = tokenized_input_id

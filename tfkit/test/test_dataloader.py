@@ -124,8 +124,8 @@ class TestDataLoader(unittest.TestCase):
 
         maxlen = 10
         feature = tfkit.clm.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                       target=["hi"],
-                                                       reserved_len=3)[-1]
+                                                  target=["hi"],
+                                                  reserved_len=3)[-1]
         print(feature)
 
         for i in tfkit.clm.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
@@ -259,7 +259,7 @@ class TestDataLoader(unittest.TestCase):
 
         maxlen = 10
         feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                      target=["hi"],
+                                                      target=["hi", "bye"],
                                                       reserved_len=3)[-1]
         print("feature", feature)
 
@@ -269,7 +269,7 @@ class TestDataLoader(unittest.TestCase):
         maxlen = 10
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_eng.csv'),
+            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
                                  pretrained_config='prajjwal1/bert-small',
                                  get_data_from_file=tfkit.seq2seq.get_data_from_file,
                                  preprocessing_data=tfkit.seq2seq.preprocessing_data,

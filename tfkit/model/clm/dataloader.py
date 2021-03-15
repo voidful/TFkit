@@ -48,13 +48,6 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     if 'pos' in likelihood:
         yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target)}, **param_dict}
     elif 'both' in likelihood:
-        # formatting neg data in csv
-        if n_target is None:
-            ntext_arr = []
-        elif "[SEP]" in n_target:
-            ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
-        else:
-            ntext_arr = [n_target.strip()]
         for neg_text in ntext_arr:
             yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target), 'ntarget': neg_text},
                                                **param_dict}

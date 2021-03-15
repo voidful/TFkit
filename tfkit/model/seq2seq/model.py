@@ -2,7 +2,7 @@ import json
 import sys
 import os
 
-from transformers import AutoModelForCausalLM, AutoConfig
+from transformers import AutoModel, AutoConfig
 from typing import List
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -19,23 +19,32 @@ from tfkit.utility.loss import NegativeCElLoss
 import numpy as np
 import copy
 
+
 class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, share_embedding=False, **kwargs):
+    def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
-        self.pretrained = pretrained
-        decoder_config = copy.deepcopy(pretrained.config)
-        decoder_config.is_decoder = True
-        decoder_config.add_cross_attention = True
-        self.model = AutoModelForCausalLM.from_config(decoder_config)  # decoder
-        if share_embedding:
-            decoder_base_model_prefix = self.model.base_model_prefix
+        if hasattr(pretrained, 'decoder'):
+            self.decoder_model = pretrained.decoder
+            self.pretrained = pretrained.encoder
+            decoder_hidden_size = pretrained.config.hidden_size
+        else:
+            self.pretrained = pretrained
+            decoder_config = copy.deepcopy(pretrained.config)
+            decoder_config.is_decoder = True
+            decoder_config.add_cross_attention = True
+            self.decoder_model = AutoModel.from_config(decoder_config)
             self._tie_encoder_decoder_weights(
-                self.pretrained, self.model._modules[decoder_base_model_prefix], self.model.base_model_prefix
+                self.pretrained, self.decoder_model,
+                self.decoder_model.base_model_prefix
             )
+            decoder_hidden_size = decoder_config.hidden_size
+        self.model = nn.Linear(decoder_hidden_size, self.tokenizer.__len__())
+
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         print('Using device:', self.device)
+        self.decoder_model.to(self.device)
         self.model.to(self.device)
         self.encoder_hidden = None
 
@@ -58,12 +67,14 @@ class Model(nn.Module):
             self.encoder_hidden = encoder_hidden_states
 
         # Decoder
-        prediction_scores = self.model(
+        prediction_output = self.decoder_model(
             input_ids=prev_tensors,
             attention_mask=decoder_mask_tensors,
             encoder_hidden_states=encoder_hidden_states,
             encoder_attention_mask=encoder_mask_tensors
         )[0]
+        prediction_scores = self.model(prediction_output)
+
         if eval:
             result_dict = {
                 'label_prob_all': [],
@@ -84,11 +95,11 @@ class Model(nn.Module):
             negative_targets = batch_data['ntarget']
             loss_tensors = torch.as_tensor(targets).to(self.device)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
-                                      loss_tensors.view(-1))
+            lm_loss = loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
+                               loss_tensors.view(-1))
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
             negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
                                               negativeloss_tensors.view(-1))
             lm_loss += negative_loss
             outputs = lm_loss
@@ -165,6 +176,8 @@ class Model(nn.Module):
             print(
                 f"The following encoder weights were not tied to the decoder {uninitialized_encoder_weights}"
             )
+        else:
+            print("All encoder weights tied to the decoder")
 
     def _jaccard_similarity(self, list1, list2):
         s1 = set(list1)

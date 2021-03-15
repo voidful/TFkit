@@ -2,7 +2,6 @@ import csv
 from collections import defaultdict
 from tqdm import tqdm
 import tfkit.utility.tok as tok
-import tfkit.model.once as once
 
 
 def get_data_from_file(fpath):
@@ -33,9 +32,9 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     if "neg" in likelihood or 'both' in likelihood:
         # formatting neg data in csv
         if n_target is None:
-            ntext_arr = [tokenizer.convert_tokens_to_string([tok.tok_begin(tokenizer)] + tokenized_target)]
+            ntext_arr = [tok.tok_begin(tokenizer) + tokenizer.convert_tokens_to_string(tokenized_target)]
         elif "[SEP]" in n_target:
-            ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
+            ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(tokenizer))]
         else:
             ntext_arr = [n_target.strip()]
         for neg_text in ntext_arr:
@@ -47,20 +46,16 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 
     # whole sentence masking
     if 'pos' in likelihood:
-        yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target)}, **param_dict}
+        yield get_feature_from_data, {**{'input': input, 'target': tokenized_target, 'previous': None},
+                                      **param_dict}
     elif 'both' in likelihood:
-        # formatting neg data in csv
-        if n_target is None:
-            ntext_arr = []
-        elif "[SEP]" in n_target:
-            ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
-        else:
-            ntext_arr = [n_target.strip()]
         for neg_text in ntext_arr:
-            yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target), 'ntarget': neg_text},
-                                               **param_dict}
+            yield get_feature_from_data, {
+                **{'input': input, 'target': tokenized_target, 'previous': None, 'ntarget': neg_text},
+                **param_dict}
 
     return get_feature_from_data, param_dict
+
 
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
                           handle_exceed='noop', **kwargs):
@@ -80,8 +75,10 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
 
         if target is not None:
             tokenized_target_id = []
-            tokenized_prev_id = []
-            tokenized_prev_id.extend(tokenizer.convert_tokens_to_ids([tok.tok_begin(tokenizer)] + target))
+            if previous is None:  # pm
+                tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_mask(tokenizer))] * maxlen
+            else:
+                tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok.tok_begin(tokenizer)] + target)
             tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(target + [tok.tok_sep(tokenizer)]))
             decoder_mask_id = [1] * (len(tokenized_prev_id))
             decoder_mask_id.extend([0] * (maxlen - len(decoder_mask_id)))
