@@ -40,6 +40,13 @@ class TestTrain(unittest.TestCase):
         self.assertTrue(input_arg.get('model') == ['onebyone'])
         self.assertTrue(isinstance(input_arg.get('train'), list))
 
+        input_arg, model_arg = tfkit.train.parse_train_args(
+            ['--model', 'onebyone', '--train', 'train.csv', '--test', 'test.csv', '--config',
+             'voidful/albert_chinese_tiny', '--likelihood', 'pos'])
+        print(input_arg, model_arg)
+        self.assertTrue(input_arg.get('likelihood') == 'pos')
+        self.assertTrue(isinstance(input_arg.get('train'), list))
+
     def test_optimizer(self):
         model_class = tfkit.utility.load_model_class('clas')
         tokenizer = tfkit.BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -56,16 +63,16 @@ class TestTrain(unittest.TestCase):
              self.GEN_DATASET, '--lr', '5e-5', '--test', self.CLAS_DATASET, self.GEN_DATASET, '--model', 'clas',
              'onebyone', '--config', 'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MTTASK_MODEL_PATH + ' --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MTTASK_MODEL_PATH + ' --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood pos --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood pos --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood neg --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood neg --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood both --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MTTASK_MODEL_PATH + '  --train ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --lr 5e-5 --test ' + self.CLAS_DATASET + ' ' + self.GEN_DATASET + ' --model clas onebyone --likelihood both --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testGenOneByOne(self):
@@ -74,7 +81,7 @@ class TestTrain(unittest.TestCase):
              self.GEN_DATASET, '--lr', '5e-5', '--test', self.GEN_DATASET, '--model', 'onebyone', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.ONEBYONE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.ONEBYONE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testGenOnce(self):
@@ -83,7 +90,7 @@ class TestTrain(unittest.TestCase):
              self.GEN_DATASET, '--lr', '5e-5', '--test', self.GEN_DATASET, '--model', 'once', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.ONCE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model once --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.ONCE_MODEL_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model once --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testGenOnceCTC(self):
@@ -101,7 +108,7 @@ class TestTrain(unittest.TestCase):
              self.MASK_DATASET, '--lr', '3e-2', '--test', self.MASK_DATASET, '--model', 'mask', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MASK_MODEL_PATH + ' --train ' + self.MASK_DATASET + ' --test ' + self.MASK_DATASET + ' --model mask --config voidful/albert_chinese_tiny --maxlen 512')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MASK_MODEL_PATH + ' --train ' + self.MASK_DATASET + ' --test ' + self.MASK_DATASET + ' --model mask --config voidful/albert_chinese_tiny --maxlen 512')
         self.assertTrue(result == 0)
 
     def testMCQ(self):
@@ -110,7 +117,7 @@ class TestTrain(unittest.TestCase):
              self.MCQ_DATASET, '--lr', '5e-5', '--test', self.MCQ_DATASET, '--model', 'mcq', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MCQ_MODEL_PATH + ' --train ' + self.MCQ_DATASET + ' --test ' + self.MCQ_DATASET + ' --model mcq --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MCQ_MODEL_PATH + ' --train ' + self.MCQ_DATASET + ' --test ' + self.MCQ_DATASET + ' --model mcq --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
         self.assertTrue(result == 0)
 
     def testQA(self):
@@ -119,7 +126,7 @@ class TestTrain(unittest.TestCase):
              self.QA_DATASET, '--lr', '5e-5', '--test', self.QA_DATASET, '--model', 'qa', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.QA_MODEL_PATH + ' --train ' + self.QA_DATASET + ' --test ' + self.QA_DATASET + ' --model qa --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.QA_MODEL_PATH + ' --train ' + self.QA_DATASET + ' --test ' + self.QA_DATASET + ' --model qa --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
         self.assertTrue(result == 0)
 
     def testGenWithSentLoss(self):
@@ -128,7 +135,7 @@ class TestTrain(unittest.TestCase):
              self.GEN_DATASET, '--lr', '5e-5', '--test', self.GEN_DATASET, '--model', 'onebyone', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.MODEL_SAVE_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny  --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.MODEL_SAVE_PATH + ' --train ' + self.GEN_DATASET + ' --test ' + self.GEN_DATASET + ' --model onebyone --config voidful/albert_chinese_tiny  --maxlen 50')
         self.assertTrue(result == 0)
 
     def testClassify(self):
@@ -137,7 +144,7 @@ class TestTrain(unittest.TestCase):
              self.CLAS_DATASET, '--lr', '5e-5', '--test', self.CLAS_DATASET, '--model', 'clas', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.CLAS_MODEL_PATH + ' --train ' + self.CLAS_DATASET + ' --test ' + self.CLAS_DATASET + ' --model clas --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.CLAS_MODEL_PATH + ' --train ' + self.CLAS_DATASET + ' --test ' + self.CLAS_DATASET + ' --model clas --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testTag(self):
@@ -146,7 +153,7 @@ class TestTrain(unittest.TestCase):
              self.TAG_DATASET, '--lr', '5e-5', '--test', self.TAG_DATASET, '--model', 'tag', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'slide'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
         self.assertTrue(result == 0)
 
     def testTagCRF(self):
@@ -155,7 +162,7 @@ class TestTrain(unittest.TestCase):
              self.TAG_DATASET, '--lr', '5e-5', '--test', self.TAG_DATASET, '--model', 'tagcrf', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'slide'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.TAG_MODEL_PATH + ' --train ' + self.TAG_DATASET + ' --test ' + self.TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
         self.assertTrue(result == 0)
 
     def testAddToken(self):
@@ -169,16 +176,20 @@ class TestTrain(unittest.TestCase):
 
     def testGenSeq2Seq(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.SEQ2SEQ_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.SEQ2SEQ_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')
         self.assertTrue(result == 0)
+        tfkit.train.main(
+            ['--batch', '1', '--epoch', '10', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
+             self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
+             'prajjwal1/bert-small', '--maxlen', '20'])
         tfkit.train.main(
             ['--batch', '2', '--epoch', '10', '--savedir', self.SEQ2SEQ_MODEL_PATH, '--train',
              self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'seq2seq', '--config',
-             'prajjwal1/bert-small', '--maxlen', '20'])
+             'prajjwal1/bert-small', '--maxlen', '20', '--likelihood', 'pos'])
 
     def testGenCLM(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small --maxlen 50')
         self.assertTrue(result == 0)
         tfkit.train.main(
             ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',
@@ -187,7 +198,7 @@ class TestTrain(unittest.TestCase):
 
     def testMaxlen(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small')
         self.assertTrue(result == 0)
         tfkit.train.main(
             ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',

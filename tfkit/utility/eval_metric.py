@@ -65,8 +65,8 @@ class EvalMetric:
 
         if isinstance(target, str):
             targets = []
-            if "[SEP]" in target:
-                targets.extend([self.tokenize_text(st.strip()) for st in target.split("[SEP]")])
+            if self.tokenizer.sep_token in target:
+                targets.extend([self.tokenize_text(st.strip()) for st in target.split(self.tokenizer.sep_token)])
             else:
                 targets.append(self.tokenize_text(target.strip()))
         if isinstance(target, list):
