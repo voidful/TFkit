@@ -30,7 +30,8 @@ setup(
         "tqdm>=4.45.0",
         "inquirer",
         "numpy",
-        "pytorch-crf"
+        "pytorch-crf",
+        "sentencepiece"
     ],
     entry_points={
         'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']

@@ -8,3 +8,4 @@ tqdm>=4.45.0
 inquirer
 numpy
 pytorch-crf
+sentencepiece
