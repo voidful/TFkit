@@ -1,7 +1,6 @@
 import sys
 import os
 
-import pytest
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -11,7 +10,6 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import unittest
 import tfkit
-from transformers import *
 
 
 class TestLoss(unittest.TestCase):

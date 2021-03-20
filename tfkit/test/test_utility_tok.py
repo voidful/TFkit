@@ -1,17 +1,12 @@
 import sys
 import os
 
-import pytest
-import torch
-from torch import nn
-from torch.autograd import Variable
-
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import unittest
 import tfkit
-from transformers import *
+from transformers import AutoTokenizer, BertTokenizer
 
 
 class TestTok(unittest.TestCase):
