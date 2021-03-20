@@ -44,7 +44,7 @@ class TestTrain(unittest.TestCase):
             ['--model', 'onebyone', '--train', 'train.csv', '--test', 'test.csv', '--config',
              'voidful/albert_chinese_tiny', '--likelihood', 'pos'])
         print(input_arg, model_arg)
-        self.assertTrue(input_arg.get('likelihood') == 'pos')
+        self.assertTrue(model_arg.get('likelihood') == 'pos')
         self.assertTrue(isinstance(input_arg.get('train'), list))
 
     def test_optimizer(self):
