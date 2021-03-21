@@ -14,7 +14,7 @@ def list_all_model(ignore_list=[]):
         os.listdir(dataset_dir)))
 
 
-def load_predict_parameter(model, model_arg, enable_arg_panel=False):
+def load_predict_parameter(model, model_arg={}, enable_arg_panel=False):
     """use inquirer panel to let user input model parameter or just use default value"""
     return nlp2.function_argument_panel(model.predict, model_arg, disable_input_panel=(not enable_arg_panel),
                                         func_parent=model,

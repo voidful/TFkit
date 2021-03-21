@@ -85,7 +85,7 @@ def main(arg=None):
                 print("predicted: ", predicted)
                 print('==========')
 
-            eval_metric.add_record(input, predicted, processed_target)
+            eval_metric.add_record(input, predicted, processed_target, eval_arg.get('metric'))
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
         argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
@@ -101,7 +101,7 @@ def main(arg=None):
 
         with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
             writer = csv.writer(f)
-            records = eval_metric.get_record()
+            records = eval_metric.get_record(eval_arg.get('metric'))
             writer.writerow(['input', 'predicted', 'targets'])
             for i, p, t in zip(records['input'], records['predicted'], records['targets']):
                 writer.writerow([i, p, "[SEP]".join([onet for onet in t if len(onet) > 0])])
