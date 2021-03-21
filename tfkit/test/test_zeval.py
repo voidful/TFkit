@@ -32,10 +32,15 @@ class TestEval(unittest.TestCase):
         self.assertTrue(result == 0)
 
     def test_parser(self):
-        parser = tfkit.eval.parse_eval_args(
+        parser, _ = tfkit.eval.parse_eval_args(
             ['--model', 'onebyone', '--metric', 'emf1', '--valid', 'test.csv', '--print'])
         print(parser)
         self.assertTrue(parser.get('model') == 'onebyone')
+
+        eval_parser, model_parser = tfkit.eval.parse_eval_args(
+            ['--model', 'onebyone', '--metric', 'emf1', '--valid', 'test.csv', '--print', '--decodenum', '2'])
+        self.assertTrue(eval_parser.get('model') == 'onebyone')
+        self.assertTrue(model_parser.get('decodenum') == '2')
 
     def testEvalGen(self):
         tfkit.eval.main(
@@ -59,6 +64,9 @@ class TestEval(unittest.TestCase):
         self.assertTrue(result == 0)
 
     def testEvalSeq2Seq(self):
+        tfkit.eval.main(
+            ['--model', self.SEQ2SEQ_MODEL_PATH, '--valid', self.SEQ2SEQ_DATASET, '--metric', 'emf1', '--print',
+             '--decodenum', '2'])
         tfkit.eval.main(
             ['--model', self.SEQ2SEQ_MODEL_PATH, '--valid', self.SEQ2SEQ_DATASET, '--metric', 'emf1', '--print'])
         result = os.system(

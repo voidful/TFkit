@@ -15,19 +15,25 @@ def parse_eval_args(args):
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
-    return vars(parser.parse_args(args))
+
+    input_arg, model_arg = parser.parse_known_args(args)
+    print("input_arg", input_arg, model_arg, args)
+    input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
+    model_arg = {k.replace("--", ""): v for k, v in zip(model_arg[:-1:2], model_arg[1::2])}
+
+    return input_arg, model_arg
 
 
 def main(arg=None):
-    eval_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
+    eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
 
     valid = eval_arg.get('valid')[0]
     model, model_type, model_class = load_trained_model(eval_arg.get('model'), pretrained_config=eval_arg.get('config'))
     eval_dataset = model_class.get_data_from_file(valid)
-    predict_parameter = load_predict_parameter(model, eval_arg.get('panel'))
+    predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
-    if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
-        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(predict_parameter['decodenum'])]
+    if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
     else:
         eval_metrics = [EvalMetric(model.tokenizer)]
 
@@ -83,7 +89,7 @@ def main(arg=None):
 
     for eval_pos, eval_metric in enumerate(eval_metrics):
         argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
-        if 'decodenum' in predict_parameter and predict_parameter['decodenum'] > 1:
+        if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
             argtype += "_num_" + str(eval_pos)
         if 'mode' in predict_parameter:
             para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
