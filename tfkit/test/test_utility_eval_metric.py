@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import unittest
 import tfkit
-from transformers import BertTokenizer
+from transformers import BertTokenizer, AutoTokenizer
 
 
 class TestEval(unittest.TestCase):
@@ -227,3 +227,22 @@ class TestEval(unittest.TestCase):
         for s in eval.cal_score('classification'):
             print(s[0])
             print(s[1])
+
+    @pytest.mark.skip()
+    def testNLGOnModel(self):
+
+        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "An interesting research into chocolate",
+                        "More Chocolate , Less Health</s>Chocolate and Blood Pressure</s>Advice on Eating Chocolate",
+                        task='nlg')
+        for s in eval.cal_score('nlg'):
+            print(s)
+
+        tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "An interesting research into chocolate",
+                        "More Chocolate , Less Health[SEP]Chocolate and Blood Pressure[SEP]Advice on Eating Chocolate",
+                        task='nlg')
+        for s in eval.cal_score('nlg'):
+            print(s)

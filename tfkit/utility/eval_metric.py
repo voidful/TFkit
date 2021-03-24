@@ -4,7 +4,7 @@ import re
 from collections import Counter
 
 
-def _normalize_answer(s):
+def _normalize_answer(s, task='emf1'):
     """Lower text and remove punctuation, articles and extra whitespace."""
 
     def remove_articles(text):
@@ -23,7 +23,10 @@ def _normalize_answer(s):
     def lower(text):
         return text.lower()
 
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
+    if task == 'emf1':
+        return white_space_fix(remove_articles(remove_punc(lower(s))))
+    else:
+        return white_space_fix((remove_punc(lower(s))))
 
 
 def _f1_score(prediction, ground_truth):
@@ -48,7 +51,13 @@ class EvalMetric:
         self.target_list = defaultdict(lambda: defaultdict(int))
 
     def tokenize_text(self, text):
-        return self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
+        text = self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
+        # return  _normalize_answer(text, task='others')  # remove punctuation
+        # keep punctuation
+        text = "".join(
+            (char if char.isalpha() or char == " " else " " + char + " ") for char in text)  # separate punctuation
+        text = ' '.join(text.split()).lower().strip()  # remove extra blank
+        return text
 
     def add_record(self, input, predicted, target, task='default'):
         if isinstance(input, str):
@@ -59,17 +68,20 @@ class EvalMetric:
 
         if isinstance(predicted, str):
             predicted = self.tokenize_text(predicted)
+            predicteds = [predicted]
         if isinstance(predicted, list):
             for i, t in enumerate(predicted):
                 predicted[i] = self.tokenize_text(t.strip())
+            predicteds = predicted
 
         if isinstance(target, str):
             targets = []
             if self.tokenizer.sep_token in target:
                 targets.extend([self.tokenize_text(st.strip()) for st in target.split(self.tokenizer.sep_token)])
             else:
-                targets.append(self.tokenize_text(target.strip()))
-        if isinstance(target, list):
+                target = self.tokenize_text(target.strip())
+                targets.append(target)
+        elif isinstance(target, list):
             for i, t in enumerate(target):
                 target[i] = self.tokenize_text(t.strip())
             targets = target
@@ -82,7 +94,7 @@ class EvalMetric:
 
         self.tasks[task]['input'].append(input)
         self.tasks[task]['predicted'].append(predicted)
-        self.tasks[task]['predicteds'].append([predicted])
+        self.tasks[task]['predicteds'].append(predicteds)
         self.tasks[task]['target'].append(target)
         self.tasks[task]['targets'].append(targets)
 
