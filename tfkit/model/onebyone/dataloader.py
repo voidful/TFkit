@@ -11,8 +11,8 @@ def get_data_from_file(fpath):
     tasks[task] = []
     with open(fpath, encoding='utf') as csvfile:
         for i in tqdm(list(csv.reader(csvfile))):
-            source_text = i[0]
-            target_text = i[1].strip().split(" ")
+            source_text = i[0].strip()
+            target_text = i[1].strip()
             negative_text = i[2].strip() if len(i) > 2 else None
             input = source_text
             target = target_text
@@ -24,8 +24,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
     tasks, task, input, targets = item
     p_target, n_target = targets
-    input = input.strip()
-    tokenized_target = tokenizer.tokenize(" ".join(p_target))
+    tokenized_target = tokenizer.tokenize(p_target)
     param_dict = {'tokenizer': tokenizer, 'maxlen': maxlen, 'handle_exceed': handle_exceed,
                   'reserved_len': reserved_len}
 
@@ -68,7 +67,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 
     # whole sentence masking
     if 'pos' in likelihood:
-        yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target)}, **param_dict}
+        yield once.get_feature_from_data, {**{'input': input, 'target': p_target}, **param_dict}
     elif 'both' in likelihood:
         # formatting neg data in csv
         if n_target is None:
@@ -78,7 +77,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
         else:
             ntext_arr = [n_target.strip()]
         for neg_text in ntext_arr:
-            yield once.get_feature_from_data, {**{'input': input, 'target': " ".join(p_target), 'ntarget': neg_text},
+            yield once.get_feature_from_data, {**{'input': input, 'target': p_target, 'ntarget': neg_text},
                                                **param_dict}
 
     return get_feature_from_data, param_dict

@@ -10,8 +10,8 @@ def get_data_from_file(fpath):
     tasks[task] = []
     with open(fpath, encoding='utf') as csvfile:
         for i in tqdm(list(csv.reader(csvfile))):
-            source_text = i[0]
-            target_text = i[1].strip().split(" ")
+            source_text = i[0].strip()
+            target_text = i[1].strip()
             negative_text = i[2].strip() if len(i) > 2 else None
             input = source_text
             target = target_text
@@ -23,9 +23,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
     tasks, task, input, targets = item
     p_target, n_target = targets
-    input = input.strip()
-
-    tokenized_target = tokenizer.tokenize(" ".join(p_target))
+    tokenized_target = tokenizer.tokenize(p_target)
     param_dict = {'tokenizer': tokenizer, 'maxlen': maxlen, 'handle_exceed': handle_exceed,
                   'reserved_len': reserved_len}
 
