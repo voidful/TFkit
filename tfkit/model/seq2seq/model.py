@@ -2,7 +2,7 @@ import json
 import sys
 import os
 
-from transformers import AutoModel, AutoConfig
+from transformers import AutoModel
 from typing import List
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -277,7 +277,7 @@ class Model(nn.Module):
             for i in range(len(sequences)):
                 if tok.tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok.tok_sep(self.tokenizer))]
-                sequences[i][0] = "".join(self.tokenizer.convert_tokens_to_string(sequences[i][0]))
+                sequences[i][0] = self.tokenizer.convert_tokens_to_string(sequences[i][0])
 
             result_dict = {
                 'label_map': sequences
