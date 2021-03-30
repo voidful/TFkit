@@ -23,13 +23,15 @@ import copy
 class Model(nn.Module):
     def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
         super().__init__()
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.maxlen = maxlen
         self.tokenizer = tokenizer
+        self.pretrained = pretrained
+        print('Using device:', self.device)
         if hasattr(pretrained, 'decoder'):
-            self.decoder_model = pretrained.decoder
-            self.pretrained = pretrained.encoder
+            self.decoder_model = None
             decoder_hidden_size = pretrained.config.hidden_size
         else:
-            self.pretrained = pretrained
             decoder_config = copy.deepcopy(pretrained.config)
             decoder_config.is_decoder = True
             decoder_config.add_cross_attention = True
@@ -39,14 +41,11 @@ class Model(nn.Module):
                 self.decoder_model.base_model_prefix
             )
             decoder_hidden_size = decoder_config.hidden_size
-        self.model = nn.Linear(decoder_hidden_size, self.tokenizer.__len__())
-
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.maxlen = maxlen
-        print('Using device:', self.device)
-        self.decoder_model.to(self.device)
+            self.decoder_model.to(self.device)
+        self.model = nn.Linear(decoder_hidden_size, self.tokenizer.__len__(), bias=False)
         self.model.to(self.device)
         self.encoder_hidden = None
+        self.pretrained.init_weights()
 
     def forward(self, batch_data, eval=False, use_prev=False):
         inputs = batch_data['input']
@@ -59,20 +58,27 @@ class Model(nn.Module):
         encoder_mask_tensors = torch.as_tensor(encoder_mask).to(self.device)
         decoder_mask_tensors = torch.as_tensor(decoder_mask).to(self.device)
 
-        if use_prev and self.encoder_hidden is not None:
-            encoder_hidden_states = self.encoder_hidden
+        if self.decoder_model is not None:
+            if use_prev and self.encoder_hidden is not None:
+                encoder_hidden_states = self.encoder_hidden
+            else:
+                outputs = self.pretrained(input_tensors, attention_mask=encoder_mask_tensors)
+                encoder_hidden_states = outputs[0]
+                self.encoder_hidden = encoder_hidden_states
+            # Decoder
+            prediction_output = self.decoder_model(
+                input_ids=prev_tensors,
+                attention_mask=decoder_mask_tensors,
+                encoder_hidden_states=encoder_hidden_states,
+                encoder_attention_mask=encoder_mask_tensors
+            )[0]
         else:
-            outputs = self.pretrained(input_tensors, attention_mask=encoder_mask_tensors)
-            encoder_hidden_states = outputs[0]
-            self.encoder_hidden = encoder_hidden_states
-
-        # Decoder
-        prediction_output = self.decoder_model(
-            input_ids=prev_tensors,
-            attention_mask=decoder_mask_tensors,
-            encoder_hidden_states=encoder_hidden_states,
-            encoder_attention_mask=encoder_mask_tensors
-        )[0]
+            prediction_output = self.pretrained(
+                input_ids=input_tensors,
+                attention_mask=encoder_mask_tensors,
+                decoder_input_ids=prev_tensors,
+                decoder_attention_mask=decoder_mask_tensors
+            )[0]
         prediction_scores = self.model(prediction_output)
 
         if eval:

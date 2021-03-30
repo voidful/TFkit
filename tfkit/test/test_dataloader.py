@@ -255,9 +255,13 @@ class TestDataLoader(unittest.TestCase):
         self.assertTrue(ds.__len__() == 50)
 
     def testSeq2seq(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
 
         maxlen = 10
+        feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
+                                                      reserved_len=3)[-1]
+        self.assertTrue(len(feature['prev']) > 0)
+
         feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
                                                       target=["hi", "bye"],
                                                       reserved_len=3)[-1]
@@ -266,14 +270,15 @@ class TestDataLoader(unittest.TestCase):
         for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
             print("data", i)
 
-        maxlen = 10
+        maxlen = 512
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
-                                 pretrained_config='prajjwal1/bert-small',
+            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv'),
+                                 pretrained_config='facebook/bart-base',
                                  get_data_from_file=tfkit.seq2seq.get_data_from_file,
                                  preprocessing_data=tfkit.seq2seq.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 print(likelihood, i)
+                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
                 self.assertTrue(len(i['input']) == maxlen)
                 self.assertTrue(len(i['target']) == maxlen)
