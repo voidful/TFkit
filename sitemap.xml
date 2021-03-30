@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://github.com/voidful/tfkit/</loc>
-     <lastmod>2020-07-06</lastmod>
+     <lastmod>2021-03-30</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://github.com/voidful/tfkit/installation/</loc>
-     <lastmod>2020-07-06</lastmod>
+     <lastmod>2021-03-30</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://github.com/voidful/tfkit/usage/</loc>
-     <lastmod>2020-07-06</lastmod>
+     <lastmod>2021-03-30</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://github.com/voidful/tfkit/task/</loc>
-     <lastmod>2020-07-06</lastmod>
+     <lastmod>2021-03-30</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://github.com/voidful/tfkit/benchmark/</loc>
-     <lastmod>2020-07-06</lastmod>
+     <lastmod>2021-03-30</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>
