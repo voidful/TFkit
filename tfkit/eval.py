@@ -18,7 +18,6 @@ def parse_eval_args(args):
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
 
     input_arg, model_arg = parser.parse_known_args(args)
-    print("input_arg", input_arg, model_arg, args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
     model_arg = {k.replace("--", ""): v for k, v in zip(model_arg[:-1:2], model_arg[1::2])}
 

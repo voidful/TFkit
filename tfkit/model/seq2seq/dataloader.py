@@ -30,7 +30,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     if "neg" in likelihood or 'both' in likelihood:
         # formatting neg data in csv
         if n_target is None:
-            ntext_arr = [tok.tok_begin(tokenizer) + tokenizer.convert_tokens_to_string(tokenized_target)]
+            ntext_arr = [tok.tok_sep(tokenizer) + tokenizer.convert_tokens_to_string(tokenized_target)]
         elif "[SEP]" in n_target:
             ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(tokenizer))]
         else:
@@ -76,7 +76,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
             if previous is None:  # pm
                 tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_mask(tokenizer))] * maxlen
             else:
-                tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok.tok_begin(tokenizer)] + target)
+                tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok.tok_sep(tokenizer)] + target)
             tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(target + [tok.tok_sep(tokenizer)]))
             decoder_mask_id = [1] * (len(tokenized_prev_id))
             decoder_mask_id.extend([0] * (maxlen - len(decoder_mask_id)))
@@ -93,7 +93,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
                 if len(tokenized_ntarget_id) <= maxlen:
                     row_dict['ntarget'] = tokenized_ntarget_id
         else:
-            tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_begin(tokenizer))]
+            tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_sep(tokenizer))]
             tokenized_prev_id.extend(tokenizer.convert_tokens_to_ids(previous))
             target_start = len(tokenized_prev_id) - 1
             row_dict['start'] = target_start

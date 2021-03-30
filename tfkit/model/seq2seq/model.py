@@ -27,10 +27,13 @@ class Model(nn.Module):
         self.maxlen = maxlen
         self.tokenizer = tokenizer
         self.pretrained = pretrained
+        init_weight = None
         print('Using device:', self.device)
         if hasattr(pretrained, 'decoder'):
             self.decoder_model = None
             decoder_hidden_size = pretrained.config.hidden_size
+            if hasattr(pretrained, 'shared'):
+                init_weight = copy.deepcopy(pretrained.shared.weight)
         else:
             decoder_config = copy.deepcopy(pretrained.config)
             decoder_config.is_decoder = True
@@ -43,9 +46,10 @@ class Model(nn.Module):
             decoder_hidden_size = decoder_config.hidden_size
             self.decoder_model.to(self.device)
         self.model = nn.Linear(decoder_hidden_size, self.tokenizer.__len__(), bias=False)
+        if init_weight is not None:
+            self.model.weight = init_weight
         self.model.to(self.device)
         self.encoder_hidden = None
-        self.pretrained.init_weights()
 
     def forward(self, batch_data, eval=False, use_prev=False):
         inputs = batch_data['input']

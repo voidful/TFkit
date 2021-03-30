@@ -82,7 +82,6 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
                 loss.mean().backward()
                 if (total_iter + 1) % input_arg.get('grad_accum') == 0:
                     optim.step()
-                    optim.zero_grad()
                     model.zero_grad()
                 t_loss += loss.mean().item()
                 logger.write_metric("loss/step", loss.mean().item(), epoch)
@@ -196,12 +195,11 @@ def main(arg=None):
     else:
         tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
 
-    model_config = AutoConfig.from_pretrained(pretrained_config)
+    pretrained = AutoModel.from_pretrained(pretrained_config)
     if 'clm' in input_arg.get('model'):
-        model_config.is_decoder = True
-    pretrained = AutoModel.from_config(model_config)
+        pretrained.config.is_decoder = True
     if input_arg.get('maxlen') == 0:
-        input_arg.update({'maxlen': model_config.max_position_embeddings})
+        input_arg.update({'maxlen': pretrained.config.max_position_embeddings})
 
     # handling add tokens
     if input_arg.get('add_tokens'):
