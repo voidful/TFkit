@@ -31,7 +31,7 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
         # formatting neg data in csv
         if n_target is None:
             ntext_arr = [tok.tok_sep(tokenizer) + tokenizer.convert_tokens_to_string(tokenized_target)]
-        elif "[SEP]" in n_target:
+        elif tok.tok_sep(tokenizer) in n_target:
             ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(tokenizer))]
         else:
             ntext_arr = [n_target.strip()]

@@ -87,9 +87,10 @@ class Model(nn.Module):
                 break
 
     def predict(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1, filtersim=True,
-                reserved_len=0, task=None, handle_exceed='noop'):
+                reserved_len=0, task=None, handle_exceed='noop', eos_num=1):
         filtersim = json.loads(str(filtersim).lower())
         topK = int(topK)
+        eos_num = int(eos_num)
         topP = float(topP)
         decodenum = int(decodenum)
         mode = mode[0] if isinstance(mode, list) else mode.lower()
@@ -101,7 +102,7 @@ class Model(nn.Module):
                 all_candidates = list()
                 exceed = False
                 for seq in sequences:
-                    if tok.tok_sep(self.tokenizer) not in seq[0]:
+                    if tok.tok_sep(self.tokenizer) not in seq[0] or i[0].count(tok.tok_sep(self.tokenizer)) < eos_num:
                         tokens, score = seq
 
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
@@ -158,14 +159,15 @@ class Model(nn.Module):
                 stop = 0
                 for i in sequences:
                     # i[0] - sequence,i[1] - sequence score
-                    if tok.tok_sep(self.tokenizer) in i[0] or i[1] >= self.maxlen:
+                    if (tok.tok_sep(self.tokenizer) in i[0] and i[0].count(tok.tok_sep(self.tokenizer)) >= eos_num) or \
+                            i[1] > self.maxlen:
                         stop += 1
                 if stop == len(sequences) or exceed:
                     break
 
             for i in range(len(sequences)):
                 if tok.tok_sep(self.tokenizer) in sequences[i][0]:  # remove sep token
-                    sequences[i][0] = sequences[i][0][:sequences[i][0].index(tok.tok_sep(self.tokenizer))]
+                    sequences[i][0] = sequences[i][0][:-1]
                 sequences[i][0] = self.tokenizer.convert_tokens_to_string(sequences[i][0])
             result_dict = {
                 'label_map': sequences
