@@ -102,7 +102,7 @@ class Model(nn.Module):
                 all_candidates = list()
                 exceed = False
                 for seq in sequences:
-                    if tok.tok_sep(self.tokenizer) not in seq[0] or i[0].count(tok.tok_sep(self.tokenizer)) < eos_num:
+                    if tok.tok_sep(self.tokenizer) not in seq[0] or seq[0].count(tok.tok_sep(self.tokenizer)) < eos_num:
                         tokens, score = seq
 
                         feature_dict = get_feature_from_data(self.tokenizer, self.maxlen, input, tokens,
