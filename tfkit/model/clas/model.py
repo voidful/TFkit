@@ -107,6 +107,8 @@ class Model(nn.Module):
     def predict(self, input='', topk=1, task=get_all_task, handle_exceed='slide',
                 merge_strategy=['minentropy', 'maxcount', 'maxprob']):
         topk = int(topk)
+        if callable(task):
+            task = task(self)
         task = task[0] if isinstance(task, list) else task
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
