@@ -103,8 +103,8 @@ def main(arg=None):
             writer = csv.writer(f)
             records = eval_metric.get_record(eval_arg.get('metric'))
             writer.writerow(['input', 'predicted', 'targets'])
-            for i, p, t in zip(records['input'], records['predicted'], records['targets']):
-                writer.writerow([i, p, tok.tok_sep(model.tokenizer).join([onet for onet in t if len(onet) > 0])])
+            for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
+                writer.writerow([i, p, t])
         print("write result at:", outfile_name)
 
         with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:

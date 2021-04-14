@@ -16,28 +16,28 @@ class TestEval(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
+        eval.add_record("input", "abc", "abb///acc///abc", task='default')
         for s in eval.cal_score('emf1'):
             print(s)
             self.assertTrue(s[1]['EM'] == 1)
             self.assertTrue(s[1]['F1'] == 1)
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "ab", "abb[SEP]acc[SEP]ab c", task='default')
+        eval.add_record("input", "ab", "abb///acc///ab c", task='default')
         for s in eval.cal_score('emf1'):
             print(s)
             self.assertTrue(s[1]['EM'] == 0)
             self.assertTrue(s[1]['F1'] > 0)
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "a b c", "a b b[SEP]a c c[SEP]", task='default')
+        eval.add_record("input", "a b c", "a b b///a c c///", task='default')
         for s in eval.cal_score('emf1'):
             print(s)
             self.assertTrue(s[1]['EM'] == 0)
             self.assertTrue(s[1]['F1'] > 0)
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "", "a b b[SEP]a c c", task='default')
+        eval.add_record("input", "", "a b b///a c c", task='default')
         for s in eval.cal_score('emf1'):
             print(s)
             self.assertTrue(s[1]['EM'] == 0)
@@ -90,7 +90,7 @@ class TestEval(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "a b c", "a b c[SEP]a c c[SEP]", task='default')
+        eval.add_record("input", "a b c", "a b c///a c c///", task='default')
         for s in eval.cal_score('nlg'):
             self.assertAlmostEqual(s[1]['Bleu_1'], 1)
             print(s)
@@ -110,13 +110,13 @@ class TestEval(unittest.TestCase):
             print(s1)
 
         eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=3)
-        eval3.add_record("input", "abc ", "abb [SEP]acc[SEP] abc ", task='default')
+        eval3.add_record("input", "abc ", "abb ///acc/// abc ", task='default')
         for s3 in eval3.cal_score('nlg'):
             self.assertAlmostEqual(s3[1]['Bleu_1'], 1)
             print(s3)
 
         eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=6)
-        eval6.add_record("input", "abc", "abb [SEP] acc [SEP]abc", task='default')
+        eval6.add_record("input", "abc", "abb /// acc ///abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             self.assertAlmostEqual(s6[1]['Bleu_1'], 1)
             print(s6)
@@ -129,13 +129,13 @@ class TestEval(unittest.TestCase):
             print(s1)
 
         eval3 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=3)
-        eval3.add_record("input", "opq", "abb[SEP]acc[SEP]abc", task='default')
+        eval3.add_record("input", "opq", "abb///acc///abc", task='default')
         for s3 in eval3.cal_score('nlg'):
             self.assertAlmostEqual(s3[1]['Bleu_1'], 0)
             print(s3)
 
         eval6 = tfkit.utility.eval_metric.EvalMetric(tokenizer, max_candidate=6)
-        eval6.add_record("input", "opq", "abb [SEP] acc[SEP]abc", task='default')
+        eval6.add_record("input", "opq", "abb /// acc///abc", task='default')
         for s6 in eval6.cal_score('nlg'):
             self.assertAlmostEqual(s6[1]['Bleu_1'], 0)
             print(s6)
@@ -157,13 +157,13 @@ class TestEval(unittest.TestCase):
     def testClassify(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "abc", "abb[SEP]acc[SEP]abc", task='default')
+        eval.add_record("input", "abc", "abb///acc///abc", task='default')
         for s in eval.cal_score('classification'):
             print(s[0])
             print(s[1])
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", "你 好", "我 好[SEP]你 好 嗎[SEP]好 嗎", task='default')
+        eval.add_record("input", "你 好", "我 好///你 好 嗎///好 嗎", task='default')
         for s in eval.cal_score('classification'):
             print(s[0])
             print(s[1])
@@ -242,7 +242,7 @@ class TestEval(unittest.TestCase):
         tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "An interesting research into chocolate",
-                        "More Chocolate , Less Health[SEP]Chocolate and Blood Pressure[SEP]Advice on Eating Chocolate",
+                        "More Chocolate , Less Health///Chocolate and Blood Pressure///Advice on Eating Chocolate",
                         task='nlg')
         for s in eval.cal_score('nlg'):
             print(s)

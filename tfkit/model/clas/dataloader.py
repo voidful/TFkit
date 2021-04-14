@@ -12,7 +12,7 @@ def get_data_from_file(fpath):
         headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0]) - 1)]
         is_multi_label = ""
         for row in reader:
-            if '/' in row[1]:
+            if tok.UNIVERSAL_SEP in row[1]:
                 is_multi_label = "_multi_label"
                 break
 
@@ -22,8 +22,8 @@ def get_data_from_file(fpath):
                 pos += start_pos
                 task = headers[0] + "_" + headers[pos] + is_multi_label
                 item = item.strip()
-                if '/' in item:
-                    for i in item.split("/"):
+                if tok.UNIVERSAL_SEP in item:
+                    for i in item.split(tok.UNIVERSAL_SEP):
                         tasks[task].append(i) if i not in tasks[task] else tasks[task]
                 else:
                     tasks[task].append(item) if item not in tasks[task] else tasks[task]
@@ -35,7 +35,7 @@ def get_data_from_file(fpath):
                 pos += start_pos
                 task = headers[0] + "_" + headers[pos] + is_multi_label
                 item = item.strip()
-                target = item.split('/') if '/' in item else [item]
+                target = item.split(tok.UNIVERSAL_SEP) if tok.UNIVERSAL_SEP in item else [item]
                 input = row[0]
                 yield tasks, task, input, target
 

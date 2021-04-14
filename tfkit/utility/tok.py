@@ -3,6 +3,7 @@ from collections import OrderedDict
 import nlp2
 from tqdm import tqdm
 
+UNIVERSAL_SEP = "///"
 
 def tok_begin(tokenizer):
     if isinstance(tokenizer._bos_token, str):

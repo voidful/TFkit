@@ -1,6 +1,8 @@
 import unittest
 import os
 
+import pytest
+
 import tfkit
 
 
@@ -204,3 +206,10 @@ class TestTrain(unittest.TestCase):
             ['--batch', '2', '--epoch', '20', '--savedir', self.CLM_MODEL_PATH, '--train',
              self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'clm', '--config',
              'prajjwal1/bert-small'])
+
+    @pytest.mark.skip()
+    def testLoggerwandb(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '2', '--savedir', self.ONCE_MODEL_PATH, '--train',
+             self.GEN_DATASET, '--lr', '5e-5', '--test', self.GEN_DATASET, '--model', 'once', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--wandb'])

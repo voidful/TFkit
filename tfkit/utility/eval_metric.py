@@ -1,8 +1,10 @@
+import copy
 from collections import defaultdict
 import string
 import re
 from collections import Counter
 
+from tfkit.utility import tok
 from tqdm.auto import tqdm
 
 
@@ -54,6 +56,7 @@ class EvalMetric:
 
     def tokenize_text(self, text):
         text = self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
+        text = text.replace(tok.tok_sep(self.tokenizer), " ")
         # return  _normalize_answer(text, task='others')  # remove punctuation
         # keep punctuation
         text = "".join(
@@ -61,44 +64,56 @@ class EvalMetric:
         text = ' '.join(text.split()).lower().strip()  # remove extra blank
         return text
 
-    def add_record(self, input, predicted, target, task='default'):
-        if isinstance(input, str):
-            input = self.tokenize_text(input.strip())
-        if isinstance(input, list):
-            for i, t in enumerate(input):
-                input[i] = self.tokenize_text(t.strip())
+    def add_record(self, ori_input, ori_predicted, ori_target, task='default'):
+        input = predicted = target = ""
+        input_list = predicted_list = target_list = []
 
-        if isinstance(predicted, str):
-            predicted = self.tokenize_text(predicted)
-            predicteds = [predicted]
-        if isinstance(predicted, list):
-            for i, t in enumerate(predicted):
-                predicted[i] = self.tokenize_text(t.strip())
-            predicteds = predicted
+        if isinstance(ori_input, str):
+            input = self.tokenize_text(ori_input.strip())
+            input_list = [input]
+        if isinstance(ori_input, list):
+            input_list = copy.copy(ori_input)
+            for i, t in enumerate(ori_input):
+                input_list[i] = self.tokenize_text(t.strip())
+            input = " ".join(input_list)
 
-        if isinstance(target, str):
-            targets = []
-            if self.tokenizer.sep_token in target:
-                targets.extend([self.tokenize_text(st.strip()) for st in target.split(self.tokenizer.sep_token)])
+        if isinstance(ori_predicted, str):
+            predicted = self.tokenize_text(ori_predicted)
+            predicted_list = [predicted]
+        if isinstance(ori_predicted, list):
+            predicted_list = copy.copy(ori_predicted)
+            for i, t in enumerate(ori_predicted):
+                predicted_list[i] = self.tokenize_text(t.strip())
+            predicted = " ".join(predicted_list)
+
+        if isinstance(ori_target, str):
+            target_list = []
+            if tok.UNIVERSAL_SEP in ori_target:
+                target = ori_target
+                target_list.extend([self.tokenize_text(st.strip()) for st in ori_target.split(tok.UNIVERSAL_SEP)])
             else:
-                target = self.tokenize_text(target.strip())
-                targets.append(target)
-        elif isinstance(target, list):
-            for i, t in enumerate(target):
-                target[i] = self.tokenize_text(t.strip())
-            targets = target
+                target = self.tokenize_text(ori_target.strip())
+                target_list.append(target)
+        elif isinstance(ori_target, list):
+            for i, t in enumerate(ori_target):
+                ori_target[i] = self.tokenize_text(t.strip())
+            target_list = ori_target
 
-        if self.max_candidate - len(targets) > 0 and "nlg" in task:
-            targets.extend([""] * (self.max_candidate - len(targets)))
+        if self.max_candidate - len(target_list) > 0 and "nlg" in task:
+            target_list.extend([""] * (self.max_candidate - len(target_list)))
 
-        for t in targets:
+        for t in target_list:
             self.target_list[task][t] += 1
 
         self.tasks[task]['input'].append(input)
+        self.tasks[task]['input_list'].append(input_list)
         self.tasks[task]['predicted'].append(predicted)
-        self.tasks[task]['predicteds'].append(predicteds)
+        self.tasks[task]['predicted_list'].append(predicted_list)
         self.tasks[task]['target'].append(target)
-        self.tasks[task]['targets'].append(targets)
+        self.tasks[task]['target_list'].append(target_list)
+        self.tasks[task]['ori_input'].append(ori_input)
+        self.tasks[task]['ori_predicted'].append(ori_predicted)
+        self.tasks[task]['ori_target'].append(ori_target)
 
     def get_record(self, task='default'):
         return self.tasks[task]
@@ -114,7 +129,7 @@ class EvalMetric:
                 for pos, predict in enumerate(task['predicted']):
                     em_list = []
                     f1_list = []
-                    for target in task['targets'][pos]:
+                    for target in task['target_list'][pos]:
                         if _normalize_answer(str(predict)) == _normalize_answer(str(target)) and len(
                                 _normalize_answer(str(predict))) > 0 or len(str(predict)) == len(str(target)) == 0:
                             em_score = 1
@@ -126,7 +141,7 @@ class EvalMetric:
                         f1_list.append(f1_score)
                     em += max(em_list)
                     f1 += max(f1_list)
-                    data_score.append([predict, task['targets'][pos][em_list.index(max(em_list))],
+                    data_score.append([predict, task['target_list'][pos][em_list.index(max(em_list))],
                                        {'em': max(em_list), 'f1': max(f1_list)}])
                     total += 1
                 result = {"EM": em / (total or not total), "F1": f1 / (total or not total)}
@@ -139,11 +154,11 @@ class EvalMetric:
                         "nlg-eval package not install, plz install it: pip install git+https://github.com/voidful/nlg-eval.git ; nlg-eval --setup ./nlg-eval-data/")
                     raise
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
-                targets = task['targets']
+                target_list = task['target_list']
                 predicted = task['predicted']
-                for t, p in tqdm(zip(targets, predicted), total=len(targets)):
+                for t, p in tqdm(zip(target_list, predicted), total=len(target_list)):
                     data_score.append([p, t, nlgeval.compute_metrics(ref_list=list(map(list, zip(t))), hyp_list=[p])])
-                result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['targets']))),  # transpose
+                result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['target_list']))),  # transpose
                                                  hyp_list=predicted)
                 data_score = sorted(data_score, key=lambda i: i[2]['ROUGE_L'])
             if "clas" in metric:
@@ -153,24 +168,23 @@ class EvalMetric:
                 target_key = [t for t in self.target_list[task_name].keys() if len(t) > 0]
                 mlb = MultiLabelBinarizer().fit([target_key])
                 # remove all blank target
-                task['targets'] = [[j for j in sub if len(j) > 0] for sub in task['targets']]
+                task['target_list'] = [[j for j in sub if len(j) > 0] for sub in task['target_list']]
                 # modify for tagging result
-                if isinstance(task['predicteds'][0][0], list):
-                    task['targets'] = sum([[[j] for j in sub] for sub in task['targets']], [])
-                    task['predicteds'] = sum([[[j] for j in sub] for sub in task['predicted']], [])
-                    if len(task['targets']) != len(task['predicteds']):
-                        diff = len(task['targets']) - len(task['predicteds'])
-                        task['predicteds'].extend([['']] * diff)
-                targets = task['targets']
-                predicted = task['predicteds']
-                for p, t in zip(predicted, targets):
+                if isinstance(task['predicted_list'][0][0], list):
+                    task['target_list'] = sum([[[j] for j in sub] for sub in task['target_list']], [])
+                    task['predicted_list'] = sum([[[j] for j in sub] for sub in task['predicted']], [])
+                    if len(task['target_list']) != len(task['predicted_list']):
+                        diff = len(task['target_list']) - len(task['predicted_list'])
+                        task['predicted_list'].extend([['']] * diff)
+                target_list = task['target_list']
+                predicted = task['predicted_list']
+                for p, t in zip(predicted, target_list):
                     score = dict(zip(["precision", "recall", "fbeta_score", "support"],
                                      precision_recall_fscore_support(mlb.transform([t]), mlb.transform([p]),
                                                                      average='weighted')))
                     data_score.append([p, t, score])
-                print(mlb.classes_)
                 result = classification_report(
-                    mlb.transform(targets),
+                    mlb.transform(target_list),
                     mlb.transform(predicted),
                     target_names=list(mlb.classes_))
                 data_score = sorted(data_score, key=lambda i: i[2]['fbeta_score'])

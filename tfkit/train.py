@@ -5,7 +5,7 @@ import nlp2
 import tfkit
 import torch
 from tqdm.auto import tqdm
-from transformers import BertTokenizer, AutoTokenizer, AutoModel, AutoConfig
+from transformers import BertTokenizer, AutoTokenizer, AutoModel
 from torch.utils import data
 from itertools import zip_longest
 import os
@@ -41,7 +41,8 @@ def parse_train_args(args):
     parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
-    parser.add_argument('--tensorboard', dest='tensorboard', action='store_true', help='Turn on tensorboard graphing')
+    parser.add_argument('--tensorboard', action='store_true', help='Turn on tensorboard graphing')
+    parser.add_argument('--wandb', action='store_true', help='Turn on wandb with project name')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
@@ -184,7 +185,8 @@ def save_model(models, input_arg, models_tag, epoch, fname, logger):
 def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
-    logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard'))
+    logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard', False),
+                    wandb=input_arg.get('wandb', False))
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     nlp2.set_seed(input_arg.get('seed'))
 
@@ -228,7 +230,7 @@ def main(arg=None):
         ds.increase_with_sampling(train_ds_maxlen)
     for ds in test_dataset:
         ds.increase_with_sampling(test_ds_maxlen)
-
+    logger.write_config(input_arg)
     logger.write_log("TRAIN PARAMETER")
     logger.write_log("=======================")
     [logger.write_log(str(key) + " : " + str(value)) for key, value in input_arg.items()]
