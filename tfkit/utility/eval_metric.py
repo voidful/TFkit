@@ -3,6 +3,8 @@ import string
 import re
 from collections import Counter
 
+from tqdm.auto import tqdm
+
 
 def _normalize_answer(s, task='emf1'):
     """Lower text and remove punctuation, articles and extra whitespace."""
@@ -139,7 +141,7 @@ class EvalMetric:
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
                 targets = task['targets']
                 predicted = task['predicted']
-                for t, p in zip(targets, predicted):
+                for t, p in tqdm(zip(targets, predicted), total=len(targets)):
                     data_score.append([p, t, nlgeval.compute_metrics(ref_list=list(map(list, zip(t))), hyp_list=[p])])
                 result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['targets']))),  # transpose
                                                  hyp_list=predicted)

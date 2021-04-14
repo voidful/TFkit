@@ -4,7 +4,7 @@ import sys
 import nlp2
 import tfkit
 import torch
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from transformers import BertTokenizer, AutoTokenizer, AutoModel, AutoConfig
 from torch.utils import data
 from itertools import zip_longest

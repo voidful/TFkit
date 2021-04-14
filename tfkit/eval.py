@@ -2,7 +2,7 @@ import argparse
 import sys
 
 from tfkit.utility import tok
-from tqdm import tqdm
+from tqdm.auto import tqdm
 import csv
 from tfkit.utility.eval_metric import EvalMetric
 from tfkit.utility.model_loader import load_trained_model, load_predict_parameter
