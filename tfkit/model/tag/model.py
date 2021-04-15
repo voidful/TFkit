@@ -31,7 +31,7 @@ class Model(nn.Module):
         self.pretrained = self.pretrained.to(self.device)
         self.loss_fct = self.loss_fct.to(self.device)
 
-    def forward(self, batch_data, eval=False, separator=" "):
+    def forward(self, batch_data, eval=False, separator=" ", **args):
         inputs = batch_data["input"]
         masks = batch_data["mask"]
 

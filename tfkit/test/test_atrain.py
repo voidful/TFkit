@@ -198,6 +198,7 @@ class TestTrain(unittest.TestCase):
              self.SEQ2SEQ_DATASET, '--lr', '5e-4', '--test', self.SEQ2SEQ_DATASET, '--model', 'clm', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
 
+    @pytest.mark.skip()
     def testMaxlen(self):
         result = os.system(
             'tfkit-train --batch 2 --epoch 1 --savedir ' + self.CLM_MODEL_PATH + ' --train ' + self.SEQ2SEQ_DATASET + ' --test ' + self.SEQ2SEQ_DATASET + ' --model clm --config prajjwal1/bert-small')

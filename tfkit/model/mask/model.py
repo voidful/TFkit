@@ -16,7 +16,7 @@ class Model(nn.Module):
         print('Using device:', self.device)
         self.model.to(self.device)
 
-    def forward(self, batch_data, eval=False):
+    def forward(self, batch_data, eval=False, **args):
         inputs = batch_data['input']
         targets = batch_data['target']
         masks = batch_data['mask']

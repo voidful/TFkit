@@ -49,7 +49,7 @@ class Model(nn.Module):
         sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
         return sum_embeddings / sum_mask
 
-    def forward(self, batch_data, eval=False):
+    def forward(self, batch_data, eval=False, **args):
         tasks = batch_data['task']
         inputs = torch.as_tensor(batch_data['input']).to(self.device)
         targets = torch.as_tensor(batch_data['target']).to(self.device)

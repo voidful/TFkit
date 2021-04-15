@@ -276,12 +276,12 @@ class TestModel(unittest.TestCase):
         dummy_result = [[['表', '示', '事', '業'], 4.438073633101437],
                         [['表', '示', '事', '情'], 9.86092332722302],
                         [['表', '示', '事', '情'], 9.86092332722302]]
-        model._filterSimilar(dummy_result, 3)
+        tfkit.utility.predictor._filter_similar(dummy_result, 3)
         self.assertTrue(len(dummy_result), 3)
 
         dummy_result = [[['表', '示', '事', '業'], 4.438073633101437],
                         [['表', '示', '事', '情'], 9.86092332722302]]
-        model._filterSimilar(dummy_result, 2)
+        tfkit.utility.predictor._filter_similar(dummy_result, 3)
         self.assertTrue(len(dummy_result), 2)
 
         for feature in tfkit.model.onebyone.get_feature_from_data(tokenizer, input=input,
