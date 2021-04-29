@@ -55,9 +55,10 @@ class TestTrain(unittest.TestCase):
         pretrained = tfkit.AutoModel.from_pretrained('voidful/albert_chinese_tiny')
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail={"taskA": ["a", "b"]},
                                   maxlen=128)
-        optim = tfkit.train.optimizer(model, lr=0.1)
-        print(optim)
+        optim, scheduler = tfkit.train.optimizer(model, lr=0.1, total_step=10)
+        print(optim, scheduler)
         print(optim.zero_grad())
+        print(scheduler.step())
 
     def testMultiTask(self):
         tfkit.train.main(
