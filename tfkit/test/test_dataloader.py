@@ -260,6 +260,7 @@ class TestDataLoader(unittest.TestCase):
         maxlen = 10
         feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
                                                       reserved_len=3)[-1]
+        print(feature)
         self.assertTrue(len(feature['prev']) > 0)
 
         feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
@@ -282,3 +283,12 @@ class TestDataLoader(unittest.TestCase):
                 print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
                 self.assertTrue(len(i['input']) == maxlen)
                 self.assertTrue(len(i['target']) == maxlen)
+
+    def testSeq2seqWithPrev(self):
+        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
+        maxlen = 10
+        for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_eng.csv')):
+            print("data", i)
+            for j in tfkit.seq2seq.preprocessing_data(i, tokenizer, maxlen=maxlen):
+                print(j)
+            break

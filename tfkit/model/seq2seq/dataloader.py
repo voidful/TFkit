@@ -23,6 +23,12 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
     likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
     tasks, task, input, targets = item
     p_target, n_target = targets
+    previous = []
+    if tok.UNIVERSAL_SEP in input:
+        part = input.split(tok.UNIVERSAL_SEP)
+        previous = tokenizer.tokenize(part[-1])
+        input = "".join(part[:-1])
+
     tokenized_target = tokenizer.tokenize(p_target)
     param_dict = {'tokenizer': tokenizer, 'maxlen': maxlen, 'handle_exceed': handle_exceed,
                   'reserved_len': reserved_len}
@@ -36,10 +42,10 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
         else:
             ntext_arr = [n_target.strip()]
         for neg_text in ntext_arr:
-            yield get_feature_from_data, {**{'input': input, 'previous': [],
+            yield get_feature_from_data, {**{'input': input, 'previous': previous,
                                              'target': tokenized_target, 'ntarget': neg_text}, **param_dict}
     else:
-        yield get_feature_from_data, {**{'input': input, 'previous': [],
+        yield get_feature_from_data, {**{'input': input, 'previous': previous,
                                          'target': tokenized_target, 'ntarget': None}, **param_dict}
 
     # whole sentence masking

@@ -5,7 +5,7 @@ import nlp2
 import tfkit
 import torch
 from tqdm.auto import tqdm
-from transformers import BertTokenizer, AutoTokenizer, AutoModel
+from transformers import BertTokenizer, AutoTokenizer, AutoModel, get_linear_schedule_with_warmup
 from torch.utils import data
 from itertools import zip_longest
 import os
@@ -54,19 +54,15 @@ def parse_train_args(args):
     return input_arg, model_arg
 
 
-def optimizer(model, lr):
-    return torch.optim.AdamW(model.parameters(), lr=lr)
+def optimizer(model, lr, total_step):
+    optim = torch.optim.AdamW(model.parameters(), lr=lr)
+    scheduler = get_linear_schedule_with_warmup(optim, num_warmup_steps=500, num_training_steps=total_step)
+    return [optim, scheduler]
 
 
 def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger):
-    optims = []
+    optims_schs = []
     models = []
-    for i, m in enumerate(models_list):
-        model = torch.nn.DataParallel(m)
-        model.train()
-        models.append(model)
-        optims.append(optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0]))
-
     total_iter = 0
     t_loss = 0
 
@@ -74,9 +70,20 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
     total_iter_length = len(iters[0])
     end = False
     pbar = tqdm(total=total_iter_length)
+
+    for i, m in enumerate(models_list):
+        model = torch.nn.DataParallel(m)
+        model.train()
+        models.append(model)
+        optims_schs.append(
+            optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
+                      total_iter_length))
+
     while not end:
-        for (model, optim, mtag, batch) in zip(models, optims, models_tag, iters):
+        for (model, optim_sch, mtag, batch) in zip(models, optims_schs, models_tag, iters):
             train_batch = next(batch, None)
+            optim = optim_sch[0]
+            scheduler = optim_sch[1]
             if train_batch is not None:
                 loss = model(train_batch)
                 loss = loss / input_arg.get('grad_accum')
@@ -84,6 +91,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
                 if (total_iter + 1) % input_arg.get('grad_accum') == 0:
                     optim.step()
                     model.zero_grad()
+                    scheduler.step()
                 t_loss += loss.mean().item()
                 logger.write_metric("loss/step", loss.mean().item(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring

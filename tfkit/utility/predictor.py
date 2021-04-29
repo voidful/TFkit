@@ -125,7 +125,7 @@ class Predictor:
             for i in range(len(sequences)):
                 if tok.tok_sep(self.model.tokenizer) in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:-1]
-                slide_len = len(previous) + 1 if len(previous) > 0 else 0
+                slide_len = len(previous) if len(previous) > 0 else 0
                 sequences[i][0] = self.model.tokenizer.convert_tokens_to_string(sequences[i][0][slide_len:])
 
             result_dict = {
