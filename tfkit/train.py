@@ -56,7 +56,8 @@ def parse_train_args(args):
 
 def optimizer(model, lr, total_step):
     optim = torch.optim.AdamW(model.parameters(), lr=lr)
-    scheduler = get_linear_schedule_with_warmup(optim, num_warmup_steps=500, num_training_steps=total_step)
+    scheduler = get_linear_schedule_with_warmup(optim, num_warmup_steps=int(total_step * 0.05),
+                                                num_training_steps=total_step)
     return [optim, scheduler]
 
 
