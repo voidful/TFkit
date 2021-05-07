@@ -85,6 +85,13 @@ class TestEval(unittest.TestCase):
         for s in eval.cal_score('emf1'):
             self.assertAlmostEqual(s[1]['EM'], 0.3333333333)
 
+    def test_tokenize_text(self):
+        tokenizer = AutoTokenizer.from_pretrained('bert-base-cased')
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer, normalize_text=False)
+        self.assertEqual(eval.tokenize_text("How's this work"), "How's this work")
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer, normalize_text=True)
+        self.assertEqual(eval.tokenize_text("How's this work"), "how ' s this work")
+
     @pytest.mark.skip()
     def testNLG(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')

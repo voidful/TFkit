@@ -61,9 +61,9 @@ class Predictor:
                         if not tokens:
                             tokens = previous
                         feature_dict = \
-                        self.get_feature_from_data(self.model.tokenizer, self.model.maxlen, input, tokens,
-                                                   reserved_len=reserved_len,
-                                                   handle_exceed=handle_exceed)[-1]
+                            self.get_feature_from_data(self.model.tokenizer, self.model.maxlen, input, tokens,
+                                                       reserved_len=reserved_len,
+                                                       handle_exceed=handle_exceed)[-1]
                         # check input exceed
                         if len(tokens) >= self.model.maxlen or feature_dict['start'] >= self.model.maxlen:
                             exceed = True
@@ -126,7 +126,8 @@ class Predictor:
                 if tok.tok_sep(self.model.tokenizer) in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:-1]
                 slide_len = len(previous) if len(previous) > 0 else 0
-                sequences[i][0] = self.model.tokenizer.convert_tokens_to_string(sequences[i][0][slide_len:])
+                sequences[i][0] = self.model.tokenizer.decode(
+                    self.model.tokenizer.convert_tokens_to_ids(sequences[i][0][slide_len:]))
 
             result_dict = {
                 'label_map': sequences

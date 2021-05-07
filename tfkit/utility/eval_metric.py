@@ -48,20 +48,22 @@ def _f1_score(prediction, ground_truth):
 
 class EvalMetric:
 
-    def __init__(self, tokenizer, max_candidate=6):
+    def __init__(self, tokenizer, max_candidate=6, normalize_text=True):
         self.tasks = defaultdict(lambda: defaultdict(list))
         self.max_candidate = max_candidate
         self.tokenizer = tokenizer
         self.target_list = defaultdict(lambda: defaultdict(int))
+        self.normalize_text = normalize_text
 
     def tokenize_text(self, text):
-        text = self.tokenizer.convert_tokens_to_string(self.tokenizer.tokenize(text))
-        text = text.replace(tok.tok_sep(self.tokenizer), " ")
-        # return  _normalize_answer(text, task='others')  # remove punctuation
-        # keep punctuation
-        text = "".join(
-            (char if char.isalpha() or char == " " else " " + char + " ") for char in text)  # separate punctuation
-        text = ' '.join(text.split()).lower().strip()  # remove extra blank
+        text = self.tokenizer.decode(self.tokenizer.encode(text, add_special_tokens=False))
+        if self.normalize_text:
+            text = text.replace(tok.tok_sep(self.tokenizer), " ")
+            # return  _normalize_answer(text, task='others')  # remove punctuation
+            # keep punctuation
+            text = "".join(
+                (char if char.isalpha() or char == " " else " " + char + " ") for char in text)  # separate punctuation
+            text = ' '.join(text.split()).lower().strip()  # remove extra blank
         return text
 
     def add_record(self, ori_input, ori_predicted, ori_target, task='default'):
