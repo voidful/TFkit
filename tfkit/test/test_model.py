@@ -1,4 +1,3 @@
-import os
 import unittest
 
 from torch import Tensor
@@ -6,7 +5,7 @@ from transformers import BertTokenizer, AutoModel, AutoTokenizer
 
 import tfkit
 import timeit
-
+from tfkit.test import *
 
 class TestModel(unittest.TestCase):
 
@@ -348,12 +347,10 @@ class TestModel(unittest.TestCase):
         self.assertTrue(result)
 
     def testOnebyoneWithReservedLen(self):
-        ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../../"))
-        DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
-        for i in tfkit.model.onebyone.get_data_from_file(os.path.join(DATASET_DIR, 'generate.csv')):
+        for i in tfkit.model.onebyone.get_data_from_file(GEN_DATASET):
             tasks, task, input, [target, negative_text] = i
             input = input.strip()
             tokenized_target = tokenizer.tokenize(" ".join(target))
