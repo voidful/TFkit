@@ -1,81 +1,86 @@
 ## Task format
-All data will be in csv format   
-No header needed     
-Each token have to separate by space    
 
-### once
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/generate.csv)   
+### Classification
 
-Format:   
-`input, target`    
+!!! info 
+    #### multi-class classification:
+    Format: 
+    `input sentence,label`     
+    
+    Example:      
+    ```
+    Calotropis procera (ushaar) keratitis.,Not-Related
+    ```
+    
+    ####  multi-label classification
+    use `///` to separate each label.
+    
+    Format: 
+    `input sentence,label1///label2`  
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/classification.csv):      
+    ```
+    We report two cases of pseudoporphyria caused by naproxen and oxaprozin.,Related///METHODS
+    ``` 
 
-Example:     
-```
-"i go to school by bus","我 坐 巴 士 上 學"
-```
+### Text Generation
 
-### onebyone
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/generate.csv)   
+!!! info
+    Format:   
+    `input sentence, target sentence`
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/generation.csv):     
+    ```
+    Peter was a truck driver . He was running a little behind on schedule . Peter decided to run past the weigh station . He was stopped by a cop .,"Peter ended up running late and getting a fine ."
+    ```
 
-Format:    
-`input, target `    
+### Extractive Question Answering
 
-Example:    
-```
-"i go to school by bus","我 坐 巴 士 上 學"
-```
-### qa
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/qa.csv)   
+!!! info
+    Format:    
+    `input sentence with question, answer start position, answer end position`      
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/qa.csv):   
+    ```
+    Beyoncé announced a hiatus from her music ... <s> Who suggested the hiatus for Beyoncé?, 74,84
+    ```
 
-Format:    
-`input, start_pos, end_pos`      
+### Multiple-Choice Question Answering
 
-Example:   
-```
-"在 歐 洲 , 梵 語 的 學 術 研 究 , 由 德 國 學 者 陸 特 和 漢 斯 雷 頓 開 創 。 後 來 威 廉 · 瓊 斯 發 現 印 歐 語 系 , 也 要 歸 功 於 對 梵 語 的 研 究 。 此 外 , 梵 語 研 究 , 也 對 西 方 文 字 學 及 歷 史 語 言 學 的 發 展 , 貢 獻 不 少 。 1 7 8 6 年 2 月 2 日 , 亞 洲 協 會 在 加 爾 各 答 舉 行 。 會 中 , 威 廉 · 瓊 斯 發 表 了 下 面 這 段 著 名 的 言 論 : 「 梵 語 儘 管 非 常 古 老 , 構 造 卻 精 妙 絕 倫 : 比 希 臘 語 還 完 美 , 比 拉 丁 語 還 豐 富 , 精 緻 之 處 同 時 勝 過 此 兩 者 , 但 在 動 詞 詞 根 和 語 法 形 式 上 , 又 跟 此 兩 者 無 比 相 似 , 不 可 能 是 巧 合 的 結 果 。 這 三 種 語 言 太 相 似 了 , 使 任 何 同 時 稽 考 三 者 的 語 文 學 家 都 不 得 不 相 信 三 者 同 出 一 源 , 出 自 一 種 可 能 已 經 消 逝 的 語 言 。 基 於 相 似 的 原 因 , 儘 管 缺 少 同 樣 有 力 的 證 據 , 我 們 可 以 推 想 哥 德 語 和 凱 爾 特 語 , 雖 然 混 入 了 迥 然 不 同 的 語 彙 , 也 與 梵 語 有 著 相 同 的 起 源 ; 而 古 波 斯 語 可 能 也 是 這 一 語 系 的 子 裔 。 」 [Question] 印 歐 語 系 因 為 哪 一 門 語 言 而 被 發 現 ?",47,49
-```
+!!! info     
+    Input passage should include all available, $each choice must start with a mask token$  
+    choice id will be start from 0  
+    
+    Format:    
+    `input passage [MASK]choiceA [MASK]choiceB, 1`      
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/mcq.csv):   
+    ```
+    "I 'm sure many of you have seen Star Wars ... </s> What is the best title of the passage ? [MASK] What Is Human Cloning [MASK] How Does Human Cloning Happen [MASK] Human Cloning Is Wrong [MASK] Discussion On Human Cloning",2
+    ```
 
-### classify
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/classification.csv)   
+### Mask Language Modeling
 
-Format:        
-`input,target_0,target_1.....`       
-If some task have multiple label, use / to separate each label - label1/label2/label3         
+!!! info    
+    input sentence with mask, can be multiple     
+    target of each mask should be separate by blank     
+    Format:    
+    `input sentence with [MASK] [MASK],target_token target_token`      
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/mask.csv):   
+    ```
+    "how did i [MASK] [MASK]","get here"
+    ```
 
-Example:      
-```
-"The prospective ultrasound findings were correlated with the final diagnoses , laparotomy findings , and pathology findings .",outcome/other,1
-```
-### tagRow
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/tag_row.csv)   
+### Sequence Tagging
 
-Format:      
-`input, target`     
-
-Example:        
-```
-"在 歐 洲 , 梵 語 的 學 術 研 究 , 由 德 國 學 者 陸 特 和 漢 斯 雷 頓 開 創 。 後 來 威 廉 · 瓊 斯 發 現 印 歐 語 系 , 也 要 歸 功 於 對 梵 語 的 研 究 。 此 外 , 梵 語 研 究 , 也 對 西 方 文 字 學 及 歷 史 語 言 學 的 發 展 , 貢 獻 不 少 。 1 7 8 6 年 2 月 2 日 , 亞 洲 協 會 在 加 爾 各 答 舉 行 。 [SEP] 陸 特 和 漢 斯 雷 頓 開 創 了 哪 一 地 區 對 梵 語 的 學 術 研 究 ?",O A A O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O O
-```
-### tagCol
-[example file](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/tag_col.csv)   
-
-Format:      
-`input, target`       
-
-Example:         
-```
-別 O
-只 O
-能 R
-想 O
-自 O
-己 O
-， O
-想 M
-你 M
-周 O
-圍 O
-的 O
-人 O
-。 O
-```
+!!! info    
+    input sentence with blank between each word    
+    target label separate with blank, should be one to one to the input    
+    Format:     
+    `input sentence,tag tag`      
+    
+    [Example](https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/tag.csv):   
+    ```
+    "welcome to New York,O O B_place B_place"
+    ```

@@ -4,17 +4,16 @@ import unittest
 import tfkit
 from transformers import BertTokenizer, AutoTokenizer
 from tfkit.utility.dataset import LoadDataset
+from tfkit.test import *
 
 
 class TestDataLoader(unittest.TestCase):
-    ROOT_DIR = os.path.dirname(os.path.abspath(__file__ + "/../../"))
-    DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
-    def testTagRow(self):
-        for i in tfkit.tag.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'tag_row.csv')):
+    def testTag(self):
+        for i in tfkit.tag.get_data_from_file(TAG_DATASET):
             print(i)
         maxlen = 128
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'tag_row.csv'),
+        for i in LoadDataset(TAG_DATASET,
                              pretrained_config='voidful/albert_chinese_small',
                              get_data_from_file=tfkit.tag.get_data_from_file,
                              preprocessing_data=tfkit.tag.preprocessing_data,
@@ -23,47 +22,31 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['input']) == maxlen)
             self.assertTrue(len(i['target']) == maxlen)
 
-    def testTagCol(self):
-
-        for i in tfkit.tag.get_data_from_file_col(os.path.join(TestDataLoader.DATASET_DIR, 'tag_col.csv')):
-            print(i)
-        maxlen = 512
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'tag_col.csv'),
-                             pretrained_config='voidful/albert_chinese_small',
-                             get_data_from_file=tfkit.tag.get_data_from_file_col,
-                             preprocessing_data=tfkit.tag.preprocessing_data,
-                             input_arg={'maxlen': maxlen}):
-            self.assertTrue(len(i['input']) == 512)
-            self.assertTrue(len(i['target']) == 512)
-        #
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
                                                   target="O O O O O O O O O O", maxlen=5, separator=" ",
                                                   handle_exceed='slide')
-        for _ in feature:
-            print(_)
+        self.assertEqual(len(feature[0]['target']), 5)
 
         print("start_slice")
         feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
                                                   target="O O O O O O O O O O", maxlen=5, separator=" ",
                                                   handle_exceed='start_slice')
-        for _ in feature:
-            print(_)
+        self.assertEqual(feature[0]['pos'], [0, 4])
 
         print("end_slice")
         feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
                                                   target="O O O O O O O O O O", maxlen=5, separator=" ",
                                                   handle_exceed='end_slice')
-        for _ in feature:
-            print(_)
+        self.assertEqual(feature[0]['pos'], [6, 10])
 
     def testMask(self):
-        for i in tfkit.mask.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv')):
+        for i in tfkit.mask.get_data_from_file(MASK_DATASET):
             print("get_data_from_file", i)
             tfkit.mask.preprocessing_data(i, BertTokenizer.from_pretrained('voidful/albert_chinese_tiny'))
 
         maxlen = 512
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mask.csv'),
+        for i in LoadDataset(MASK_DATASET,
                              pretrained_config='voidful/albert_chinese_tiny',
                              get_data_from_file=tfkit.mask.get_data_from_file,
                              preprocessing_data=tfkit.mask.preprocessing_data,
@@ -73,11 +56,11 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) == maxlen)
 
     def testMCQ(self):
-        for i in tfkit.mcq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'mcq.csv')):
+        for i in tfkit.mcq.get_data_from_file(MCQ_DATASET):
             print("get_data_from_file", i)
 
         maxlen = 512
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'mcq.csv'),
+        for i in LoadDataset(MCQ_DATASET,
                              pretrained_config='voidful/albert_chinese_tiny',
                              get_data_from_file=tfkit.mcq.get_data_from_file,
                              preprocessing_data=tfkit.mcq.preprocessing_data,
@@ -87,10 +70,10 @@ class TestDataLoader(unittest.TestCase):
 
     def testOnce(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        for i in tfkit.once.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv')):
+        for i in tfkit.once.get_data_from_file(GEN_DATASET):
             print(i)
         maxlen = 512
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv'),
+        for i in LoadDataset(GEN_DATASET,
                              pretrained_config='voidful/albert_chinese_tiny',
                              get_data_from_file=tfkit.once.get_data_from_file,
                              preprocessing_data=tfkit.once.preprocessing_data,
@@ -98,15 +81,15 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
             print(len(i['target']))
-            self.assertTrue(len(i['input']) == 512)
-            self.assertTrue(len(i['target']) == 512)
+            self.assertEqual(maxlen, len(i['input']))
+            self.assertEqual(maxlen, len(i['target']))
 
     def testOnceCTC(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        for i in tfkit.oncectc.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        for i in tfkit.oncectc.get_data_from_file(GEN_DATASET):
             print(i)
-        maxlen = 10
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+        maxlen = 100
+        for i in LoadDataset(GEN_DATASET,
                              pretrained_config='voidful/albert_chinese_tiny',
                              get_data_from_file=tfkit.oncectc.get_data_from_file,
                              preprocessing_data=tfkit.oncectc.preprocessing_data,
@@ -116,8 +99,8 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
             print(i)
             print(len(i['target']))
-            self.assertTrue(len(i['input']) == maxlen)
-            self.assertTrue(len(i['target']) == maxlen)
+            self.assertEqual(maxlen, len(i['input']))
+            self.assertEqual(maxlen, len(i['target']))
 
     def testCLM(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -128,13 +111,13 @@ class TestDataLoader(unittest.TestCase):
                                                   reserved_len=3)[-1]
         print(feature)
 
-        for i in tfkit.clm.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        for i in tfkit.clm.get_data_from_file(GEN_DATASET):
             print(i)
 
-        maxlen = 10
+        maxlen = 100
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+            for i in LoadDataset(GEN_DATASET,
                                  pretrained_config='voidful/albert_chinese_tiny',
                                  get_data_from_file=tfkit.clm.get_data_from_file,
                                  preprocessing_data=tfkit.clm.preprocessing_data,
@@ -146,8 +129,8 @@ class TestDataLoader(unittest.TestCase):
                     self.assertTrue(i['ntarget'][start_pos] != -1)
                 else:
                     self.assertTrue(i['target'][start_pos] != -1)
-                self.assertTrue(len(i['input']) == maxlen)
-                self.assertTrue(len(i['target']) == maxlen)
+                self.assertEqual(maxlen, len(i['input']))
+                self.assertEqual(maxlen, len(i['target']))
 
     def testOnebyone(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
@@ -159,13 +142,13 @@ class TestDataLoader(unittest.TestCase):
         print(feature)
         self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
 
-        for i in tfkit.onebyone.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        for i in tfkit.onebyone.get_data_from_file(GEN_DATASET):
             print(i)
 
-        maxlen = 10
+        maxlen = 100
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+            for i in LoadDataset(GEN_DATASET,
                                  pretrained_config='voidful/albert_chinese_tiny',
                                  get_data_from_file=tfkit.onebyone.get_data_from_file,
                                  preprocessing_data=tfkit.onebyone.preprocessing_data,
@@ -177,15 +160,16 @@ class TestDataLoader(unittest.TestCase):
                     self.assertTrue(i['ntarget'][start_pos] != -1)
                 else:
                     self.assertTrue(i['target'][start_pos] != -1)
-                self.assertTrue(len(i['input']) == maxlen)
-                self.assertTrue(len(i['target']) == maxlen)
+
+                self.assertEqual(maxlen, len(i['input']))
+                self.assertEqual(maxlen, len(i['target']))
 
     def testGPT(self):
         tokenizer = AutoTokenizer.from_pretrained('openai-gpt')
         maxlen = 512
         for likelihood in ['none', 'neg', 'pos', 'both']:
             output = []
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv'),
+            for i in LoadDataset(GEN_DATASET,
                                  pretrained_config='openai-gpt',
                                  get_data_from_file=tfkit.onebyone.get_data_from_file,
                                  preprocessing_data=tfkit.onebyone.preprocessing_data,
@@ -196,40 +180,26 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.convert_tokens_to_string(output) + "\n")
 
     def testClassifier(self):
-        for i in tfkit.clas.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv')):
+        for i in tfkit.clas.get_data_from_file(CLAS_DATASET):
             print(i)
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'classification.csv'),
+        for i in LoadDataset(CLAS_DATASET,
                              pretrained_config='voidful/albert_chinese_small',
                              get_data_from_file=tfkit.clas.get_data_from_file,
                              preprocessing_data=tfkit.clas.preprocessing_data):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
 
-        # multi-label data
-        for i in tfkit.clas.get_data_from_file(
-                os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv')):
-            print(i)
-
-        for i in LoadDataset(
-                os.path.join(TestDataLoader.DATASET_DIR, 'multi_label_classification.csv'),
-                pretrained_config='voidful/albert_chinese_small',
-                get_data_from_file=tfkit.clas.get_data_from_file,
-                preprocessing_data=tfkit.clas.preprocessing_data):
-            print(i)
-            self.assertTrue(len(i['input']) <= 512)
-            self.assertTrue(len(i['target']) < 512)
-
     def testQA(self):
-        for i in tfkit.qa.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv')):
+        for i in tfkit.qa.get_data_from_file(QA_DATASET):
             print(i)
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
+        for i in LoadDataset(QA_DATASET,
                              pretrained_config='voidful/albert_chinese_small',
                              get_data_from_file=tfkit.qa.get_data_from_file,
                              preprocessing_data=tfkit.qa.preprocessing_data):
             print(i)
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
-        for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
+        for i in LoadDataset(QA_DATASET,
                              pretrained_config='voidful/albert_chinese_tiny',
                              get_data_from_file=tfkit.qa.get_data_from_file,
                              preprocessing_data=tfkit.qa.preprocessing_data):
@@ -237,15 +207,15 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) == 2)
 
     def testLen(self):
-        ds = LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
+        ds = LoadDataset(QA_DATASET,
                          pretrained_config='voidful/albert_chinese_small',
                          get_data_from_file=tfkit.qa.get_data_from_file,
                          preprocessing_data=tfkit.qa.preprocessing_data)
         old_len = ds.__len__()
-        ds.increase_with_sampling(10)
-        self.assertTrue(ds.__len__() == old_len)
+        ds.increase_with_sampling(2)
+        self.assertEqual(old_len, ds.__len__())
 
-        ds = LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'qa.csv'),
+        ds = LoadDataset(QA_DATASET,
                          pretrained_config='voidful/albert_chinese_small',
                          get_data_from_file=tfkit.qa.get_data_from_file,
                          preprocessing_data=tfkit.qa.preprocessing_data)
@@ -268,13 +238,13 @@ class TestDataLoader(unittest.TestCase):
                                                       reserved_len=3)[-1]
         print("feature", feature)
 
-        for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'generate.csv')):
+        for i in tfkit.seq2seq.get_data_from_file(GEN_DATASET):
             print("data", i)
 
         maxlen = 512
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
-            for i in LoadDataset(os.path.join(TestDataLoader.DATASET_DIR, 'gen_long.csv'),
+            for i in LoadDataset(GEN_DATASET,
                                  pretrained_config='facebook/bart-base',
                                  get_data_from_file=tfkit.seq2seq.get_data_from_file,
                                  preprocessing_data=tfkit.seq2seq.preprocessing_data,
@@ -287,7 +257,7 @@ class TestDataLoader(unittest.TestCase):
     def testSeq2seqWithPrev(self):
         tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
         maxlen = 10
-        for i in tfkit.seq2seq.get_data_from_file(os.path.join(TestDataLoader.DATASET_DIR, 'gen_eng.csv')):
+        for i in tfkit.seq2seq.get_data_from_file(GEN_DATASET):
             print("data", i)
             for j in tfkit.seq2seq.preprocessing_data(i, tokenizer, maxlen=maxlen):
                 print(j)

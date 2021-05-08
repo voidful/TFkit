@@ -19,142 +19,111 @@
     </a>
 </p>
 
-
-TFKit lets everyone make use of  transformer architecture on many tasks and models in small change of config.   
-At the same time, it can do multi-task multi-model learning, and can introduce its own data sets and tasks through simple modifications.    
-
-## Feature
-- One-click replacement of different pre-trained models
-- Support multi-model and multi-task
-- Classifier with multiple labels and multiple classifications
-- Unify input formats for different tasks
-- Separation of data reading and model architecture
-- Support various loss function and indicators
-
-
-## Supplement
-- [Model list](https://huggingface.co/models): Support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert/...   
-- [NLPrep](https://github.com/voidful/NLPrep): download and preprocessing data in one line     
-- [nlp2go](https://github.com/voidful/nlp2go): create demo api as quickly as possible.
-
-
-## Quick Start
+## Getting started
 
 ### Installing via pip
 ```bash
 pip install tfkit
 ```
-### Running TFKit to train a ner model
-install nlprep and nlp2go      
-```bash
-pip install nlprep  nlp2go -U
+
+* You can use tfkit for model training and evaluation with `tfkit-train` and `tfkit-eval`.
+
+### Running TFKit on the task you wanted
+
+### First step - prepare your dataset
+The key to combine different task together is to make different task with same data format.
+
+**notice**  
+
+* All data will be in csv format - tfkit will use **csv** for all task, normally it will have two columns, first columns is the input of models, the second column is the output of models.
+* Plane text with no tokenization - there is no need to tokenize text before training, or do re-calculating for tokenization, tfkit will handle it for you.
+* No header is needed.
+
+For example, a sentiment classification dataset will be like:
+```csv
+how dare you,negative
 ```
-download dataset using nlprep
+
+!!! hint 
+    For the detail and example format on different, you can check [here](tasks/) 
+
+!!! hint 
+    nlprep is a tool for data split/preprocessing/argumentation, it can help you to create ready to train data for tfkit, check [here](https://github.com/voidful/NLPrep)
+
+### Second step - model training
+
+Using `tfkit-train` for model training, you can use 
+
+Before training a model, there is something you need to clarify:
+
+- `--model` what is your model to handle this task? check [here](models/) to the detail of models.
+- `--config` what pretrained model you want to use？ you can go [https://huggingface.co/models](https://huggingface.co/models) to search for available pretrained models.
+- `--train` and `--test` training and testing dataset path, which is in csv format.
+- `--savedir` model saving directory, default will be in '/checkpoints' folder
+  
+you can leave the rest to the default config, or use `tfkit-train -h` to more configuration.
+
+An example about training a sentiment classifier:
+```bash
+tfkit-train \
+--model clas \
+--config xlm-roberta-base \
+--train training_data.csv \
+--test testing_data.csv \
+--lr 4e-5 \
+--maxlen 384 \
+--epoch 10 \
+--savedir roberta_sentiment_classificer
+```
+
+#### Third step - model eval
+
+Using `tfkit-eval` for model evaluation.   
+- `--model` saved model's path.  
+- `--metric` the evaluation metric eg: emf1, nlg(BLEU/ROUGE), clas(confusion matrix).  
+- `--valid` validation data, also in csv format.  
+- `--panel` a input panel for model specific parameter.  
+
+for more configuration detail, you may use `tfkit-eval -h`.
+
+After evaluate, It will print evaluate result in your console, and also generate three report for debugging.  
+- `*_score.csv` overall score, it is the copy of the console result.  
+- `*each_data_score.csv` score on each data, 3 column `predicted,targets,score`, ranked from the lowest to the highest.  
+- `*predicted.csv` csv file include 3 column `input,predicted,targets`.  
+
+!!! hint 
+    nlp2go is a tool for demonstration, with CLI and Restful interface. check [here](https://github.com/voidful/nlp2go) 
+
+### Example
+#### Use distilbert to train NER Model
 ```bash
 nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen 512 --model tag --config distilbert-base-multilingual-cased 
+nlp2go --model ./checkpoints/3.pt  --cli     
 ```
-train model with albert
+
+#### Use Albert to train DRCD Model Model
 ```bash
-tfkit-train --batch 20 \
---epoch 5 \
---lr 5e-5 \
---train ./clner_row/train.csv \
---test ./clner_row/test.csv \
---maxlen 512 \
---model tagRow \
---savedir ./albert_ner \
---config voidful/albert_chinese_small
+nlprep --dataset qa_zh --outdir ./zhqa/   
+tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
+nlp2go --model ./drcd_qa_model/3.pt --cli 
 ```
-eval model
-```bash
-tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation.csv --metric clas
-```     
-result
-```text
-Task : default report 
-TASK:  default 0
-                precision    recall  f1-score   support
 
-    B_Abstract       0.00      0.00      0.00         1
-    B_Location       1.00      1.00      1.00         1
-      B_Metric       1.00      1.00      1.00         1
-B_Organization       0.00      0.00      0.00         1
-      B_Person       1.00      1.00      1.00         1
-    B_Physical       0.00      0.00      0.00         1
-       B_Thing       1.00      1.00      1.00         1
-        B_Time       1.00      1.00      1.00         1
-    I_Abstract       1.00      1.00      1.00         1
-    I_Location       1.00      1.00      1.00         1
-      I_Metric       1.00      1.00      1.00         1
-I_Organization       0.00      0.00      0.00         1
-      I_Person       1.00      1.00      1.00         1
-    I_Physical       0.00      0.00      0.00         1
-       I_Thing       1.00      1.00      1.00         1
-        I_Time       1.00      1.00      1.00         1
-             O       1.00      1.00      1.00         1
-
-     micro avg       1.00      0.71      0.83        17
-     macro avg       0.71      0.71      0.71        17
-  weighted avg       0.71      0.71      0.71        17
-   samples avg       1.00      0.71      0.83        17
-```    
-host prediction service
+#### Use Albert to train both DRCD Model and NER Model
 ```bash
-nlp2go --model ./albert_ner/3.pt --api_path ner
+nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+nlprep --dataset qa_zh --outdir ./zhqa/ 
+tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --model tag qa --config voidful/albert_chinese_small
+nlp2go --model ./mt-qaner/3.pt --cli 
 ```
 
 **You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ?usp=sharing)**
 
-
-## Overview
-### Train
-```
-$ tfkit-train
-Run training
-
-arguments:
-  --train TRAIN [TRAIN ...]     train dataset path
-  --test TEST [TEST ...]        test dataset path
-  --config CONFIG               distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small
-  --model {once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} [{once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} ...]
-                                model task
-  --savedir SAVEDIR     model saving dir, default /checkpoints
-optional arguments:
-  -h, --help            show this help message and exit
-  --batch BATCH         batch size, default 20
-  --lr LR [LR ...]      learning rate, default 5e-5
-  --epoch EPOCH         epoch, default 10
-  --maxlen MAXLEN       max tokenized sequence length, default 368
-  --lossdrop            loss dropping for text generation
-  --tag TAG [TAG ...]   tag to identity task in multi-task
-  --seed SEED           random seed, default 609
-  --worker WORKER       number of worker on pre-processing, default 8
-  --grad_accum          gradient accumulation, default 1
-  --tensorboard         Turn on tensorboard graphing
-  --resume RESUME       resume training
-  --cache               cache training data
-
-```
-### Eval  
-```
-$ tfkit-eval
-Run evaluation on different benchmark
-arguments:
-  --model MODEL             model path
-  --metric {emf1,nlg,clas}  evaluate metric
-  --valid VALID             evaluate data path
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --print               print each pair of evaluate data
-  --enable_arg_panel    enable panel to input argument
-
-```
-
 ## Contributing
 Thanks for your interest.There are many ways to contribute to this project. Get started [here](https://github.com/voidful/tfkit/blob/master/CONTRIBUTING.md).
 
-## License ![PyPI - License](https://img.shields.io/github/license/voidful/tfkit)
+## License 
+![PyPI - License](https://img.shields.io/github/license/voidful/tfkit)
 
 * [License](https://github.com/voidful/tfkit/blob/master/LICENSE)
 

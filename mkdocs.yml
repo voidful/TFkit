@@ -10,10 +10,10 @@ copyright: Copyright &copy; Voidful
 nav:
   - Home: index.md
   - Installation: installation.md
-  - Usage: usage.md
-  - Task: task.md
+  - Tasks: tasks.md
+  - Models: models.md
+  - Structure: structure.md
   - Benchmark: benchmark.md
-#  - Class: class.md
 
 plugins:
   - search
@@ -24,8 +24,12 @@ plugins:
           setup_commands:
             - import sys
             - sys.path.append("docs")
+          rendering:
+            show_root_heading: True
+            heading_level: 3
+            show_source: false
       watch:
-        - nlprep
+        - tfkit
 
 theme:
   name: material
@@ -48,6 +52,8 @@ extra:
       link: https://twitter.com/voidful_stack
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/voidful/
+  version:
+    provider: mike
 
 # Google Analytics
 google_analytics:

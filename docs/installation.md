@@ -9,10 +9,11 @@ pip install tfkit
 ```bash
 git clone https://github.com/voidful/tfkit.git
 python setup.py install
+# or
+pip install .
 ```
 
 ## Running tfkit
-
 Model you've installed tfkit, you can run with  
 
 ### pip installed version: 

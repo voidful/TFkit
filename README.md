@@ -28,140 +28,36 @@
     </a>
 </p>
 
+## What is it
 
-TFKit lets everyone make use of  transformer architecture on many tasks and models in small change of config.   
-At the same time, it can do multi-task multi-model learning, and can introduce its own data sets and tasks through simple modifications.    
+TFKit is a deep natural language process framework for classification/tagging/question answering/embedding study and language generation.  
+It leverages the use of transformers on many tasks with different models in this all-in-one framework.   
+All you need is a little change of config.  
 
-## Feature
-- One-click replacement of different pre-trained models
-- Support multi-model and multi-task
-- Classifier with multiple labels and multiple classifications
-- Unify input formats for different tasks
-- Separation of data reading and model architecture
-- Support various loss function and indicators
+## Task Supported
+|  |  |
+|-|-|
+| Classification  | Multi-class |
+| Classification  | Multi-label |
+| Question Answering  | Extractive - SQuAD like |
+| Question Answering  | Multiple-choice |
+| Tagging  | Sequence level |
+| Tagging  | Sequence level with crf |
+| Text Generation | Seq2seq models - BART/T5/Bert2Bert... |
+| Text Generation | Causal LM models - GPT/GPT2... |
+| Text Generation | Once models |
+| Text Generation | Once models  with ctc loss |
+| Text Generation | Onebyone models |
+| Self-supervise Learning | Mask LM |
 
+# Getting Started
+Learn more from the [document](https://voidful.github.io/TFkit/).  
 
 ## Supplement
-- [Model list](https://huggingface.co/models): Support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert/...   
-- [NLPrep](https://github.com/voidful/NLPrep): download and preprocessing data in one line     
+- [transformers models list](https://huggingface.co/models): you can find any pretrained models here   
+- [nlprep](https://github.com/voidful/NLPrep): download and preprocessing data in one line     
 - [nlp2go](https://github.com/voidful/nlp2go): create demo api as quickly as possible.
 
-# Documentation
-Learn more from the [docs](https://voidful.github.io/TFkit/).  
-
-
-## Quick Start
-
-### Installing via pip
-```bash
-pip install tfkit
-```
-### Running TFKit to train a ner model
-install nlprep and nlp2go      
-```bash
-pip install nlprep  nlp2go -U
-```
-download dataset using nlprep
-```bash
-nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
-```
-train model with albert
-```bash
-tfkit-train --batch 20 \
---epoch 5 \
---lr 5e-5 \
---train ./clner_row/clner-train.csv \
---test ./clner_row/clner-test.csv \
---maxlen 512 \
---model tagRow \
---savedir ./albert_ner \
---config voidful/albert_chinese_small
-```
-eval model
-```bash
-tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation.csv --metric clas
-```     
-result
-```text
-Task : default report 
-TASK:  default 0
-                precision    recall  f1-score   support
-
-    B_Abstract       0.00      0.00      0.00         1
-    B_Location       1.00      1.00      1.00         1
-      B_Metric       1.00      1.00      1.00         1
-B_Organization       0.00      0.00      0.00         1
-      B_Person       1.00      1.00      1.00         1
-    B_Physical       0.00      0.00      0.00         1
-       B_Thing       1.00      1.00      1.00         1
-        B_Time       1.00      1.00      1.00         1
-    I_Abstract       1.00      1.00      1.00         1
-    I_Location       1.00      1.00      1.00         1
-      I_Metric       1.00      1.00      1.00         1
-I_Organization       0.00      0.00      0.00         1
-      I_Person       1.00      1.00      1.00         1
-    I_Physical       0.00      0.00      0.00         1
-       I_Thing       1.00      1.00      1.00         1
-        I_Time       1.00      1.00      1.00         1
-             O       1.00      1.00      1.00         1
-
-     micro avg       1.00      0.71      0.83        17
-     macro avg       0.71      0.71      0.71        17
-  weighted avg       0.71      0.71      0.71        17
-   samples avg       1.00      0.71      0.83        17
-```    
-host prediction service
-```bash
-nlp2go --model ./albert_ner/3.pt --api_path ner
-```
-
-**You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ?usp=sharing)**
-
-
-## Overview
-### Train
-```
-$ tfkit-train
-Run training
-
-arguments:
-  --train TRAIN [TRAIN ...]     train dataset path
-  --test TEST [TEST ...]        test dataset path
-  --config CONFIG               distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small
-  --model {once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} [{once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} ...]
-                                model task
-  --savedir SAVEDIR     model saving dir, default /checkpoints
-optional arguments:
-  -h, --help            show this help message and exit
-  --batch BATCH         batch size, default 20
-  --lr LR [LR ...]      learning rate, default 5e-5
-  --epoch EPOCH         epoch, default 10
-  --maxlen MAXLEN       max tokenized sequence length, default 368
-  --lossdrop            loss dropping for text generation
-  --tag TAG [TAG ...]   tag to identity task in multi-task
-  --seed SEED           random seed, default 609
-  --worker WORKER       number of worker on pre-processing, default 8
-  --grad_accum          gradient accumulation, default 1
-  --tensorboard         Turn on tensorboard graphing
-  --resume RESUME       resume training
-  --cache               cache training data
-
-```
-### Eval  
-```
-$ tfkit-eval
-Run evaluation on different benchmark
-arguments:
-  --model MODEL             model path
-  --metric {emf1,nlg,clas}  evaluate metric
-  --valid VALID             evaluate data path
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --print               print each pair of evaluate data
-  --enable_arg_panel    enable panel to input argument
-
-```
 
 ## Contributing
 Thanks for your interest.There are many ways to contribute to this project. Get started [here](https://github.com/voidful/tfkit/blob/master/CONTRIBUTING.md).
