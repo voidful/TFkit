@@ -9,13 +9,14 @@
         <meta name="description" content="🤖📇 Transformers kit - End2End toolkit for NLP task">
       
       
-        <link rel="canonical" href="https://github.com/voidful/tfkit/">
-      
       
         <meta name="author" content="Voidful">
       
-      <link rel="shortcut icon" href="img/tfkit-icon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-6.1.0">
+      
+        <link rel="canonical" href="https://github.com/voidful/tfkit/">
+      
+      <link rel="icon" href="img/tfkit-icon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.4">
     
     
       
@@ -23,10 +24,10 @@
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.bc7e593a.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.bde7dde4.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.ab28b872.min.css">
+        <link rel="stylesheet" href="assets/stylesheets/palette.ef6f36e2.min.css">
         
           
           
@@ -38,9 +39,9 @@
     
       
         
-        <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700%7CRoboto+Mono&display=fallback">
-        <style>body,input{font-family:"Roboto",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono",SFMono-Regular,Consolas,Menlo,monospace}</style>
+        <style>:root{--md-text-font-family:"Roboto";--md-code-font-family:"Roboto Mono"}</style>
       
     
     
@@ -48,7 +49,7 @@
     
       
         
-<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-127062540-5","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){if(this.value){var e=document.location.pathname;ga("send","pageview",e+"?q="+this.value)}})}),document.addEventListener("DOMContentSwitch",function(){ga("send","pageview",document.location.pathname)})</script>
+<script>window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)},ga.l=+new Date,ga("create","UA-127062540-5","auto"),ga("set","anonymizeIp",!0),ga("send","pageview"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){var e;this.value&&(e=document.location.pathname,ga("send","pageview",e+"?q="+this.value))}),"undefined"!=typeof location$&&location$.subscribe(function(e){ga("send","pageview",e.pathname)})})</script>
 <script async src="https://www.google-analytics.com/analytics.js"></script>
       
     
@@ -62,15 +63,17 @@
     
     
     <body dir="ltr" data-md-color-scheme="" data-md-color-primary="blue-grey" data-md-color-accent="blue-grey">
-      
   
+    
+    <script>function __prefix(e){return new URL(".",location).pathname+"."+e}function __get(e,t=localStorage){return JSON.parse(t.getItem(__prefix(e)))}</script>
+    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
         
-        <a href="#feature" class="md-skip">
+        <a href="#getting-started" class="md-skip">
           Skip to content
         </a>
       
@@ -79,48 +82,50 @@
       
     </div>
     
-      
-
-<header class="md-header" data-md-component="header">
-  <nav class="md-header-nav md-grid" aria-label="Header">
-    <a href="https://github.com/voidful/tfkit" title="tfkit" class="md-header-nav__button md-logo" aria-label="tfkit">
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="tfkit" class="md-header__button md-logo" aria-label="tfkit" data-md-component="logo">
       
   <img src="img/tfkit-icon.png" alt="logo">
 
     </a>
-    <label class="md-header-nav__button md-icon" for="__drawer">
+    <label class="md-header__button md-icon" for="__drawer">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
     </label>
-    <div class="md-header-nav__title" data-md-component="header-title">
-      
-        <div class="md-header-nav__ellipsis">
-          <span class="md-header-nav__topic md-ellipsis">
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
             tfkit
           </span>
-          <span class="md-header-nav__topic md-ellipsis">
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
             
               Home
             
           </span>
         </div>
-      
+      </div>
     </div>
     
-      <label class="md-header-nav__button md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
       </label>
       
 <div class="md-search" data-md-component="search" role="dialog">
   <label class="md-search__overlay" for="__search"></label>
   <div class="md-search__inner" role="search">
     <form class="md-search__form" name="search">
-      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
       <label class="md-search__icon md-icon" for="__search">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0116 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 019.5 16 6.5 6.5 0 013 9.5 6.5 6.5 0 019.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
       </label>
-      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" data-md-component="search-reset" tabindex="-1">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
       </button>
     </form>
     <div class="md-search__output">
@@ -137,12 +142,12 @@
 </div>
     
     
-      <div class="md-header-nav__source">
+      <div class="md-header__source">
         
-<a href="https://github.com/voidful/tfkit/" title="Go to repository" class="md-source">
+<a href="https://github.com/voidful/tfkit/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     tfkit
@@ -162,14 +167,16 @@
         <div class="md-main__inner md-grid">
           
             
-              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
 
+
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="https://github.com/voidful/tfkit" title="tfkit" class="md-nav__button md-logo" aria-label="tfkit">
+    <a href="." title="tfkit" class="md-nav__button md-logo" aria-label="tfkit" data-md-component="logo">
       
   <img src="img/tfkit-icon.png" alt="logo">
 
@@ -179,10 +186,10 @@
   
     <div class="md-nav__source">
       
-<a href="https://github.com/voidful/tfkit/" title="Go to repository" class="md-source">
+<a href="https://github.com/voidful/tfkit/" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05L244 40.45a28.87 28.87 0 00-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 01-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 000 40.81l195.61 195.6a28.86 28.86 0 0040.8 0l194.69-194.69a28.86 28.86 0 000-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     tfkit
@@ -197,24 +204,28 @@
       
 
   
-
-
-  <li class="md-nav__item md-nav__item--active">
+  
     
-    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Home
-        <span class="md-nav__icon md-icon"></span>
-      </label>
-    
-    <a href="." class="md-nav__link md-nav__link--active">
-      Home
-    </a>
-    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
       
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Home
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        Home
+      </a>
+      
+        
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
   
   
   
@@ -222,28 +233,14 @@
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#feature" class="md-nav__link">
-    Feature
+  <a href="#getting-started" class="md-nav__link">
+    Getting started
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supplement" class="md-nav__link">
-    Supplement
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    Quick Start
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Start">
+    <nav class="md-nav" aria-label="Getting started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -254,8 +251,30 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#running-tfkit-to-train-a-ner-model" class="md-nav__link">
-    Running TFKit to train a ner model
+  <a href="#running-tfkit-on-the-task-you-wanted" class="md-nav__link">
+    Running TFKit on the task you wanted
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-step-prepare-your-dataset" class="md-nav__link">
+    First step - prepare your dataset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#second-step-model-training" class="md-nav__link">
+    Second step - model training
+  </a>
+  
+    <nav class="md-nav" aria-label="Second step - model training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#third-step-model-eval" class="md-nav__link">
+    Third step - model eval
   </a>
   
 </li>
@@ -264,26 +283,38 @@
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
   </a>
   
-    <nav class="md-nav" aria-label="Overview">
+    <nav class="md-nav" aria-label="Example">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#train" class="md-nav__link">
-    Train
+  <a href="#use-distilbert-to-train-ner-model" class="md-nav__link">
+    Use distilbert to train NER Model
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#eval" class="md-nav__link">
-    Eval
+  <a href="#use-albert-to-train-drcd-model-model" class="md-nav__link">
+    Use Albert to train DRCD Model Model
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-albert-to-train-both-drcd-model-and-ner-model" class="md-nav__link">
+    Use Albert to train both DRCD Model and NER Model
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -316,56 +347,84 @@
     </ul>
   
 </nav>
-    
-  </li>
+      
+    </li>
+  
 
     
       
       
       
 
-
-  <li class="md-nav__item">
-    <a href="installation/" class="md-nav__link">
-      Installation
-    </a>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item">
-    <a href="usage/" class="md-nav__link">
-      Usage
-    </a>
-  </li>
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="installation/" class="md-nav__link">
+        Installation
+      </a>
+    </li>
+  
 
     
       
       
       
 
-
-  <li class="md-nav__item">
-    <a href="task/" class="md-nav__link">
-      Task
-    </a>
-  </li>
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="tasks/" class="md-nav__link">
+        Tasks
+      </a>
+    </li>
+  
 
     
       
       
       
 
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="models/" class="md-nav__link">
+        Models
+      </a>
+    </li>
+  
 
-  <li class="md-nav__item">
-    <a href="benchmark/" class="md-nav__link">
-      Benchmark
-    </a>
-  </li>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="structure/" class="md-nav__link">
+        Structure
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="benchmark/" class="md-nav__link">
+        Benchmark
+      </a>
+    </li>
+  
 
     
   </ul>
@@ -375,7 +434,8 @@
               </div>
             
             
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -383,32 +443,19 @@
   
   
   
+  
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
-    <ul class="md-nav__list" data-md-scrollfix>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#feature" class="md-nav__link">
-    Feature
+  <a href="#getting-started" class="md-nav__link">
+    Getting started
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supplement" class="md-nav__link">
-    Supplement
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    Quick Start
-  </a>
-  
-    <nav class="md-nav" aria-label="Quick Start">
+    <nav class="md-nav" aria-label="Getting started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -419,8 +466,30 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#running-tfkit-to-train-a-ner-model" class="md-nav__link">
-    Running TFKit to train a ner model
+  <a href="#running-tfkit-on-the-task-you-wanted" class="md-nav__link">
+    Running TFKit on the task you wanted
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-step-prepare-your-dataset" class="md-nav__link">
+    First step - prepare your dataset
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#second-step-model-training" class="md-nav__link">
+    Second step - model training
+  </a>
+  
+    <nav class="md-nav" aria-label="Second step - model training">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#third-step-model-eval" class="md-nav__link">
+    Third step - model eval
   </a>
   
 </li>
@@ -429,26 +498,38 @@
     </nav>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    Overview
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
   </a>
   
-    <nav class="md-nav" aria-label="Overview">
+    <nav class="md-nav" aria-label="Example">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#train" class="md-nav__link">
-    Train
+  <a href="#use-distilbert-to-train-ner-model" class="md-nav__link">
+    Use distilbert to train NER Model
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#eval" class="md-nav__link">
-    Eval
+  <a href="#use-albert-to-train-drcd-model-model" class="md-nav__link">
+    Use Albert to train DRCD Model Model
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-albert-to-train-both-drcd-model-and-ner-model" class="md-nav__link">
+    Use Albert to train both DRCD Model and NER Model
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -486,7 +567,7 @@
               </div>
             
           
-          <div class="md-content">
+          <div class="md-content" data-md-component="content">
             <article class="md-content__inner md-typeset">
               
                 
@@ -518,126 +599,95 @@
         <img alt="Last Commit" src="https://img.shields.io/github/last-commit/voidful/tfkit">
     </a>
 </p></p>
-<p>TFKit lets everyone make use of  transformer architecture on many tasks and models in small change of config. <br />
-At the same time, it can do multi-task multi-model learning, and can introduce its own data sets and tasks through simple modifications.    </p>
-<h2 id="feature">Feature<a class="headerlink" href="#feature" title="Permanent link">&para;</a></h2>
-<ul>
-<li>One-click replacement of different pre-trained models</li>
-<li>Support multi-model and multi-task</li>
-<li>Classifier with multiple labels and multiple classifications</li>
-<li>Unify input formats for different tasks</li>
-<li>Separation of data reading and model architecture</li>
-<li>Support various loss function and indicators</li>
-</ul>
-<h2 id="supplement">Supplement<a class="headerlink" href="#supplement" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="https://huggingface.co/models">Model list</a>: Support Bert/GPT/GPT2/XLM/XLNet/RoBERTa/CTRL/ALBert/...   </li>
-<li><a href="https://github.com/voidful/NLPrep">NLPrep</a>: download and preprocessing data in one line     </li>
-<li><a href="https://github.com/voidful/nlp2go">nlp2go</a>: create demo api as quickly as possible.</li>
-</ul>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<h2 id="getting-started">Getting started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
 <h3 id="installing-via-pip">Installing via pip<a class="headerlink" href="#installing-via-pip" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>pip install tfkit
 </code></pre></div>
 
-<h3 id="running-tfkit-to-train-a-ner-model">Running TFKit to train a ner model<a class="headerlink" href="#running-tfkit-to-train-a-ner-model" title="Permanent link">&para;</a></h3>
-<p>install nlprep and nlp2go    <br />
-<div class="highlight"><pre><span></span><code>pip install nlprep  nlp2go -U
-</code></pre></div>
-download dataset using nlprep
-<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
-</code></pre></div>
-train model with albert
-<div class="highlight"><pre><span></span><code>tfkit-train --batch <span class="m">20</span> <span class="se">\</span>
---epoch <span class="m">5</span> <span class="se">\</span>
---lr 5e-5 <span class="se">\</span>
---train ./clner_row/train.csv <span class="se">\</span>
---test ./clner_row/test.csv <span class="se">\</span>
---maxlen <span class="m">512</span> <span class="se">\</span>
---model tagRow <span class="se">\</span>
---savedir ./albert_ner <span class="se">\</span>
---config voidful/albert_chinese_small
-</code></pre></div>
-eval model
-<div class="highlight"><pre><span></span><code>tfkit-eval --model ./albert_ner/3.pt --valid ./clner_row/validation.csv --metric clas
-</code></pre></div>
-result
-<div class="highlight"><pre><span></span><code>Task : default report 
-TASK:  default 0
-                precision    recall  f1-score   support
-
-    B_Abstract       0.00      0.00      0.00         1
-    B_Location       1.00      1.00      1.00         1
-      B_Metric       1.00      1.00      1.00         1
-B_Organization       0.00      0.00      0.00         1
-      B_Person       1.00      1.00      1.00         1
-    B_Physical       0.00      0.00      0.00         1
-       B_Thing       1.00      1.00      1.00         1
-        B_Time       1.00      1.00      1.00         1
-    I_Abstract       1.00      1.00      1.00         1
-    I_Location       1.00      1.00      1.00         1
-      I_Metric       1.00      1.00      1.00         1
-I_Organization       0.00      0.00      0.00         1
-      I_Person       1.00      1.00      1.00         1
-    I_Physical       0.00      0.00      0.00         1
-       I_Thing       1.00      1.00      1.00         1
-        I_Time       1.00      1.00      1.00         1
-             O       1.00      1.00      1.00         1
-
-     micro avg       1.00      0.71      0.83        17
-     macro avg       0.71      0.71      0.71        17
-  weighted avg       0.71      0.71      0.71        17
-   samples avg       1.00      0.71      0.83        17
-</code></pre></div>
-host prediction service
-<div class="highlight"><pre><span></span><code>nlp2go --model ./albert_ner/3.pt --api_path ner
+<ul>
+<li>You can use tfkit for model training and evaluation with <code>tfkit-train</code> and <code>tfkit-eval</code>.</li>
+</ul>
+<h3 id="running-tfkit-on-the-task-you-wanted">Running TFKit on the task you wanted<a class="headerlink" href="#running-tfkit-on-the-task-you-wanted" title="Permanent link">&para;</a></h3>
+<h3 id="first-step-prepare-your-dataset">First step - prepare your dataset<a class="headerlink" href="#first-step-prepare-your-dataset" title="Permanent link">&para;</a></h3>
+<p>The key to combine different task together is to make different task with same data format.</p>
+<p><strong>notice</strong>  </p>
+<ul>
+<li>All data will be in csv format - tfkit will use <strong>csv</strong> for all task, normally it will have two columns, first columns is the input of models, the second column is the output of models.</li>
+<li>Plane text with no tokenization - there is no need to tokenize text before training, or do re-calculating for tokenization, tfkit will handle it for you.</li>
+<li>No header is needed.</li>
+</ul>
+<p>For example, a sentiment classification dataset will be like:
+<div class="highlight"><pre><span></span><code>how dare you,negative
 </code></pre></div></p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>For the detail and example format on different, you can check <a href="tasks/">here</a> </p>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>nlprep is a tool for data split/preprocessing/argumentation, it can help you to create ready to train data for tfkit, check <a href="https://github.com/voidful/NLPrep">here</a></p>
+</div>
+<h3 id="second-step-model-training">Second step - model training<a class="headerlink" href="#second-step-model-training" title="Permanent link">&para;</a></h3>
+<p>Using <code>tfkit-train</code> for model training, you can use </p>
+<p>Before training a model, there is something you need to clarify:</p>
+<ul>
+<li><code>--model</code> what is your model to handle this task? check <a href="models/">here</a> to the detail of models.</li>
+<li><code>--config</code> what pretrained model you want to use？ you can go <a href="https://huggingface.co/models">https://huggingface.co/models</a> to search for available pretrained models.</li>
+<li><code>--train</code> and <code>--test</code> training and testing dataset path, which is in csv format.</li>
+<li><code>--savedir</code> model saving directory, default will be in '/checkpoints' folder</li>
+</ul>
+<p>you can leave the rest to the default config, or use <code>tfkit-train -h</code> to more configuration.</p>
+<p>An example about training a sentiment classifier:
+<div class="highlight"><pre><span></span><code>tfkit-train <span class="se">\</span>
+--model clas <span class="se">\</span>
+--config xlm-roberta-base <span class="se">\</span>
+--train training_data.csv <span class="se">\</span>
+--test testing_data.csv <span class="se">\</span>
+--lr 4e-5 <span class="se">\</span>
+--maxlen <span class="m">384</span> <span class="se">\</span>
+--epoch <span class="m">10</span> <span class="se">\</span>
+--savedir roberta_sentiment_classificer
+</code></pre></div></p>
+<h4 id="third-step-model-eval">Third step - model eval<a class="headerlink" href="#third-step-model-eval" title="Permanent link">&para;</a></h4>
+<p>Using <code>tfkit-eval</code> for model evaluation. <br />
+- <code>--model</code> saved model's path.<br />
+- <code>--metric</code> the evaluation metric eg: emf1, nlg(BLEU/ROUGE), clas(confusion matrix).<br />
+- <code>--valid</code> validation data, also in csv format.<br />
+- <code>--panel</code> a input panel for model specific parameter.  </p>
+<p>for more configuration detail, you may use <code>tfkit-eval -h</code>.</p>
+<p>After evaluate, It will print evaluate result in your console, and also generate three report for debugging.<br />
+- <code>*_score.csv</code> overall score, it is the copy of the console result.<br />
+- <code>*each_data_score.csv</code> score on each data, 3 column <code>predicted,targets,score</code>, ranked from the lowest to the highest.<br />
+- <code>*predicted.csv</code> csv file include 3 column <code>input,predicted,targets</code>.  </p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>nlp2go is a tool for demonstration, with CLI and Restful interface. check <a href="https://github.com/voidful/nlp2go">here</a> </p>
+</div>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<h4 id="use-distilbert-to-train-ner-model">Use distilbert to train NER Model<a class="headerlink" href="#use-distilbert-to-train-ner-model" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+tfkit-train --batch <span class="m">10</span> --epoch <span class="m">3</span> --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen <span class="m">512</span> --model tag --config distilbert-base-multilingual-cased 
+nlp2go --model ./checkpoints/3.pt  --cli     
+</code></pre></div>
+
+<h4 id="use-albert-to-train-drcd-model-model">Use Albert to train DRCD Model Model<a class="headerlink" href="#use-albert-to-train-drcd-model-model" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>nlprep --dataset qa_zh --outdir ./zhqa/   
+tfkit-train --maxlen <span class="m">512</span> --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
+nlp2go --model ./drcd_qa_model/3.pt --cli 
+</code></pre></div>
+
+<h4 id="use-albert-to-train-both-drcd-model-and-ner-model">Use Albert to train both DRCD Model and NER Model<a class="headerlink" href="#use-albert-to-train-both-drcd-model-and-ner-model" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
+nlprep --dataset qa_zh --outdir ./zhqa/ 
+tfkit-train --maxlen <span class="m">300</span> --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --model tag qa --config voidful/albert_chinese_small
+nlp2go --model ./mt-qaner/3.pt --cli 
+</code></pre></div>
+
 <p><strong>You can also try tfkit in Google Colab: <a href="https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ?usp=sharing"><img alt="Google Colab" src="https://colab.research.google.com/assets/colab-badge.svg" title="tfkit" /></a></strong></p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<h3 id="train">Train<a class="headerlink" href="#train" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>$ tfkit-train
-Run training
-
-arguments:
-  --train TRAIN [TRAIN ...]     train dataset path
-  --test TEST [TEST ...]        test dataset path
-  --config CONFIG               distilbert-base-multilingual-cased/bert-base-multilingual-cased/voidful/albert_chinese_small
-  --model {once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} [{once,twice,onebyone,clas,tagRow,tagCol,qa,onebyone-neg,onebyone-pos,onebyone-both} ...]
-                                model task
-  --savedir SAVEDIR     model saving dir, default /checkpoints
-optional arguments:
-  -h, --help            show this help message and exit
-  --batch BATCH         batch size, default 20
-  --lr LR [LR ...]      learning rate, default 5e-5
-  --epoch EPOCH         epoch, default 10
-  --maxlen MAXLEN       max tokenized sequence length, default 368
-  --lossdrop            loss dropping for text generation
-  --tag TAG [TAG ...]   tag to identity task in multi-task
-  --seed SEED           random seed, default 609
-  --worker WORKER       number of worker on pre-processing, default 8
-  --grad_accum          gradient accumulation, default 1
-  --tensorboard         Turn on tensorboard graphing
-  --resume RESUME       resume training
-  --cache               cache training data
-</code></pre></div>
-
-<h3 id="eval">Eval<a class="headerlink" href="#eval" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code>$ tfkit-eval
-Run evaluation on different benchmark
-arguments:
-  --model MODEL             model path
-  --metric {emf1,nlg,clas}  evaluate metric
-  --valid VALID             evaluate data path
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --print               print each pair of evaluate data
-  --enable_arg_panel    enable panel to input argument
-</code></pre></div>
-
 <h2 id="contributing">Contributing<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h2>
 <p>Thanks for your interest.There are many ways to contribute to this project. Get started <a href="https://github.com/voidful/tfkit/blob/master/CONTRIBUTING.md">here</a>.</p>
-<h2 id="license">License <img alt="PyPI - License" src="https://img.shields.io/github/license/voidful/tfkit" /><a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
+<p><img alt="PyPI - License" src="https://img.shields.io/github/license/voidful/tfkit" /></p>
 <ul>
 <li><a href="https://github.com/voidful/tfkit/blob/master/LICENSE">License</a></li>
 </ul>
@@ -654,31 +704,30 @@ Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" titl
             </article>
           </div>
         </div>
+        
       </main>
       
         
 <footer class="md-footer">
   
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
-        
-        
-          <a href="installation/" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-footer-nav__title">
-              <div class="md-ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Installation
-              </div>
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+      
+        <a href="installation/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Installation
             </div>
-            <div class="md-footer-nav__button md-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -692,6 +741,7 @@ Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" titl
         <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
           Material for MkDocs
         </a>
+        
       </div>
       
   <div class="md-footer-social">
@@ -730,19 +780,13 @@ Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" titl
 </footer>
       
     </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": ".", "features": [], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "assets/javascripts/workers/search.4fa0e4ee.min.js", "version": {"provider": "mike"}}</script>
     
-      <script src="assets/javascripts/vendor.6a3d08fc.min.js"></script>
-      <script src="assets/javascripts/bundle.71201edf.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}</script>
-      
-      <script>
-        app = initialize({
-          base: ".",
-          features: [],
-          search: Object.assign({
-            worker: "assets/javascripts/worker/search.4ac00218.min.js"
-          }, typeof search !== "undefined" && search)
-        })
-      </script>
+    
+      <script src="assets/javascripts/bundle.1d3bfcf1.min.js"></script>
       
     
   </body>

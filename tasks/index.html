@@ -13,14 +13,14 @@
         <meta name="author" content="Voidful">
       
       
-        <link rel="canonical" href="https://github.com/voidful/tfkit/benchmark/">
+        <link rel="canonical" href="https://github.com/voidful/tfkit/tasks/">
       
       <link rel="icon" href="../img/tfkit-icon.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.4">
     
     
       
-        <title>Benchmark - tfkit</title>
+        <title>Tasks - tfkit</title>
       
     
     
@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#drcd" class="md-skip">
+        <a href="#task-format" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Benchmark
+              Tasks
             
           </span>
         </div>
@@ -235,11 +235,115 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../tasks/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Tasks
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Tasks
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#task-format" class="md-nav__link">
+    Task format
+  </a>
+  
+    <nav class="md-nav" aria-label="Task format">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#classification" class="md-nav__link">
+    Classification
+  </a>
+  
+    <nav class="md-nav" aria-label="Classification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-class-classification" class="md-nav__link">
+    multi-class classification:
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-label-classification" class="md-nav__link">
+    multi-label classification
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text-generation" class="md-nav__link">
+    Text Generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extractive-question-answering" class="md-nav__link">
+    Extractive Question Answering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-choice-question-answering" class="md-nav__link">
+    Multiple-Choice Question Answering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mask-language-modeling" class="md-nav__link">
+    Mask Language Modeling
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequence-tagging" class="md-nav__link">
+    Sequence Tagging
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -280,67 +384,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Benchmark
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../benchmark/" class="md-nav__link">
         Benchmark
       </a>
-      
-        
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#drcd" class="md-nav__link">
-    DRCD
-  </a>
-  
-    <nav class="md-nav" aria-label="DRCD">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dev" class="md-nav__link">
-    Dev
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -369,23 +417,71 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#drcd" class="md-nav__link">
-    DRCD
+  <a href="#task-format" class="md-nav__link">
+    Task format
   </a>
   
-    <nav class="md-nav" aria-label="DRCD">
+    <nav class="md-nav" aria-label="Task format">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
+  <a href="#classification" class="md-nav__link">
+    Classification
+  </a>
+  
+    <nav class="md-nav" aria-label="Classification">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multi-class-classification" class="md-nav__link">
+    multi-class classification:
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#dev" class="md-nav__link">
-    Dev
+  <a href="#multi-label-classification" class="md-nav__link">
+    multi-label classification
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#text-generation" class="md-nav__link">
+    Text Generation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#extractive-question-answering" class="md-nav__link">
+    Extractive Question Answering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-choice-question-answering" class="md-nav__link">
+    Multiple-Choice Question Answering
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mask-language-modeling" class="md-nav__link">
+    Mask Language Modeling
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sequence-tagging" class="md-nav__link">
+    Sequence Tagging
   </a>
   
 </li>
@@ -407,68 +503,82 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/voidful/tfkit/edit/master/docs/benchmark.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/voidful/tfkit/edit/master/docs/tasks.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                  <h1>Benchmark</h1>
+                  <h1>Tasks</h1>
                 
-                <h2 id="drcd">DRCD<a class="headerlink" href="#drcd" title="Permanent link">&para;</a></h2>
-<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th align="center">model</th>
-<th align="center">EM</th>
-<th align="center">F1</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_small">albert-small</a></td>
-<td align="center">74.45%</td>
-<td align="center">86.08%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/hfl/chinese-electra-small-discriminator">electra-small</a></td>
-<td align="center">76.64%</td>
-<td align="center">87.49%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_base">albert-base</a></td>
-<td align="center">80.17%</td>
-<td align="center">89.87%</td>
-</tr>
-</tbody>
-</table>
-<h3 id="dev">Dev<a class="headerlink" href="#dev" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th align="center">model</th>
-<th align="center">EM</th>
-<th align="center">F1</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_small">albert-small</a></td>
-<td align="center">73.70%</td>
-<td align="center">85.33%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/hfl/chinese-electra-small-discriminator">electra-small</a></td>
-<td align="center">77.61%</td>
-<td align="center">87.33%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_base">albert-base</a></td>
-<td align="center">80.52%</td>
-<td align="center">89.92%</td>
-</tr>
-</tbody>
-</table>
+                <h2 id="task-format">Task format<a class="headerlink" href="#task-format" title="Permanent link">&para;</a></h2>
+<h3 id="classification">Classification<a class="headerlink" href="#classification" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<h4 id="multi-class-classification">multi-class classification:<a class="headerlink" href="#multi-class-classification" title="Permanent link">&para;</a></h4>
+<p>Format: 
+<code>input sentence,label</code>     </p>
+<p>Example:    <br />
+<div class="highlight"><pre><span></span><code>Calotropis procera (ushaar) keratitis.,Not-Related
+</code></pre></div></p>
+<h4 id="multi-label-classification">multi-label classification<a class="headerlink" href="#multi-label-classification" title="Permanent link">&para;</a></h4>
+<p>use <code>///</code> to separate each label.</p>
+<p>Format: 
+<code>input sentence,label1///label2</code>  </p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/classification.csv">Example</a>:    <br />
+<div class="highlight"><pre><span></span><code>We report two cases of pseudoporphyria caused by naproxen and oxaprozin.,Related///METHODS
+</code></pre></div></p>
+</div>
+<h3 id="text-generation">Text Generation<a class="headerlink" href="#text-generation" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Format: <br />
+<code>input sentence, target sentence</code></p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/generation.csv">Example</a>:   <br />
+<div class="highlight"><pre><span></span><code>Peter was a truck driver . He was running a little behind on schedule . Peter decided to run past the weigh station . He was stopped by a cop .,&quot;Peter ended up running late and getting a fine .&quot;
+</code></pre></div></p>
+</div>
+<h3 id="extractive-question-answering">Extractive Question Answering<a class="headerlink" href="#extractive-question-answering" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Format:  <br />
+<code>input sentence with question, answer start position, answer end position</code>      </p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/qa.csv">Example</a>: <br />
+<div class="highlight"><pre><span></span><code>Beyoncé announced a hiatus from her music ... &lt;s&gt; Who suggested the hiatus for Beyoncé?, 74,84
+</code></pre></div></p>
+</div>
+<h3 id="multiple-choice-question-answering">Multiple-Choice Question Answering<a class="headerlink" href="#multiple-choice-question-answering" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Input passage should include all available, <span><span class="MathJax_Preview">each choice must start with a mask token</span><script type="math/tex">each choice must start with a mask token</script></span><br />
+choice id will be start from 0  </p>
+<p>Format:  <br />
+<code>input passage [MASK]choiceA [MASK]choiceB, 1</code>      </p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/mcq.csv">Example</a>: <br />
+<div class="highlight"><pre><span></span><code>&quot;I &#39;m sure many of you have seen Star Wars ... &lt;/s&gt; What is the best title of the passage ? [MASK] What Is Human Cloning [MASK] How Does Human Cloning Happen [MASK] Human Cloning Is Wrong [MASK] Discussion On Human Cloning&quot;,2
+</code></pre></div></p>
+</div>
+<h3 id="mask-language-modeling">Mask Language Modeling<a class="headerlink" href="#mask-language-modeling" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>input sentence with mask, can be multiple   <br />
+target of each mask should be separate by blank   <br />
+Format:  <br />
+<code>input sentence with [MASK] [MASK],target_token target_token</code>      </p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/mask.csv">Example</a>: <br />
+<div class="highlight"><pre><span></span><code>&quot;how did i [MASK] [MASK]&quot;,&quot;get here&quot;
+</code></pre></div></p>
+</div>
+<h3 id="sequence-tagging">Sequence Tagging<a class="headerlink" href="#sequence-tagging" title="Permanent link">&para;</a></h3>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>input sentence with blank between each word  <br />
+target label separate with blank, should be one to one to the input  <br />
+Format:   <br />
+<code>input sentence,tag tag</code>      </p>
+<p><a href="https://github.com/voidful/TFkit/blob/master/tfkit/demo_data/tag.csv">Example</a>: <br />
+<div class="highlight"><pre><span></span><code>&quot;welcome to New York,O O B_place B_place&quot;
+</code></pre></div></p>
+</div>
                 
               
               
@@ -487,7 +597,7 @@
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-        <a href="../structure/" class="md-footer__link md-footer__link--prev" rel="prev">
+        <a href="../installation/" class="md-footer__link md-footer__link--prev" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -496,11 +606,25 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Structure
+              Installation
             </div>
           </div>
         </a>
       
+      
+        <a href="../models/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Models
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
       
     </nav>
   

@@ -13,14 +13,14 @@
         <meta name="author" content="Voidful">
       
       
-        <link rel="canonical" href="https://github.com/voidful/tfkit/benchmark/">
+        <link rel="canonical" href="https://github.com/voidful/tfkit/structure/">
       
       <link rel="icon" href="../img/tfkit-icon.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.4">
     
     
       
-        <title>Benchmark - tfkit</title>
+        <title>Structure - tfkit</title>
       
     
     
@@ -73,7 +73,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#drcd" class="md-skip">
+        <a href="#overview" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Benchmark
+              Structure
             
           </span>
         </div>
@@ -265,21 +265,6 @@
 
   
   
-  
-    <li class="md-nav__item">
-      <a href="../structure/" class="md-nav__link">
-        Structure
-      </a>
-    </li>
-  
-
-    
-      
-      
-      
-
-  
-  
     
   
   
@@ -290,12 +275,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Benchmark
+          Structure
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Benchmark
+        Structure
       </a>
       
         
@@ -311,29 +296,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#drcd" class="md-nav__link">
-    DRCD
+  <a href="#overview" class="md-nav__link">
+    Overview
   </a>
-  
-    <nav class="md-nav" aria-label="DRCD">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dev" class="md-nav__link">
-    Dev
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -341,6 +306,21 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../benchmark/" class="md-nav__link">
+        Benchmark
+      </a>
     </li>
   
 
@@ -369,29 +349,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#drcd" class="md-nav__link">
-    DRCD
+  <a href="#overview" class="md-nav__link">
+    Overview
   </a>
-  
-    <nav class="md-nav" aria-label="DRCD">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    Test
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#dev" class="md-nav__link">
-    Dev
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -407,68 +367,60 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/voidful/tfkit/edit/master/docs/benchmark.md" title="Edit this page" class="md-content__button md-icon">
+                  <a href="https://github.com/voidful/tfkit/edit/master/docs/structure.md" title="Edit this page" class="md-content__button md-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
                   </a>
                 
                 
-                  <h1>Benchmark</h1>
+                  <h1>Structure</h1>
                 
-                <h2 id="drcd">DRCD<a class="headerlink" href="#drcd" title="Permanent link">&para;</a></h2>
-<h3 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th align="center">model</th>
-<th align="center">EM</th>
-<th align="center">F1</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_small">albert-small</a></td>
-<td align="center">74.45%</td>
-<td align="center">86.08%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/hfl/chinese-electra-small-discriminator">electra-small</a></td>
-<td align="center">76.64%</td>
-<td align="center">87.49%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_base">albert-base</a></td>
-<td align="center">80.17%</td>
-<td align="center">89.87%</td>
-</tr>
-</tbody>
-</table>
-<h3 id="dev">Dev<a class="headerlink" href="#dev" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th align="center">model</th>
-<th align="center">EM</th>
-<th align="center">F1</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_small">albert-small</a></td>
-<td align="center">73.70%</td>
-<td align="center">85.33%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/hfl/chinese-electra-small-discriminator">electra-small</a></td>
-<td align="center">77.61%</td>
-<td align="center">87.33%</td>
-</tr>
-<tr>
-<td align="center"><a href="https://huggingface.co/voidful/albert_chinese_base">albert-base</a></td>
-<td align="center">80.52%</td>
-<td align="center">89.92%</td>
-</tr>
-</tbody>
-</table>
+                <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>Flow<br />
+<img alt="Flow" src="https://raw.githubusercontent.com/voidful/TFkit/master/docs/img/flow.png" /></p>
+<p>Project directory:
+<div class="highlight"><pre><span></span><code>.
+├─ demo_data/                          # Example data for training and evaluation
+├─ docs/                               # Documents
+├─ tfkit/
+│  ├─ model/                           # all of the models, subdir name will be model name 
+│  │  ├─ model_name                    # - name will be dynamic import to tfkit-train
+│  │  │  ├─ __init__.py                
+│  │  │  ├─ dataloader.py              # - for data loading and preprocessing
+│  │  │  └─ model.py                   # - model forward and prediction
+│  │  └─ __init__.py                   
+│  ├─ test/                            # project unit test
+│  │  ├─ __init__.py                   
+│  │  ├─ test_atrain.py                # - test tfkit-train
+│  │  ├─ test_dataloader.py            # - test all model/*/dataloader.py
+│  │  ├─ test_model.py                 # - test all model/*/model.py
+│  │  ├─ test_package.py               # - test package import
+│  │  ├─ test_utility_dataset.py       # - test utility/dataset.py
+│  │  ├─ test_utility_eval_metric.py   # - test utility/eval_metric.py
+│  │  ├─ test_utility_logger.py        # - test utility/logger.py
+│  │  ├─ test_utility_loss.py          # - test utility/loss.py
+│  │  ├─ test_utility_model_loader.py  # - test utility/model_loader.py
+│  │  ├─ test_utility_tok.py           # - test utility/predictor.py
+│  │  ├─ test_zeval.py                 # - test tfkit-eval
+│  │  └─ test_zzdump.py                # - test tfkit-dump
+│  ├─ utility/                         # project utility
+│  │  ├─ __init__.py                   
+│  │  ├─ dataset.py                    # - handle dataset loading
+│  │  ├─ eval_metric.py                # - handle evaluation metric calculation
+│  │  ├─ logger.py                     # - handle logging and printing
+│  │  ├─ loss.py                       # - custom loss function
+│  │  ├─ model_loader.py               # - handle model loading
+│  │  ├─ predictor.py                  # - handle model prediction
+│  │  └─ tok.py                        # - handle tokenization
+│  ├─ __init__.py                      # package init
+│  ├─ dump.py                          # tfkit-dump handler
+│  ├─ eval.py                          # tfkit-eval handler
+│  └─ train.py                         # tfkit-train handler
+├─ Dockerfile                          # recommend docker file
+├─ mkdocs.yml                          # document config
+├─ README.md                           # project readme
+├─ requirements.txt                    # package requirement
+└─ setup.py                            # package setup
+</code></pre></div></p>
                 
               
               
@@ -487,7 +439,7 @@
   
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
-        <a href="../structure/" class="md-footer__link md-footer__link--prev" rel="prev">
+        <a href="../models/" class="md-footer__link md-footer__link--prev" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -496,11 +448,25 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Structure
+              Models
             </div>
           </div>
         </a>
       
+      
+        <a href="../benchmark/" class="md-footer__link md-footer__link--next" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Benchmark
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
       
     </nav>
   
