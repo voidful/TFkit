@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(
     name='tfkit',
     version='0.7.16',
@@ -20,19 +23,7 @@ setup(
     license="Apache",
     keywords='transformer huggingface nlp multi-task multi-class multi-label classification generation tagging deep learning machine reading',
     packages=find_packages(),
-    install_requires=[
-        "transformers<=4.4.0,>=3.3.0",
-        "tensorboardX",
-        "torch",
-        "sklearn",
-        "matplotlib",
-        "nlp2>=1.8.28",
-        "tqdm>=4.45.0",
-        "inquirer",
-        "numpy",
-        "pytorch-crf",
-        "sentencepiece"
-    ],
+    install_requires=required,
     entry_points={
         'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']
     },
