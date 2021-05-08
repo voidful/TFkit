@@ -1,5 +1,6 @@
 import csv
 from collections import defaultdict
+import nlp2
 import tfkit.utility.tok as tok
 
 
@@ -25,7 +26,7 @@ def get_feature_from_data(tokenizer, input, target=None, maxlen=512, handle_exce
 
     mapping_index = []
     pos = 1  # cls as start 0
-    input_text_list = input.split(" ")
+    input_text_list = nlp2.split_sentence_to_array(input)
     for i in input_text_list:
         for _ in range(len(tokenizer.tokenize(i))):
             if _ < 1:
