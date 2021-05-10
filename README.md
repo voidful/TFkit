@@ -35,20 +35,18 @@ It leverages the use of transformers on many tasks with different models in this
 All you need is a little change of config.  
 
 ## Task Supported
+With transformer models - BERT/ALBERT/T5/BART......
 |  |  |
 |-|-|
-| Classification  | Multi-class |
-| Classification  | Multi-label |
-| Question Answering  | Extractive - SQuAD like |
-| Question Answering  | Multiple-choice |
-| Tagging  | Sequence level |
-| Tagging  | Sequence level with crf |
-| Text Generation | Seq2seq models - BART/T5/Bert2Bert... |
-| Text Generation | Causal LM models - GPT/GPT2... |
-| Text Generation | Once models |
-| Text Generation | Once models  with ctc loss |
-| Text Generation | Onebyone models |
-| Self-supervise Learning | Mask LM |
+| Classification  | :label: multi-class and multi-label classification |
+| Question Answering  | :page_with_curl: extractive qa |
+| Question Answering  | :radio_button: multiple-choice qa |
+| Tagging  | :eye_speech_bubble: sequence level tagging / sequence level with crf  |
+| Text Generation | :memo: seq2seq language model |
+| Text Generation | :pen: causal language model |
+| Text Generation | :printer: once generation model / once generation model with ctc loss |
+| Text Generation | :pencil: onebyone generation model |
+| Self-supervise Learning | :diving_mask: mask language model |
 
 # Getting Started
 Learn more from the [document](https://voidful.github.io/TFkit/).  
