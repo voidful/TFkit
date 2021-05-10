@@ -93,8 +93,8 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
                     optim.step()
                     model.zero_grad()
                     scheduler.step()
-                t_loss += loss.mean().item()
-                logger.write_metric("loss/step", loss.mean().item(), epoch)
+                t_loss += loss.mean().detach()
+                logger.write_metric("loss/step", loss.mean().detach(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     logger.write_log(
                         f"epoch: {epoch}, tag: {mtag}, model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
@@ -125,7 +125,7 @@ def model_eval(models, test_dataset, fname, input_arg, epoch, logger):
                 if test_batch is not None:
                     loss = model(test_batch)
                     loss = loss / input_arg.get('grad_accum')
-                    t_loss += loss.mean().item()
+                    t_loss += loss.mean().detach()
                     t_length += 1
                     pbar.update(1)
                 else:
@@ -248,10 +248,12 @@ def main(arg=None):
     train_dataset = [data.DataLoader(dataset=ds,
                                      batch_size=input_arg.get('batch'),
                                      shuffle=True,
+                                     pin_memory=True,
                                      num_workers=input_arg.get('worker')) for ds in train_dataset]
     test_dataset = [data.DataLoader(dataset=ds,
                                     batch_size=input_arg.get('batch'),
-                                    shuffle=True,
+                                    shuffle=False,
+                                    pin_memory=True,
                                     num_workers=input_arg.get('worker')) for ds in test_dataset]
 
     # loading model back

@@ -60,9 +60,10 @@ class Model(nn.Module):
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
                                       loss_tensors.view(-1))
-            negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
-                                              negativeloss_tensors.view(-1))
-            masked_lm_loss += negative_loss
+            if not torch.all(negativeloss_tensors.eq(-1)).item():
+                negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
+                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                                                  negativeloss_tensors.view(-1))
+                masked_lm_loss += negative_loss
             outputs = masked_lm_loss
         return outputs

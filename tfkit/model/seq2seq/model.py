@@ -107,10 +107,11 @@ class Model(nn.Module):
             lm_loss = loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
                                loss_tensors.view(-1))
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
-            negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-            negative_loss = negative_loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
-                                              negativeloss_tensors.view(-1))
-            lm_loss += negative_loss
+            if not torch.all(negative_targets.eq(-1)).item():
+                negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
+                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
+                                                  negativeloss_tensors.view(-1))
+                lm_loss += negative_loss
             outputs = lm_loss
         return outputs
 
