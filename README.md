@@ -51,6 +51,59 @@ With transformer models - BERT/ALBERT/T5/BART......
 # Getting Started
 Learn more from the [document](https://voidful.github.io/TFkit/).  
 
+## How To Use
+
+### Step 0: Install
+Simple installation from PyPI
+```bash
+pip install tfkit
+```
+
+### Step 1: Prepare dataset in csv format
+[Task format](https://voidful.tech/TFkit/tasks/)
+``` 
+input, target
+```
+
+### Step 2: Train model
+```bash
+tfkit-train \
+--model clas \
+--config xlm-roberta-base \
+--train training_data.csv \
+--test testing_data.csv \
+--lr 4e-5 \
+--maxlen 384 \
+--epoch 10 \
+--savedir roberta_sentiment_classificer
+```
+
+### Step 3: Evaluate
+```bash
+tfkit-eval \
+--model roberta_sentiment_classificer/1.pt \
+--metric clas \
+--valid testing_data.csv
+```
+
+## Advanced features
+<details>
+  <summary>Multi-task training </summary>
+
+  ```bash
+  tfkit-train \
+    --model clas clas \
+    --config xlm-roberta-base \
+    --train training_data_taskA.csv training_data_taskB.csv \
+    --test testing_data_taskA.csv testing_data_taskB.csv \
+    --lr 4e-5 \
+    --maxlen 384 \
+    --epoch 10 \
+    --savedir roberta_sentiment_classificer_multi_task
+  ```
+</details>
+
+
 ## Supplement
 - [transformers models list](https://huggingface.co/models): you can find any pretrained models here   
 - [nlprep](https://github.com/voidful/NLPrep): download and preprocessing data in one line     
