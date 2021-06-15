@@ -25,7 +25,7 @@ def load_model_class(model_name):
     return importlib.import_module('.' + model_name, 'tfkit.model')
 
 
-def load_trained_model(model_path, pretrained_config=None, model_type=None):
+def load_trained_model(model_path, pretrained_config=None, tag=None):
     """loading saved model"""
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -36,12 +36,12 @@ def load_trained_model(model_path, pretrained_config=None, model_type=None):
     print('==========')
 
     if 'tags' in torchpack and len(torchpack['tags']) > 1:
-        if model_type is None:
+        if tag is None:
             print("Pick which models to use in multi-task models")
             inquirer_res = inquirer.prompt(
-                [inquirer.List('model_type', message="Select model", choices=torchpack['tags'])])
-            model_type = inquirer_res['model_type']
-        type_ind = torchpack['tags'].index(model_type)
+                [inquirer.List('tag', message="Select model", choices=torchpack['tags'])])
+            tag = inquirer_res['tag']
+        type_ind = torchpack['tags'].index(tag)
     else:
         type_ind = 0
 
