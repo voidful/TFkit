@@ -48,9 +48,8 @@ def _f1_score(prediction, ground_truth):
 
 class EvalMetric:
 
-    def __init__(self, tokenizer, max_candidate=6, normalize_text=True):
+    def __init__(self, tokenizer, normalize_text=True):
         self.tasks = defaultdict(lambda: defaultdict(list))
-        self.max_candidate = max_candidate
         self.tokenizer = tokenizer
         self.target_list = defaultdict(lambda: defaultdict(int))
         self.normalize_text = normalize_text
@@ -100,9 +99,6 @@ class EvalMetric:
             for i, t in enumerate(ori_target):
                 ori_target[i] = self.tokenize_text(t.strip())
             target_list = ori_target
-
-        if self.max_candidate - len(target_list) > 0 and "nlg" in task:
-            target_list.extend([""] * (self.max_candidate - len(target_list)))
 
         for t in target_list:
             self.target_list[task][t] += 1
@@ -156,8 +152,14 @@ class EvalMetric:
                         "nlg-eval package not install, plz install it: pip install git+https://github.com/voidful/nlg-eval.git ; nlg-eval --setup ./nlg-eval-data/")
                     raise
                 nlgeval = NLGEval(no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"])
+
                 target_list = task['target_list']
                 predicted = task['predicted']
+                for idx, tl in enumerate(target_list):
+                    max_candidate = max([len(i) for i in target_list])
+                    if max_candidate - len(tl) > 0:
+                        target_list[idx].extend([""] * (max_candidate - len(tl)))
+
                 for t, p in tqdm(zip(target_list, predicted), total=len(target_list)):
                     data_score.append([p, t, nlgeval.compute_metrics(ref_list=list(map(list, zip(t))), hyp_list=[p])])
                 result = nlgeval.compute_metrics(ref_list=list(map(list, zip(*task['target_list']))),  # transpose
