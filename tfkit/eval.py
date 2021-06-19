@@ -14,7 +14,7 @@ def parse_eval_args(args):
     parser.add_argument("--config", type=str, help='pre-trained model path after add token')
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
-    parser.add_argument("--tag",  type=str, help="evaluate model tag for select multi-task model")
+    parser.add_argument("--tag", type=str, help="evaluate model tag for select multi-task model")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
 
@@ -29,8 +29,9 @@ def main(arg=None):
     eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
 
     valid = eval_arg.get('valid')[0]
-    model, model_type, model_class = load_trained_model(eval_arg.get('model'), pretrained_config=eval_arg.get('config'),
-                                                        tag=eval_arg.get('tag'))
+    model, model_type, model_class, model_info = load_trained_model(eval_arg.get('model'),
+                                                                    pretrained_config=eval_arg.get('config'),
+                                                                    tag=eval_arg.get('tag'))
     eval_dataset = model_class.get_data_from_file(valid)
     predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 

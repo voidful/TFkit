@@ -31,9 +31,10 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torchpack = torch.load(model_path, map_location=device)
 
+    model_info = {key: torchpack[key] for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key}
     print("===model info===")
-    [print(key, ':', torchpack[key]) for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key]
-    print('==========')
+    [print(k, v) for k, v in model_info.items()]
+    print('===============')
 
     if 'tags' in torchpack and len(torchpack['tags']) > 1:
         if tag is None:
@@ -82,4 +83,4 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     model.load_state_dict(models_state[type_ind], strict=False)
 
     print("finish loading")
-    return model, type, model_class
+    return model, type, model_class, model_info

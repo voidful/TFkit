@@ -36,7 +36,7 @@ class TestModelLoader(unittest.TestCase):
 
     def test_load_trained_model(self):
         model_path = os.path.join(self.MODEL_SAVE_PATH, '1.pt')
-        model, model_type, model_class = tfkit.load_trained_model(model_path)
+        model, model_type, model_class, model_info = tfkit.load_trained_model(model_path)
         print(model.predict("a"))
         print(model_type)
         print(model_class)
