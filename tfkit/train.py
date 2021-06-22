@@ -2,6 +2,7 @@ import argparse
 import sys
 
 import nlp2
+
 import tfkit
 import torch
 from tqdm.auto import tqdm
@@ -10,7 +11,7 @@ from torch.utils import data
 from itertools import zip_longest
 import os
 import tfkit.utility.tok as tok
-from tfkit.utility.dataset import get_dataset
+from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
 from tfkit.utility.model_loader import load_model_class
 
@@ -249,11 +250,13 @@ def main(arg=None):
                                      batch_size=input_arg.get('batch'),
                                      shuffle=True,
                                      pin_memory=True,
+                                     collate_fn=dataloader_collate,
                                      num_workers=input_arg.get('worker')) for ds in train_dataset]
     test_dataset = [data.DataLoader(dataset=ds,
                                     batch_size=input_arg.get('batch'),
                                     shuffle=False,
                                     pin_memory=True,
+                                    collate_fn=dataloader_collate,
                                     num_workers=input_arg.get('worker')) for ds in test_dataset]
 
     # loading model back

@@ -57,7 +57,8 @@ def get_feature_from_data(tokenizer, maxlen, input, target=None, ntarget=None, r
             row_dict['target_once'] = tokenized_target_once_id
 
         input_length = min(maxlen, target_start * 3)
-        tokenized_input_id.extend([tokenizer.mask_token_id] * (maxlen - len(tokenized_input_id)))
+        tokenized_input_id.extend([tokenizer.mask_token_id] * min(input_length, (maxlen - len(tokenized_input_id))))
+        tokenized_input_id.extend([tokenizer.pad_token_id] * (maxlen - len(tokenized_input_id)))
         mask_id = [1] * input_length
         mask_id.extend([0] * (maxlen - len(mask_id)))
         row_dict['input'] = tokenized_input_id

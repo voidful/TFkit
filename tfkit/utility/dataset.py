@@ -5,19 +5,35 @@ from random import choice
 import nlp2
 import numpy
 import numpy as np
+import torch
 from torch.utils import data
 from tqdm import tqdm
 from transformers import AutoTokenizer, BertTokenizer
 
 
 def check_type_for_dataloader(data_item):
-    if (isinstance(data_item, list) and not isinstance(data_item[-1], str) and check_type_for_dataloader(data_item[-1])) or \
+    if (isinstance(data_item, list) and not isinstance(data_item[-1], str) and check_type_for_dataloader(
+            data_item[-1])) or \
             isinstance(data_item, str) or \
             isinstance(data_item, numpy.ndarray) or \
             isinstance(data_item, int):
         return True
     else:
         return False
+
+
+def dataloader_collate(batch):
+    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch])
+    if has_pad:
+        pad_token = batch[0]['input'][-1]
+        pad_start = max([list(dat['input']).index(pad_token) for dat in batch])
+        for ind, dat in enumerate(batch):
+            for k, v in dat.items():
+                if isinstance(v, numpy.ndarray) and v.size > 1:
+                    batch[ind][k] = v[:pad_start]
+                if k == 'input_length':
+                    batch[ind][k] = pad_start - 1
+    return torch.utils.data._utils.collate.default_collate(batch)
 
 
 def get_dataset(file_path, model_class, parameter):
