@@ -42,7 +42,9 @@ class Model(nn.Module):
             )
             decoder_hidden_size = decoder_config.hidden_size
             self.decoder_model.to(self.device)
-        self.model = nn.Linear(decoder_hidden_size, self.tokenizer.__len__(), bias=False)
+
+        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(decoder_hidden_size, self.vocab_size, bias=False)
         if init_weight is not None:
             self.model.weight = init_weight
         self.model.to(self.device)
@@ -51,6 +53,7 @@ class Model(nn.Module):
         self.predict = predictor.gen_predict
 
     def forward(self, batch_data, eval=False, use_prev=False, **args):
+
         inputs = batch_data['input']
         prevs = batch_data['prev']
         encoder_mask = batch_data['encoder_mask']
@@ -104,12 +107,12 @@ class Model(nn.Module):
             negative_targets = batch_data['ntarget']
             loss_tensors = torch.as_tensor(targets).to(self.device)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            lm_loss = loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
+            lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                loss_tensors.view(-1))
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
             if not torch.all(negative_targets.eq(-1)).item():
                 negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.tokenizer.__len__()),
+                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
                                                   negativeloss_tensors.view(-1))
                 lm_loss += negative_loss
             outputs = lm_loss

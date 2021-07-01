@@ -18,7 +18,8 @@ class Model(nn.Module):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
+        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         print('Using device:', self.device)
@@ -57,11 +58,11 @@ class Model(nn.Module):
             loss_tensors = torch.as_tensor(targets).to(self.device)
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       loss_tensors.view(-1))
             if not torch.all(negativeloss_tensors.eq(-1)).item():
                 negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
-                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
                                                   negativeloss_tensors.view(-1))
                 masked_lm_loss += negative_loss
             outputs = masked_lm_loss

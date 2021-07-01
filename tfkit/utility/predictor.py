@@ -103,7 +103,7 @@ class Predictor:
                             for k, v in token_prob_list[:50]:
                                 if len(tokens) > 0 and tokens[-1] == k or len(k) < 1:
                                     continue
-                                candidate = [tokens + [k], score + -log(v)]
+                                candidate = [tokens + [k], score + -log(v) if v > 0 else 0]
                                 all_candidates.append(candidate)
                     else:
                         all_candidates.append(seq)

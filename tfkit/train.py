@@ -14,6 +14,10 @@ import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
 from tfkit.utility.model_loader import load_model_class
+import logging
+
+transformers_logger = logging.getLogger('transformers')
+transformers_logger.setLevel(logging.CRITICAL)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["OMP_NUM_THREADS"] = "1"

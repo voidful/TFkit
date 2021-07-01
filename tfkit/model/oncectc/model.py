@@ -22,7 +22,8 @@ class Model(nn.Module):
         self.pretrained.resize_token_embeddings(len(tokenizer))
         self.blank_index = self.tokenizer.convert_tokens_to_ids([self.blank_token])[0]
         self.loss = SeqCTCLoss(blank_index=self.blank_index)
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
+        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
         self.model.to(self.device)
@@ -46,7 +47,7 @@ class Model(nn.Module):
         prediction_scores = self.model(sequence_output)
 
         batch_size = list(tokens_tensor.shape)[0]
-        prediction_scores = prediction_scores.view(batch_size, -1, self.pretrained.config.vocab_size)
+        prediction_scores = prediction_scores.view(batch_size, -1, self.vocab_size)
         if eval:
             pscore = prediction_scores.detach().cpu()
             result_dict = {
@@ -82,7 +83,7 @@ class Model(nn.Module):
                                     target_tensors.view(batch_size, -1),
                                     target_length_tensors)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.pretrained.config.vocab_size),
+            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       target_once_tensors.view(-1))
 
             outputs = ctc_lm_loss + masked_lm_loss

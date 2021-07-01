@@ -1,11 +1,14 @@
 import argparse
 import sys
 
-from tfkit.utility import tok
 from tqdm.auto import tqdm
 import csv
 from tfkit.utility.eval_metric import EvalMetric
 from tfkit.utility.model_loader import load_trained_model, load_predict_parameter
+import logging
+
+transformers_logger = logging.getLogger('transformers')
+transformers_logger.setLevel(logging.CRITICAL)
 
 
 def parse_eval_args(args):
