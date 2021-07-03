@@ -13,11 +13,11 @@ class TestEval(unittest.TestCase):
         parser, _ = tfkit.eval.parse_eval_args(
             ['--model', 'onebyone', '--metric', 'emf1', '--valid', 'test.csv', '--print'])
         print(parser)
-        self.assertTrue(parser.get('model') == 'onebyone')
+        self.assertTrue(parser.get('model') == ['onebyone'])
 
         eval_parser, model_parser = tfkit.eval.parse_eval_args(
             ['--model', 'onebyone', '--metric', 'emf1', '--valid', 'test.csv', '--print', '--decodenum', '2'])
-        self.assertTrue(eval_parser.get('model') == 'onebyone')
+        self.assertTrue(eval_parser.get('model') == ['onebyone'])
         self.assertTrue(model_parser.get('decodenum') == '2')
 
     def testEvalGen(self):
