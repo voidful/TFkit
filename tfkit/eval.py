@@ -38,10 +38,10 @@ def main(arg=None):
         for f in nlp2.get_files_from_dir(m):
             if '.pt' == f[-3:]:
                 models.append(f)
-    for model in models:
+    for model_path in models:
         try:
             valid = eval_arg.get('valid')[0]
-            model, model_type, model_class, model_info = load_trained_model(model,
+            model, model_type, model_class, model_info = load_trained_model(model_path,
                                                                             pretrained_config=eval_arg.get('config'),
                                                                             tag=eval_arg.get('tag'))
             eval_dataset = model_class.get_data_from_file(valid)
@@ -112,7 +112,7 @@ def main(arg=None):
                     argtype += "_mode_" + str(para_mode)
                 if 'filtersim' in predict_parameter:
                     argtype += "_filtersim_" + str(predict_parameter['filtersim'])
-                outfile_name = eval_arg.get('model') + argtype
+                outfile_name = model_path + argtype
 
                 with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
                     writer = csv.writer(f)
@@ -135,7 +135,8 @@ def main(arg=None):
                 for i in eval_metric.cal_score(eval_arg.get('metric')):
                     print("TASK: ", i[0], eval_pos)
                     print(i[1])
-        except:
+        except Exception as e:
+            print(f"Exception: {e}")
             pass
 
 
