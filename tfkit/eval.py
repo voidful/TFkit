@@ -1,6 +1,7 @@
 import argparse
 import sys
 
+import nlp2
 from tqdm.auto import tqdm
 import csv
 from tfkit.utility.eval_metric import EvalMetric
@@ -13,7 +14,9 @@ transformers_logger.setLevel(logging.CRITICAL)
 
 def parse_eval_args(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", required=True, type=str, help="model path")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--model", nargs='+', type=str, help="model path")
+    group.add_argument("--models", nargs='+', type=str, help="model dir for multiple model evaluation")
     parser.add_argument("--config", type=str, help='pre-trained model path after add token')
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
@@ -30,102 +33,110 @@ def parse_eval_args(args):
 
 def main(arg=None):
     eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
+    models = eval_arg.get('model', [])
+    for m in eval_arg.get('models', []):
+        for f in nlp2.get_files_from_dir(m):
+            if '.pt' == f[-3:]:
+                models.append(f)
+    for model in models:
+        try:
+            valid = eval_arg.get('valid')[0]
+            model, model_type, model_class, model_info = load_trained_model(model,
+                                                                            pretrained_config=eval_arg.get('config'),
+                                                                            tag=eval_arg.get('tag'))
+            eval_dataset = model_class.get_data_from_file(valid)
+            predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
-    valid = eval_arg.get('valid')[0]
-    model, model_type, model_class, model_info = load_trained_model(eval_arg.get('model'),
-                                                                    pretrained_config=eval_arg.get('config'),
-                                                                    tag=eval_arg.get('tag'))
-    eval_dataset = model_class.get_data_from_file(valid)
-    predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
+            if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+                eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
+            else:
+                eval_metrics = [EvalMetric(model.tokenizer)]
 
-    if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-        eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
-    else:
-        eval_metrics = [EvalMetric(model.tokenizer)]
+            print("PREDICT PARAMETER")
+            print("=======================")
+            print(predict_parameter)
+            print("=======================")
+            for i in tqdm(eval_dataset):
+                tasks = i[0]
+                task = i[1]
+                input = i[2]
+                target = i[3]
 
-    print("PREDICT PARAMETER")
-    print("=======================")
-    print(predict_parameter)
-    print("=======================")
-    for i in tqdm(eval_dataset):
-        tasks = i[0]
-        task = i[1]
-        input = i[2]
-        target = i[3]
+                predict_parameter.update({'input': input})
+                if 'task' not in predict_parameter:
+                    predict_parameter.update({'task': task})
+                result, result_dict = model.predict(**predict_parameter)
+                for eval_pos, eval_metric in enumerate(eval_metrics):
+                    # predicted can be list of string or string
+                    # target should be list of string
+                    predicted = result
+                    processed_target = target
+                    if 'qa' in model_type:
+                        processed_target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
+                        if len(result) > 0:
+                            predicted = result[0][0] if isinstance(result[0], list) else result[0]
+                        else:
+                            predicted = ''
+                    elif 'onebyone' in model_type or 'seq2seq' in model_type or 'clm' in model_type:
+                        processed_target = target[0]
+                        if len(result) < eval_pos:
+                            print("Decode size smaller than decode num:", result_dict['label_map'])
+                        predicted = result[eval_pos]
+                    elif 'once' in model_type:
+                        processed_target = target[0]
+                        predicted = result[eval_pos]
+                    elif 'mask' in model_type:
+                        processed_target = target[0].split(" ")
+                        predicted = result
+                    elif 'tag' in model_type:
+                        predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
+                        processed_target = target[0].split(" ")
+                        predicted = predicted.split(" ")
 
-        predict_parameter.update({'input': input})
-        if 'task' not in predict_parameter:
-            predict_parameter.update({'task': task})
-        result, result_dict = model.predict(**predict_parameter)
-        for eval_pos, eval_metric in enumerate(eval_metrics):
-            # predicted can be list of string or string
-            # target should be list of string
-            predicted = result
-            processed_target = target
-            if 'qa' in model_type:
-                processed_target = " ".join(input.split(" ")[int(target[0]): int(target[1])])
-                if len(result) > 0:
-                    predicted = result[0][0] if isinstance(result[0], list) else result[0]
-                else:
-                    predicted = ''
-            elif 'onebyone' in model_type or 'seq2seq' in model_type or 'clm' in model_type:
-                processed_target = target[0]
-                if len(result) < eval_pos:
-                    print("Decode size smaller than decode num:", result_dict['label_map'])
-                predicted = result[eval_pos]
-            elif 'once' in model_type:
-                processed_target = target[0]
-                predicted = result[eval_pos]
-            elif 'mask' in model_type:
-                processed_target = target[0].split(" ")
-                predicted = result
-            elif 'tag' in model_type:
-                predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
-                processed_target = target[0].split(" ")
-                predicted = predicted.split(" ")
+                    if eval_arg.get('print'):
+                        print('===eval===')
+                        print("input: ", input)
+                        print("target: ", processed_target)
+                        print("predicted: ", predicted)
+                        print('==========')
 
-            if eval_arg.get('print'):
-                print('===eval===')
-                print("input: ", input)
-                print("target: ", processed_target)
-                print("predicted: ", predicted)
-                print('==========')
+                    eval_metric.add_record(input, predicted, processed_target, eval_arg.get('metric'))
 
-            eval_metric.add_record(input, predicted, processed_target, eval_arg.get('metric'))
+            for eval_pos, eval_metric in enumerate(eval_metrics):
+                argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
+                if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+                    argtype += "_num_" + str(eval_pos)
+                if 'mode' in predict_parameter:
+                    para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
+                        predict_parameter['mode'].lower()
+                    argtype += "_mode_" + str(para_mode)
+                if 'filtersim' in predict_parameter:
+                    argtype += "_filtersim_" + str(predict_parameter['filtersim'])
+                outfile_name = eval_arg.get('model') + argtype
 
-    for eval_pos, eval_metric in enumerate(eval_metrics):
-        argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
-        if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-            argtype += "_num_" + str(eval_pos)
-        if 'mode' in predict_parameter:
-            para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
-                predict_parameter['mode'].lower()
-            argtype += "_mode_" + str(para_mode)
-        if 'filtersim' in predict_parameter:
-            argtype += "_filtersim_" + str(predict_parameter['filtersim'])
-        outfile_name = eval_arg.get('model') + argtype
+                with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
+                    writer = csv.writer(f)
+                    records = eval_metric.get_record(eval_arg.get('metric'))
+                    writer.writerow(['input', 'predicted', 'targets'])
+                    for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
+                        writer.writerow([i, p, t])
+                print("write result at:", outfile_name)
 
-        with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
-            writer = csv.writer(f)
-            records = eval_metric.get_record(eval_arg.get('metric'))
-            writer.writerow(['input', 'predicted', 'targets'])
-            for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
-                writer.writerow([i, p, t])
-        print("write result at:", outfile_name)
+                with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
+                    eds = csv.writer(edsf)
+                    with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+                        for i in eval_metric.cal_score(eval_arg.get('metric')):
+                            f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
+                            f.write(str(i[1]) + '\n')
+                            eds.writerows(i[2])
 
-        with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
-            eds = csv.writer(edsf)
-            with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+                print("write score at:", outfile_name)
+
                 for i in eval_metric.cal_score(eval_arg.get('metric')):
-                    f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
-                    f.write(str(i[1]) + '\n')
-                    eds.writerows(i[2])
-
-        print("write score at:", outfile_name)
-
-        for i in eval_metric.cal_score(eval_arg.get('metric')):
-            print("TASK: ", i[0], eval_pos)
-            print(i[1])
+                    print("TASK: ", i[0], eval_pos)
+                    print(i[1])
+        except:
+            pass
 
 
 if __name__ == "__main__":
