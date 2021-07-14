@@ -18,7 +18,8 @@ def parse_eval_args(args):
     group.add_argument("--model", nargs='+', type=str, help="model path")
     group.add_argument("--models", nargs='+', type=str, help="model dir for multiple model evaluation")
     parser.add_argument("--config", type=str, help='pre-trained model path after add token')
-    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas'], help="evaluate metric")
+    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas', 'er'],
+                        help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
     parser.add_argument("--tag", type=str, help="evaluate model tag for select multi-task model")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")

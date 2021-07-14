@@ -12,6 +12,65 @@ from transformers import BertTokenizer, AutoTokenizer
 
 
 class TestEval(unittest.TestCase):
+    @pytest.mark.skip()
+    def testER(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "abc", "abb///acc///abc", task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+            self.assertTrue(s[1]['WER'] == 0)
+            self.assertTrue(s[1]['CER'] == 0)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "ab", "abb///acc///ab c", task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+            self.assertTrue(s[1]['WER'] == 50)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "a b c", "a b b///a c c///", task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "", "a b b///a c c", task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "a", ["a"], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "a", ["b"], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "b", ["a"], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "b", ["b"], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "", [""], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("input", "梵 語", ["梵 語"], task='default')
+        eval.add_record("input", "梵 語", ["梵 語d"], task='default')
+        eval.add_record("input", "梵 語", ["梵 語c"], task='default')
+        for s in eval.cal_score('er'):
+            print(s)
+
     def testEMF1(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
