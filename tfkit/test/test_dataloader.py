@@ -10,11 +10,12 @@ from tfkit.test import *
 class TestDataLoader(unittest.TestCase):
 
     def testTag(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         for i in tfkit.tag.get_data_from_file(TAG_DATASET):
             print(i)
         maxlen = 128
         for i in LoadDataset(TAG_DATASET,
-                             pretrained_config='voidful/albert_chinese_small',
+                             tokenizer=tokenizer,
                              get_data_from_file=tfkit.tag.get_data_from_file,
                              preprocessing_data=tfkit.tag.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
@@ -41,13 +42,14 @@ class TestDataLoader(unittest.TestCase):
         self.assertEqual(feature[0]['pos'], [6, 10])
 
     def testMask(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         for i in tfkit.mask.get_data_from_file(MASK_DATASET):
             print("get_data_from_file", i)
             tfkit.mask.preprocessing_data(i, BertTokenizer.from_pretrained('voidful/albert_chinese_tiny'))
 
         maxlen = 512
         for i in LoadDataset(MASK_DATASET,
-                             pretrained_config='voidful/albert_chinese_tiny',
+                             tokenizer=tokenizer,
                              get_data_from_file=tfkit.mask.get_data_from_file,
                              preprocessing_data=tfkit.mask.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
@@ -56,14 +58,15 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) == maxlen)
 
     def testMCQ(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         for i in tfkit.mcq.get_data_from_file(MCQ_DATASET):
             print("get_data_from_file", i)
 
         maxlen = 512
         for i in LoadDataset(MCQ_DATASET,
-                             pretrained_config='voidful/albert_chinese_tiny',
-                             get_data_from_file=tfkit.mcq.get_data_from_file,
-                             preprocessing_data=tfkit.mcq.preprocessing_data,
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.mcq.get_data_from_file,
+                             preprocessing_data=tfkit.model.mcq.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
             print(i)
             self.assertTrue(len(i['input']) == maxlen)
@@ -74,9 +77,9 @@ class TestDataLoader(unittest.TestCase):
             print(i)
         maxlen = 512
         for i in LoadDataset(GEN_DATASET,
-                             pretrained_config='voidful/albert_chinese_tiny',
-                             get_data_from_file=tfkit.once.get_data_from_file,
-                             preprocessing_data=tfkit.once.preprocessing_data,
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.once.get_data_from_file,
+                             preprocessing_data=tfkit.model.once.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
@@ -90,9 +93,9 @@ class TestDataLoader(unittest.TestCase):
             print(i)
         maxlen = 100
         for i in LoadDataset(GEN_DATASET,
-                             pretrained_config='voidful/albert_chinese_tiny',
-                             get_data_from_file=tfkit.oncectc.get_data_from_file,
-                             preprocessing_data=tfkit.oncectc.preprocessing_data,
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.oncectc.get_data_from_file,
+                             preprocessing_data=tfkit.model.oncectc.preprocessing_data,
                              input_arg={'maxlen': maxlen}):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target_once'])))
@@ -118,9 +121,9 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
             for i in LoadDataset(GEN_DATASET,
-                                 pretrained_config='voidful/albert_chinese_tiny',
-                                 get_data_from_file=tfkit.clm.get_data_from_file,
-                                 preprocessing_data=tfkit.clm.preprocessing_data,
+                                 tokenizer=tokenizer,
+                                 get_data_from_file=tfkit.model.clm.get_data_from_file,
+                                 preprocessing_data=tfkit.model.clm.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 start_pos = i['start']
                 print(likelihood, i)
@@ -149,9 +152,9 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
             for i in LoadDataset(GEN_DATASET,
-                                 pretrained_config='voidful/albert_chinese_tiny',
-                                 get_data_from_file=tfkit.onebyone.get_data_from_file,
-                                 preprocessing_data=tfkit.onebyone.preprocessing_data,
+                                 tokenizer=tokenizer,
+                                 get_data_from_file=tfkit.model.onebyone.get_data_from_file,
+                                 preprocessing_data=tfkit.model.onebyone.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 start_pos = i['start']
                 print(likelihood, i)
@@ -170,9 +173,9 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['none', 'neg', 'pos', 'both']:
             output = []
             for i in LoadDataset(GEN_DATASET,
-                                 pretrained_config='openai-gpt',
-                                 get_data_from_file=tfkit.onebyone.get_data_from_file,
-                                 preprocessing_data=tfkit.onebyone.preprocessing_data,
+                                 tokenizer=tokenizer,
+                                 get_data_from_file=tfkit.model.onebyone.get_data_from_file,
+                                 preprocessing_data=tfkit.model.onebyone.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
                 start_pos = i['start']
                 output.extend(tokenizer.convert_ids_to_tokens([i['target'][start_pos]]))
@@ -180,45 +183,49 @@ class TestDataLoader(unittest.TestCase):
             print(tokenizer.convert_tokens_to_string(output) + "\n")
 
     def testClassifier(self):
-        for i in tfkit.clas.get_data_from_file(CLAS_DATASET):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        for i in tfkit.model.clas.get_data_from_file(CLAS_DATASET):
             print(i)
         for i in LoadDataset(CLAS_DATASET,
-                             pretrained_config='voidful/albert_chinese_small',
-                             get_data_from_file=tfkit.clas.get_data_from_file,
-                             preprocessing_data=tfkit.clas.preprocessing_data):
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.clas.get_data_from_file,
+                             preprocessing_data=tfkit.model.clas.preprocessing_data):
+            print(i)
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) < 512)
 
     def testQA(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         for i in tfkit.qa.get_data_from_file(QA_DATASET):
             print(i)
         for i in LoadDataset(QA_DATASET,
-                             pretrained_config='voidful/albert_chinese_small',
-                             get_data_from_file=tfkit.qa.get_data_from_file,
-                             preprocessing_data=tfkit.qa.preprocessing_data):
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.qa.get_data_from_file,
+                             preprocessing_data=tfkit.model.qa.preprocessing_data):
             print(i)
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
         for i in LoadDataset(QA_DATASET,
-                             pretrained_config='voidful/albert_chinese_tiny',
-                             get_data_from_file=tfkit.qa.get_data_from_file,
-                             preprocessing_data=tfkit.qa.preprocessing_data):
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.qa.get_data_from_file,
+                             preprocessing_data=tfkit.model.qa.preprocessing_data):
             self.assertTrue(len(i['input']) <= 512)
             self.assertTrue(len(i['target']) == 2)
 
     def testLen(self):
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
         ds = LoadDataset(QA_DATASET,
-                         pretrained_config='voidful/albert_chinese_small',
-                         get_data_from_file=tfkit.qa.get_data_from_file,
-                         preprocessing_data=tfkit.qa.preprocessing_data)
+                         tokenizer=tokenizer,
+                         get_data_from_file=tfkit.model.qa.get_data_from_file,
+                         preprocessing_data=tfkit.model.qa.preprocessing_data)
         old_len = ds.__len__()
         ds.increase_with_sampling(2)
         self.assertEqual(old_len, ds.__len__())
 
         ds = LoadDataset(QA_DATASET,
-                         pretrained_config='voidful/albert_chinese_small',
-                         get_data_from_file=tfkit.qa.get_data_from_file,
-                         preprocessing_data=tfkit.qa.preprocessing_data)
+                         tokenizer=tokenizer,
+                         get_data_from_file=tfkit.model.qa.get_data_from_file,
+                         preprocessing_data=tfkit.model.qa.preprocessing_data)
         print("before increase_with_sampling", ds.__len__())
         ds.increase_with_sampling(50)
         print("after increase_with_sampling", ds.__len__())
@@ -245,7 +252,7 @@ class TestDataLoader(unittest.TestCase):
         for likelihood in ['none', 'neg', 'pos', 'both']:
             print(likelihood)
             for i in LoadDataset(GEN_DATASET,
-                                 pretrained_config='facebook/bart-base',
+                                 tokenizer=tokenizer,
                                  get_data_from_file=tfkit.seq2seq.get_data_from_file,
                                  preprocessing_data=tfkit.seq2seq.preprocessing_data,
                                  input_arg={'maxlen': maxlen, 'likelihood': likelihood}):

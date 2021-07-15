@@ -13,7 +13,7 @@ import os
 import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
-from tfkit.utility.model_loader import load_model_class
+from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model
 import logging
 
 transformers_logger = logging.getLogger('transformers')
@@ -33,13 +33,15 @@ def parse_train_args(args):
     parser.add_argument("--handle_exceed", choices=exceed_mode,
                         help='select ways to handle input exceed max length')
     parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
-    parser.add_argument("--add_tokens", type=int, default=0,
-                        help="auto add freq > x UNK token to word table")
+    parser.add_argument("--add_tokens_freq", type=int, default=0,
+                        help="auto add freq >= x UNK token to word table")
+    parser.add_argument("--add_tokens_file", type=str,
+                        help="add token from a list file")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--no_eval", action='store_true', help="not running evaluation")
     parser.add_argument("--model", type=str, required=True, nargs='+',
-                        choices=tfkit.model_loader.list_all_model(), help="model task")
+                        choices=tfkit.utility.model.list_all_model(), help="model task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
@@ -157,8 +159,8 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
 
         # load dataset
         ds_parameter = {**model_arg, **input_arg}
-        train_ds = get_dataset(train_file, model_class, ds_parameter)
-        test_ds = get_dataset(test_file, model_class, ds_parameter)
+        train_ds = get_dataset(train_file, model_class, tokenizer, ds_parameter)
+        test_ds = get_dataset(test_file, model_class, tokenizer, ds_parameter)
 
         # load model
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
@@ -176,26 +178,6 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
     return models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen
 
 
-def save_model(models, input_arg, models_tag, epoch, fname, logger):
-    save_model = {
-        'models': [m.state_dict() for m in models],
-        'model_config': input_arg.get('config'),
-        'tags': models_tag,
-        'type': input_arg.get('model'),
-        'maxlen': input_arg.get('maxlen'),
-        'epoch': epoch
-    }
-
-    for ind, m in enumerate(input_arg.get('model')):
-        if 'tag' in m:
-            save_model['label'] = models[ind].labels
-        if "clas" in m:
-            save_model['task-label'] = models[ind].tasks_detail
-
-    torch.save(save_model, f"{fname}.pt")
-    logger.write_log(f"weights were saved to {fname}.pt")
-
-
 def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
@@ -204,32 +186,23 @@ def main(arg=None):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     nlp2.set_seed(input_arg.get('seed'))
 
-    # load pre-train model
-    pretrained_config = input_arg.get('config')
-    if 'albert_chinese' in pretrained_config:
-        tokenizer = BertTokenizer.from_pretrained(pretrained_config)
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
+    tokenizer = load_pretrained_tokenizer(input_arg.get('config'))
+    pretrained = load_pretrained_model(input_arg.get('config'), input_arg.get('model'))
 
-    pretrained = AutoModel.from_pretrained(pretrained_config)
-    if 'clm' in input_arg.get('model'):
-        pretrained.config.is_decoder = True
     if input_arg.get('maxlen') == 0:
         input_arg.update({'maxlen': pretrained.config.max_position_embeddings})
 
     # handling add tokens
-    if input_arg.get('add_tokens'):
+    add_tokens = None
+    if input_arg.get('add_tokens_freq', None):
         logger.write_log("Calculating Unknown Token")
         add_tokens = tok.get_freqK_unk_token(tokenizer, input_arg.get('train') + input_arg.get('test'),
-                                             input_arg.get('add_tokens'))
-        num_added_toks = tokenizer.add_tokens(add_tokens)
-        logger.write_log('We have added', num_added_toks, 'tokens')
-        pretrained.resize_token_embeddings(len(tokenizer))
-        save_path = os.path.join(input_arg.get('savedir'), pretrained_config + "_added_tok")
-        pretrained.save_pretrained(save_path)
-        tokenizer.save_pretrained(save_path)
-        logger.write_log('New pre-train model saved at ', save_path)
-        logger.write_log("=======================")
+                                             input_arg.get('add_tokens_freq'))
+    if input_arg.get('add_tokens_file', None):
+        add_tokens = nlp2.read_files_into_lines(input_arg.get('add_tokens_file'))
+
+    if add_tokens:
+        pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
 
     # load model and data
     models_tag = input_arg.get('tag') if input_arg.get('tag', None) is not None else [m.lower() + "_" + str(ind) for
@@ -286,11 +259,11 @@ def main(arg=None):
             train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
             logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
-            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger)
+            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, add_tokens=add_tokens)
             pass
 
         logger.write_log(f"=========save at epoch={epoch}=========")
-        save_model(models, input_arg, models_tag, epoch, fname, logger)
+        save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=add_tokens)
 
         if input_arg.get('no_eval') is False:
             logger.write_log(f"=========eval at epoch={epoch}=========")

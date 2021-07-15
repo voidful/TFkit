@@ -5,7 +5,7 @@ import nlp2
 from tqdm.auto import tqdm
 import csv
 from tfkit.utility.eval_metric import EvalMetric
-from tfkit.utility.model_loader import load_trained_model, load_predict_parameter
+from tfkit.utility.model import load_trained_model, load_predict_parameter
 import logging
 
 transformers_logger = logging.getLogger('transformers')

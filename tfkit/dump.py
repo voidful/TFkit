@@ -2,9 +2,7 @@ import argparse
 import sys
 
 from transformers import AutoModelWithLMHead, AutoModelForSeq2SeqLM
-
-from tfkit import load_trained_model
-
+from tfkit.utility import load_trained_model
 
 def parse_dump_args(args):
     parser = argparse.ArgumentParser()

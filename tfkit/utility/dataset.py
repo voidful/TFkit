@@ -36,7 +36,7 @@ def dataloader_collate(batch):
     return torch.utils.data._utils.collate.default_collate(batch)
 
 
-def get_dataset(file_path, model_class, parameter):
+def get_dataset(file_path, model_class, tokenizer, parameter):
     panel = nlp2.Panel()
     all_arg = nlp2.function_get_all_arg_with_value(model_class.preprocessing_data)
     if parameter.get('panel'):
@@ -45,7 +45,7 @@ def get_dataset(file_path, model_class, parameter):
             panel.add_element(k=missarg, v=all_arg[missarg], msg=missarg, default=all_arg[missarg])
         filled_arg = panel.get_result_dict()
         parameter.update(filled_arg)
-    ds = LoadDataset(fpath=file_path, pretrained_config=parameter.get('config'),
+    ds = LoadDataset(fpath=file_path, tokenizer=tokenizer,
                      get_data_from_file=model_class.get_data_from_file,
                      preprocessing_data=model_class.preprocessing_data,
                      cache=parameter.get('cache'),
@@ -54,14 +54,9 @@ def get_dataset(file_path, model_class, parameter):
 
 
 class LoadDataset(data.Dataset):
-    def __init__(self, fpath, pretrained_config, get_data_from_file, preprocessing_data, cache=False, input_arg={}):
+    def __init__(self, fpath, tokenizer, get_data_from_file, preprocessing_data, cache=False, input_arg={}):
         sample = []
-        if 'albert_chinese' in pretrained_config:
-            tokenizer = BertTokenizer.from_pretrained(pretrained_config)
-        else:
-            tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
-
-        cache_path = fpath + "_" + pretrained_config.replace("/", "_") + ".cache"
+        cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 outdata = pickle.load(cf)

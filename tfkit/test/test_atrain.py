@@ -2,7 +2,7 @@ import unittest
 import pytest
 import tfkit
 from tfkit.test import *
-
+from transformers import BertTokenizer, AutoModel, AutoTokenizer
 
 class TestTrain(unittest.TestCase):
 
@@ -27,8 +27,8 @@ class TestTrain(unittest.TestCase):
 
     def test_optimizer(self):
         model_class = tfkit.utility.load_model_class('clas')
-        tokenizer = tfkit.BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        pretrained = tfkit.AutoModel.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail={"taskA": ["a", "b"]},
                                   maxlen=128)
         optim, scheduler = tfkit.train.optimizer(model, lr=0.1, total_step=10)
@@ -157,13 +157,22 @@ class TestTrain(unittest.TestCase):
             'tfkit-train --batch 2 --epoch 2 --savedir ' + TAG_MODEL_DIR + ' --train ' + TAG_DATASET + ' --test ' + TAG_DATASET + ' --model tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
         self.assertTrue(result == 0)
 
-    def testAddToken(self):
+    def testAddTokenFreq(self):
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', ADDTOK_SAVE_DIR, '--train',
+            ['--batch', '2', '--epoch', '1', '--savedir', ADDTOKFREQ_SAVE_DIR, '--train',
              GEN_DATASET, '--lr', '5e-5', '--test', ADDTOK_DATASET, '--model', 'clm', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50', '--add_tokens', '5'])
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--add_tokens_freq', '1'])
         result = os.system(
-            'tfkit-train --batch 2 --add_tokens 5  --savedir ' + ADDTOK_SAVE_DIR + ' --epoch 2  --train ' + ADDTOK_DATASET + ' --test ' + ADDTOK_DATASET + ' --model clm --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --add_tokens_freq 1  --savedir ' + ADDTOKFREQ_SAVE_DIR + ' --epoch 2  --train ' + ADDTOK_DATASET + ' --test ' + ADDTOK_DATASET + ' --model clm --config voidful/albert_chinese_tiny --maxlen 50')
+        self.assertTrue(result == 0)
+
+    def testAddTokenFile(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', ADDTOKFILE_SAVE_DIR, '--train',
+             GEN_DATASET, '--lr', '5e-5', '--test', ADDTOK_DATASET, '--model', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--add_tokens_file', NEWTOKEN_FILE])
+        result = os.system(
+            f'tfkit-train --batch 2 --add_tokens_file {NEWTOKEN_FILE}  --savedir {ADDTOKFILE_SAVE_DIR} --epoch 2  --train {ADDTOK_DATASET}  --test {ADDTOK_DATASET} --model clm --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     @pytest.mark.skip()

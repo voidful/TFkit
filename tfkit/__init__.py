@@ -1,5 +1,5 @@
 from tfkit.model import *
-from tfkit.utility import *
+import tfkit.utility
 import tfkit.dump
 import tfkit.train
 import tfkit.eval

@@ -96,8 +96,14 @@ class TestEval(unittest.TestCase):
 
     def testEvalAddedTokenModel(self):
         result = os.system(
-            'tfkit-eval --model ' + ADDTOK_MODEL_PATH + ' --config ' + ADDTOK_TOK_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-eval --model ' + ADDTOK_MODEL_PATH + ' --config ' + ADDTOK_TOK_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+        self.assertTrue(result == 0)
+        result = os.system(
+            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+        self.assertTrue(result == 0)
+        result = os.system(
+            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)

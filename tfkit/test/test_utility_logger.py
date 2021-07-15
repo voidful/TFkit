@@ -14,7 +14,7 @@ class TestLogger(unittest.TestCase):
     MODEL_SAVE_PATH = os.path.join(ROOT_DIR, 'tfkit/test/cache/')
 
     def test_write_log(self):
-        logger = tfkit.Logger(savedir=self.MODEL_SAVE_PATH)
+        logger = tfkit.utility.Logger(savedir=self.MODEL_SAVE_PATH)
         logger.write_log("test")
         with open(logger.logfilepath, 'r') as f:
             lines = f.read().splitlines()
@@ -23,7 +23,7 @@ class TestLogger(unittest.TestCase):
             self.assertEqual(last_line, "test")
 
     def test_write_metric(self):
-        logger = tfkit.Logger(savedir=self.MODEL_SAVE_PATH)
+        logger = tfkit.utility.Logger(savedir=self.MODEL_SAVE_PATH)
         logger.write_metric("test", 1, 0)
         with open(logger.metricfilepath, 'r') as f:
             last_row = list(csv.reader(f))[-1]

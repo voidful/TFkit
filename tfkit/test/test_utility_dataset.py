@@ -26,7 +26,9 @@ class TestDataset(unittest.TestCase):
             'config': 'voidful/albert_chinese_tiny',
             'cache': False
         }
-        ds = tfkit.utility.get_dataset(file_path=file_path, model_class=model_class, parameter=dataset_arg)
+        tokenizer = tfkit.utility.load_pretrained_tokenizer('voidful/albert_chinese_tiny')
+        ds = tfkit.utility.get_dataset(file_path=file_path, model_class=model_class, tokenizer=tokenizer,
+                                       parameter=dataset_arg)
         print(ds, ds[0])
 
         model_class = tfkit.utility.load_model_class('onebyone')
@@ -37,7 +39,8 @@ class TestDataset(unittest.TestCase):
             'config': 'voidful/albert_chinese_tiny',
             'cache': False
         }
-        ds = tfkit.utility.get_dataset(file_path=file_path, model_class=model_class, parameter=dataset_arg)
+        ds = tfkit.utility.get_dataset(file_path=file_path, tokenizer=tokenizer, model_class=model_class,
+                                       parameter=dataset_arg)
         print(len(ds), ds[0])
 
         model_class = tfkit.utility.load_model_class('onebyone')
@@ -49,5 +52,6 @@ class TestDataset(unittest.TestCase):
             'cache': False,
             'likelihood': 'both'
         }
-        ds = tfkit.utility.get_dataset(file_path=file_path, model_class=model_class, parameter=dataset_arg)
+        ds = tfkit.utility.get_dataset(file_path=file_path, tokenizer=tokenizer, model_class=model_class,
+                                       parameter=dataset_arg)
         print(len(ds), ds[0])

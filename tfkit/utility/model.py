@@ -5,6 +5,7 @@ import inquirer
 import nlp2
 import torch
 from transformers import BertTokenizer, AutoTokenizer, AutoModel
+import tfkit
 
 
 def list_all_model(ignore_list=[]):
@@ -25,7 +26,31 @@ def load_model_class(model_name):
     return importlib.import_module('.' + model_name, 'tfkit.model')
 
 
-def load_trained_model(model_path, pretrained_config=None, tag=None):
+def load_pretrained_model(pretrained_config, model_type):
+    pretrained = AutoModel.from_pretrained(pretrained_config)
+    if 'clm' in model_type:
+        pretrained.config.is_decoder = True
+    return pretrained
+
+
+def load_pretrained_tokenizer(pretrained_config):
+    if 'albert_chinese' in pretrained_config:
+        tokenizer = BertTokenizer.from_pretrained(pretrained_config)
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
+    return tokenizer
+
+
+def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens):
+    print("==========ADD TOKEN============")
+    num_added_toks = tokenizer.add_tokens(add_tokens)
+    print('We have added', num_added_toks, 'tokens')
+    pretrained.resize_token_embeddings(len(tokenizer))
+    print("=======================")
+    return pretrained, tokenizer
+
+
+def load_trained_model(model_path, pretrained_config=None, tag=None, added_token=None):
     """loading saved model"""
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -45,7 +70,6 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
         type_ind = torchpack['tags'].index(tag)
     else:
         type_ind = 0
-
     print("loading saved model")
 
     # get all loading parameter
@@ -57,13 +81,15 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     model_types = [torchpack['type']] if not isinstance(torchpack['type'], list) else torchpack['type']
     models_state = torchpack['models'] if 'models' in torchpack else [torchpack['model_state_dict']]
     type = model_types[type_ind]
-
+    add_tokens = torchpack['add_tokens'] if 'add_tokens' in torchpack else None
     # load model
     if 'albert_chinese' in config:
         tokenizer = BertTokenizer.from_pretrained(config)
     else:
         tokenizer = AutoTokenizer.from_pretrained(config)
     pretrained = AutoModel.from_pretrained(config)
+
+    pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
 
     if 'tag' in type:  # for old version model
         type = 'tag'
@@ -84,3 +110,24 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
 
     print("finish loading")
     return model, type, model_class, model_info
+
+
+def save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=None):
+    save_model = {
+        'models': [m.state_dict() for m in models],
+        'model_config': input_arg.get('config'),
+        'add_tokens': add_tokens,
+        'tags': models_tag,
+        'type': input_arg.get('model'),
+        'maxlen': input_arg.get('maxlen'),
+        'epoch': epoch
+    }
+
+    for ind, m in enumerate(input_arg.get('model')):
+        if 'tag' in m:
+            save_model['label'] = models[ind].labels
+        if "clas" in m:
+            save_model['task-label'] = models[ind].tasks_detail
+
+    torch.save(save_model, f"{fname}.pt")
+    logger.write_log(f"weights were saved to {fname}.pt")
