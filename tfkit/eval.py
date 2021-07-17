@@ -1,5 +1,7 @@
 import argparse
 import sys
+from datetime import timedelta
+import time
 
 import nlp2
 from tqdm.auto import tqdm
@@ -41,6 +43,7 @@ def main(arg=None):
                 models.append(f)
     for model_path in models:
         try:
+            start_time = time.time()
             valid = eval_arg.get('valid')[0]
             model, model_type, model_class, model_info = load_trained_model(model_path,
                                                                             pretrained_config=eval_arg.get('config'),
@@ -57,6 +60,7 @@ def main(arg=None):
             print("=======================")
             print(predict_parameter)
             print("=======================")
+
             for i in tqdm(eval_dataset):
                 tasks = i[0]
                 task = i[1]
@@ -136,6 +140,8 @@ def main(arg=None):
                 for i in eval_metric.cal_score(eval_arg.get('metric')):
                     print("TASK: ", i[0], eval_pos)
                     print(i[1])
+
+            print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
         except Exception as e:
             print(f"Exception: {e}")
             pass

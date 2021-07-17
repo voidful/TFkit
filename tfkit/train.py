@@ -1,15 +1,16 @@
 import argparse
 import sys
-
-import nlp2
-
-import tfkit
-import torch
-from tqdm.auto import tqdm
-from transformers import BertTokenizer, AutoTokenizer, AutoModel, get_linear_schedule_with_warmup
-from torch.utils import data
-from itertools import zip_longest
 import os
+from datetime import timedelta
+import time
+from itertools import zip_longest
+
+import torch
+from torch.utils import data
+from tqdm.auto import tqdm
+from transformers import get_linear_schedule_with_warmup
+import nlp2
+import tfkit
 import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
@@ -199,6 +200,7 @@ def main(arg=None):
         add_tokens = tok.get_freqK_unk_token(tokenizer, input_arg.get('train') + input_arg.get('test'),
                                              input_arg.get('add_tokens_freq'))
     if input_arg.get('add_tokens_file', None):
+        logger.write_log("Add token from file")
         add_tokens = nlp2.read_files_into_lines(input_arg.get('add_tokens_file'))
 
     if add_tokens:
@@ -252,6 +254,7 @@ def main(arg=None):
     # train/eval loop
     logger.write_log("training batch : " + str(input_arg.get('batch') * input_arg.get('grad_accum')))
     for epoch in range(start_epoch, start_epoch + input_arg.get('epoch')):
+        start_time = time.time()
         fname = os.path.join(input_arg.get('savedir'), str(epoch))
 
         logger.write_log(f"=========train at epoch={epoch}=========")
@@ -269,6 +272,7 @@ def main(arg=None):
             logger.write_log(f"=========eval at epoch={epoch}=========")
             eval_avg_loss = model_eval(models, test_dataset, fname, input_arg, epoch, logger)
             logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
+        logger.write_log(f"=== Epoch execution time: {timedelta(seconds=(time.time() - start_time))} ===")
 
 
 if __name__ == "__main__":
