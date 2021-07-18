@@ -68,8 +68,8 @@ class Model(nn.Module):
                 if predicted_token == tok_sep(self.tokenizer):
                     break
 
-                topK = torch.topk(softmax(prediction_scores[0][pos], dim=0), 50)
-                logit_prob = softmax(prediction_scores[0][pos], dim=0).data.tolist()
+                logit_prob = softmax(prediction_scores[0][pos], dim=0)
+                topK = torch.topk(logit_prob, 50)
                 prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
                                zip(topK.values.data.tolist(), topK.indices.data.tolist())]
                 result_dict['prob_list'].append(logit_prob)

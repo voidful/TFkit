@@ -58,7 +58,7 @@ def load_trained_model(model_path, pretrained_config=None, tag=None, added_token
 
     model_info = {key: torchpack[key] for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key}
     print("===model info===")
-    [print(k, v) for k, v in model_info.items()]
+    [print(k, v[:10], "...") if isinstance(v, list) and len(v) > 10 else print(k, v) for k, v in model_info.items()]
     print('===============')
 
     if 'tags' in torchpack and len(torchpack['tags']) > 1:
