@@ -52,7 +52,7 @@ class Model(nn.Module):
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
 
-    def forward(self, batch_data, eval=False, use_prev=False, **args):
+    def forward(self, batch_data, eval=False, **args):
 
         inputs = batch_data['input']
         prevs = batch_data['prev']
@@ -65,7 +65,7 @@ class Model(nn.Module):
         decoder_mask_tensors = torch.as_tensor(decoder_mask).to(self.device)
 
         if self.decoder_model is not None:
-            if use_prev and self.encoder_hidden is not None:
+            if eval and self.encoder_hidden is not None:
                 encoder_hidden_states = self.encoder_hidden
             else:
                 outputs = self.pretrained(input_tensors, attention_mask=encoder_mask_tensors)
@@ -79,12 +79,20 @@ class Model(nn.Module):
                 encoder_attention_mask=encoder_mask_tensors
             )[0]
         else:
-            prediction_output = self.pretrained(
+            if eval and self.encoder_hidden is not None:
+                prev_tensors = prev_tensors[..., -1:]
+                batch_data['start'][0] = 0
+            prediction = self.pretrained(
                 input_ids=input_tensors,
                 attention_mask=encoder_mask_tensors,
                 decoder_input_ids=prev_tensors,
-                decoder_attention_mask=decoder_mask_tensors
-            )[0]
+                decoder_attention_mask=decoder_mask_tensors,
+                past_key_values=self.encoder_hidden,
+                use_cache=True,
+                return_dict=True
+            )
+            prediction_output = prediction['last_hidden_state']
+            self.encoder_hidden = prediction['past_key_values']
         prediction_scores = self.model(prediction_output)
 
         if eval:
