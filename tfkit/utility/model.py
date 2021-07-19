@@ -50,7 +50,7 @@ def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens):
     return pretrained, tokenizer
 
 
-def load_trained_model(model_path, pretrained_config=None, tag=None, added_token=None):
+def load_trained_model(model_path, pretrained_config=None, tag=None):
     """loading saved model"""
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

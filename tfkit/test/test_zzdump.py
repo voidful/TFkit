@@ -1,5 +1,5 @@
 import unittest
-
+from tfkit.test import *
 import os
 
 import tfkit
@@ -19,9 +19,8 @@ class TestEval(unittest.TestCase):
         self.assertTrue(parser.get('dumpdir') == 'b')
 
     def testDump(self):
-        model_path = os.path.join(self.MODEL_SAVE_PATH, '1.pt')
         dump_dir = './cache/dump'
-        tfkit.dump.main(["--model", model_path, '--dumpdir', dump_dir])
+        tfkit.dump.main(["--model", ADDTOKFILE_MODEL_PATH, '--dumpdir', dump_dir])
         result = os.system(
-            'tfkit-dump --model ' + model_path + ' --dumpdir ' + dump_dir)
+            'tfkit-dump --model ' + ADDTOKFILE_MODEL_PATH + ' --dumpdir ' + dump_dir)
         self.assertTrue(result == 0)
