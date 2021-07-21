@@ -49,6 +49,7 @@ class Model(nn.Module):
             self.model.weight = init_weight
         self.model.to(self.device)
         self.encoder_hidden = None
+        self.past_key_values = None
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
 
@@ -82,17 +83,28 @@ class Model(nn.Module):
             if eval and self.encoder_hidden is not None:
                 prev_tensors = prev_tensors[..., -1:]
                 batch_data['start'][0] = 0
-            prediction = self.pretrained(
-                input_ids=input_tensors,
-                attention_mask=encoder_mask_tensors,
-                decoder_input_ids=prev_tensors,
-                decoder_attention_mask=decoder_mask_tensors,
-                past_key_values=self.encoder_hidden,
-                use_cache=True,
-                return_dict=True
-            )
+                prediction = self.pretrained(
+                    inputs_embeds=self.encoder_hidden,
+                    decoder_input_ids=prev_tensors,
+                    decoder_attention_mask=decoder_mask_tensors,
+                    past_key_values=self.past_key_values,
+                    output_hidden_states=True,
+                    use_cache=True,
+                    return_dict=True
+                )
+            else:
+                prediction = self.pretrained(
+                    input_ids=input_tensors,
+                    attention_mask=encoder_mask_tensors,
+                    decoder_input_ids=prev_tensors,
+                    decoder_attention_mask=decoder_mask_tensors,
+                    past_key_values=self.encoder_hidden,
+                    use_cache=True,
+                    return_dict=True
+                )
             prediction_output = prediction['last_hidden_state']
-            self.encoder_hidden = prediction['past_key_values']
+            self.encoder_hidden = prediction['encoder_last_hidden_state']
+            self.past_key_values = prediction['past_key_values']
         prediction_scores = self.model(prediction_output)
 
         if eval:

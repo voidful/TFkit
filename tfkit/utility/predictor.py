@@ -48,7 +48,6 @@ class Predictor:
             previous = self.model.tokenizer.tokenize(input.split(tok.UNIVERSAL_SEP)[-1])
             eos_num += 1
 
-        self.model.eval()
         sequences = [[[], 1.0]]
         with torch.no_grad():
             while True:
