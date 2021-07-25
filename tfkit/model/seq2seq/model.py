@@ -98,13 +98,14 @@ class Model(nn.Module):
                     attention_mask=encoder_mask_tensors,
                     decoder_input_ids=prev_tensors,
                     decoder_attention_mask=decoder_mask_tensors,
-                    past_key_values=self.encoder_hidden,
+                    past_key_values=self.past_key_values,
                     use_cache=True,
                     return_dict=True
                 )
             prediction_output = prediction['last_hidden_state']
-            self.encoder_hidden = prediction['encoder_last_hidden_state']
-            self.past_key_values = prediction['past_key_values']
+            if eval:
+                self.encoder_hidden = prediction['encoder_last_hidden_state']
+                self.past_key_values = prediction['past_key_values']
         prediction_scores = self.model(prediction_output)
 
         if eval:
