@@ -42,11 +42,11 @@ def load_pretrained_tokenizer(pretrained_config):
 
 
 def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens):
-    print("==========ADD TOKEN============")
+    print("===ADD TOKEN===")
     num_added_toks = tokenizer.add_tokens(add_tokens)
     print('We have added', num_added_toks, 'tokens')
     pretrained.resize_token_embeddings(len(tokenizer))
-    print("=======================")
+    print("===============")
     return pretrained, tokenizer
 
 

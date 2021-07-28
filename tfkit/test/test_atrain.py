@@ -74,32 +74,32 @@ class TestTrain(unittest.TestCase):
 
     def testGenOnceCTC(self):
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '30', '--savedir', ONCECTC_MODEL_DIR, '--train',
+            ['--batch', '2', '--epoch', '1', '--savedir', ONCECTC_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '3e-4', '--test', GEN_DATASET, '--model', 'oncectc', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 20 --savedir ' + ONCE_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model oncectc --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + ONCE_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model oncectc --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testGenSeq2Seq(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + SEQ2SEQ_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + SEQ2SEQ_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model seq2seq --config prajjwal1/bert-small --maxlen 50')
         self.assertTrue(result == 0)
         tfkit.train.main(
-            ['--batch', '1', '--epoch', '10', '--savedir', SEQ2SEQ_MODEL_DIR, '--train',
+            ['--batch', '1', '--epoch', '1', '--savedir', SEQ2SEQ_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '5e-4', '--test', GEN_DATASET, '--model', 'seq2seq', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '10', '--savedir', SEQ2SEQ_MODEL_DIR, '--train',
+            ['--batch', '2', '--epoch', '2', '--savedir', SEQ2SEQ_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '5e-4', '--test', GEN_DATASET, '--model', 'seq2seq', '--config',
              'prajjwal1/bert-small', '--maxlen', '20', '--likelihood', 'pos'])
 
     def testGenCLM(self):
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + CLM_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model clm --config prajjwal1/bert-small --maxlen 50')
+            'tfkit-train --batch 2 --epoch 1 --savedir ' + CLM_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --model clm --config prajjwal1/bert-small --maxlen 50')
         self.assertTrue(result == 0)
         tfkit.train.main(
-            ['--batch', '2', '--epoch', '20', '--savedir', CLM_MODEL_DIR, '--train',
+            ['--batch', '2', '--epoch', '2', '--savedir', CLM_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '5e-4', '--test', GEN_DATASET, '--model', 'clm', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
 

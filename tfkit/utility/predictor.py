@@ -132,4 +132,5 @@ class Predictor:
                 'label_map': sequences
             }
             self.model.encoder_hidden = None
+            self.model.past_key_values = None
             return [i[0] for i in sequences], [result_dict]
