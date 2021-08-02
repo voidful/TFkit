@@ -53,7 +53,7 @@ class Model(nn.Module):
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, beamsearch=False, **args):
 
         inputs = batch_data['input']
         prevs = batch_data['prev']
@@ -80,7 +80,7 @@ class Model(nn.Module):
                 encoder_attention_mask=encoder_mask_tensors
             )[0]
         else:
-            if eval and self.encoder_hidden is not None:
+            if eval and self.encoder_hidden is not None and not beamsearch:
                 prev_tensors = prev_tensors[..., -1:]
                 batch_data['start'][0] = 0
                 prediction = self.pretrained(
@@ -103,7 +103,7 @@ class Model(nn.Module):
                     return_dict=True
                 )
             prediction_output = prediction['last_hidden_state']
-            if eval:
+            if eval and not beamsearch:
                 self.encoder_hidden = prediction['encoder_last_hidden_state']
                 self.past_key_values = prediction['past_key_values']
         prediction_scores = self.model(prediction_output)

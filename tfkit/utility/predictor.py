@@ -71,7 +71,7 @@ class Predictor:
 
                         for k, v in feature_dict.items():
                             feature_dict[k] = [v]
-                        predictions = self.model.forward(feature_dict, eval=True, use_prev=True)
+                        predictions = self.model.forward(feature_dict, eval=True, use_prev=True,beamsearch=decodenum>1)
                         token_prob_list = predictions['label_prob_all'][0]
                         # topK topP
                         if 'top' in mode:
