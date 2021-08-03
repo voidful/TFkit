@@ -1,6 +1,6 @@
 import sys
 import os
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 import nlp2
 from torch.distributions import Categorical
@@ -57,9 +57,18 @@ class Model(nn.Module):
                 if pos >= len(token_word_mapping):
                     break
                 word = token_word_mapping[start + pos]['word']
-                max_index = logit_prob.index(max(logit_prob))
-                result_dict['label_map'].append({word: self.labels[max_index]})
-                result_dict['label_prob_all'].append({word: dict(zip(self.labels, logit_prob))})
+                pos = token_word_mapping[start + pos]['pos']
+                if len(result_dict['label_map']) > pos:
+                    O = Counter(result_dict['label_prob_all'][-1][word])
+                    N = Counter(dict(zip(self.labels, logit_prob)))
+                    mean_prob = {k: v / 2 for k, v in (O + N).items()}
+                    result_dict['label_prob_all'][-1] = {word: mean_prob}
+                    result_dict['label_map'][-1] = {
+                        word: max(mean_prob, key=mean_prob.get)}
+                else:
+                    max_index = logit_prob.index(max(logit_prob))
+                    result_dict['label_map'].append({word: self.labels[max_index]})
+                    result_dict['label_prob_all'].append({word: dict(zip(self.labels, logit_prob))})
             result_dict['token_word_mapping'] = token_word_mapping[start:end]
             outputs = result_dict
         else:
@@ -75,7 +84,7 @@ class Model(nn.Module):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
-        input = " ".join(nlp2.split_sentence_to_array(input))
+        # input = " ".join(nlp2.split_sentence_to_array(input))
         with torch.no_grad():
             ret_detail = []
             predicted_pos_prob = defaultdict(lambda: defaultdict(list))
