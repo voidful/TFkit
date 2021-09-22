@@ -32,9 +32,9 @@
 
 TFKit is a deep natural language process framework for
 classification/tagging/question answering/embedding study and language
-generation.  
+generation.
 It leverages the use of transformers on many tasks with different models in this
-all-in-one framework.  
+all-in-one framework.
 All you need is a little change of config.
 
 ## Task Supported
@@ -138,7 +138,7 @@ started [here](https://github.com/voidful/tfkit/blob/master/CONTRIBUTING.md).
 ## Icons reference
 
 Icons modify from <a href="http://www.freepik.com/" title="Freepik">Freepik</a>
-from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>  
+from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
 Icons modify from
 <a href="https://www.flaticon.com/authors/nikita-golubev" title="Nikita Golubev">Nikita
 Golubev</a> from
