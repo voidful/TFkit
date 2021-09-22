@@ -114,9 +114,13 @@ tfkit-eval \
 Thanks for your interest.There are many ways to contribute to this project. Get started [here](https://github.com/voidful/tfkit/blob/master/CONTRIBUTING.md).
 
 ## License ![PyPI - License](https://img.shields.io/github/license/voidful/tfkit)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fvoidful%2FTFkit.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fvoidful%2FTFkit?ref=badge_shield)
 
 * [License](https://github.com/voidful/tfkit/blob/master/LICENSE)
 
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fvoidful%2FTFkit.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fvoidful%2FTFkit?ref=badge_large)
+
 ## Icons reference
 Icons modify from <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>      
-Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" title="Nikita Golubev">Nikita Golubev</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>      
+Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" title="Nikita Golubev">Nikita Golubev</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
