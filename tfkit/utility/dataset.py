@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from torch.utils import data
 from tqdm import tqdm
-from transformers import AutoTokenizer, BertTokenizer
+import copy
 
 
 def check_type_for_dataloader(data_item):
@@ -23,6 +23,7 @@ def check_type_for_dataloader(data_item):
 
 
 def dataloader_collate(batch):
+    batch = copy.deepcopy(batch)
     has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch])
     if has_pad:
         pad_token = batch[0]['input'][-1]
