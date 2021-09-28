@@ -72,6 +72,7 @@ class LoadDataset(data.Dataset):
                 for get_feature_from_data, feature_param in preprocessing_data(i, tokenizer, **input_arg):
                     for feature in get_feature_from_data(**feature_param):
                         feature = {k: v for k, v in feature.items() if check_type_for_dataloader(v)}
+                        feature.update((k, np.asarray(v)) for k, v in feature.items() if k != 'task')
                         sample.append(feature)
                         total_data += 1
             print("Processed " + str(total_data) + " data.")
@@ -80,7 +81,6 @@ class LoadDataset(data.Dataset):
                 with open(cache_path, 'wb') as cf:
                     outdata = {'sample': sample, 'task': task_dict}
                     pickle.dump(outdata, cf)
-
         self.sample = sample
         self.task = task_dict
 
@@ -92,5 +92,4 @@ class LoadDataset(data.Dataset):
         return len(self.sample)
 
     def __getitem__(self, idx):
-        self.sample[idx].update((k, np.asarray(v)) for k, v in self.sample[idx].items() if k != 'task')
         return self.sample[idx]
