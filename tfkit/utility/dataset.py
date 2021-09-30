@@ -7,8 +7,8 @@ import numpy
 import numpy as np
 import torch
 from torch.utils import data
-from tqdm import tqdm
 import copy
+from tqdm.contrib.concurrent import process_map
 
 
 def check_type_for_dataloader(data_item):
@@ -55,38 +55,45 @@ def get_dataset(file_path, model_class, tokenizer, parameter):
 
 
 class LoadDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, get_data_from_file, preprocessing_data, cache=False, input_arg={}):
+    def preprocess(self, i):
+        tasks, task, input_text, target, *other = i
+        self.task_dict.update(tasks)
         sample = []
+        for get_feature_from_data, feature_param in self.preprocessing_data(i, self.tokenizer, **self.input_arg):
+            for feature in get_feature_from_data(**feature_param):
+                feature = {k: v for k, v in feature.items() if check_type_for_dataloader(v)}
+                feature.update((k, np.asarray(v)) for k, v in feature.items() if k != 'task')
+                sample.append(feature)
+        return sample
+
+    def __init__(self, fpath, tokenizer, get_data_from_file, preprocessing_data, cache=False, input_arg={}):
         cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
+        self.task_dict = {}
+        self.preprocessing_data = preprocessing_data
+        self.tokenizer = tokenizer
+        self.input_arg = input_arg
+
         if os.path.isfile(cache_path) and cache:
             with open(cache_path, "rb") as cf:
                 outdata = pickle.load(cf)
                 sample = outdata['sample']
-                task_dict = outdata['task']
+                self.task_dict = outdata['task']
         else:
-            task_dict = {}
-            total_data = 0
-            for i in tqdm(get_data_from_file(fpath)):
-                tasks, task, input_text, target, *other = i
-                task_dict.update(tasks)
-                for get_feature_from_data, feature_param in preprocessing_data(i, tokenizer, **input_arg):
-                    for feature in get_feature_from_data(**feature_param):
-                        feature = {k: v for k, v in feature.items() if check_type_for_dataloader(v)}
-                        feature.update((k, np.asarray(v)) for k, v in feature.items() if k != 'task')
-                        sample.append(feature)
-                        total_data += 1
-            print("Processed " + str(total_data) + " data.")
-
+            sample = []
+            [sample.extend(i) for i in process_map(self.preprocess, list(get_data_from_file(fpath)),
+                                                   max_workers=input_arg['worker'],
+                                                   chunksize=1000)]
+            print(f"There are {len(sample)} datas after preprocessing.")
             if cache:
                 with open(cache_path, 'wb') as cf:
-                    outdata = {'sample': sample, 'task': task_dict}
+                    outdata = {'sample': sample, 'task': self.task_dict}
                     pickle.dump(outdata, cf)
-        self.sample = sample
-        self.task = task_dict
+        self.sample = np.array(sample)
+        self.task = self.task_dict
 
     def increase_with_sampling(self, total):
         inc_samp = [choice(self.sample) for _ in range(total - len(self.sample))]
-        self.sample.extend(inc_samp)
+        self.sample = np.concatenate([self.sample, np.array(inc_samp)])
 
     def __len__(self):
         return len(self.sample)
