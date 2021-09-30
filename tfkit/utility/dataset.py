@@ -56,8 +56,6 @@ def get_dataset(file_path, model_class, tokenizer, parameter):
 
 class LoadDataset(data.Dataset):
     def preprocess(self, i):
-        tasks, task, input_text, target, *other = i
-        self.task_dict.update(tasks)
         sample = []
         for get_feature_from_data, feature_param in self.preprocessing_data(i, self.tokenizer, **self.input_arg):
             for feature in get_feature_from_data(**feature_param):
@@ -80,8 +78,10 @@ class LoadDataset(data.Dataset):
                 self.task_dict = outdata['task']
         else:
             sample = []
-            [sample.extend(i) for i in process_map(self.preprocess, list(get_data_from_file(fpath)),
-                                                   max_workers=input_arg['worker'],
+            all_data = list(get_data_from_file(fpath))
+            [self.task_dict.update(i[0]) for i in all_data]
+            [sample.extend(i) for i in process_map(self.preprocess, all_data,
+                                                   max_workers=input_arg.get('worker', 4),
                                                    chunksize=1000)]
             print(f"There are {len(sample)} datas after preprocessing.")
             if cache:
