@@ -13,17 +13,18 @@ import torch
 from torch import nn
 from tfkit.model.seq2seq.dataloader import get_feature_from_data
 from torch.nn.functional import softmax
-from tfkit.utility.loss import NegativeCElLoss
+from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
 import copy
 
 
 class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
+    def __init__(self, tokenizer, pretrained, maxlen=512, selfkd=False, **kwargs):
         super().__init__()
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         self.tokenizer = tokenizer
         self.pretrained = pretrained
+        self.selfkd = selfkd
         init_weight = None
         print('Using device:', self.device)
         if hasattr(pretrained, 'decoder'):
@@ -53,7 +54,7 @@ class Model(nn.Module):
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
 
-    def forward(self, batch_data, eval=False, beamsearch=False, **args):
+    def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **args):
 
         inputs = batch_data['input']
         prevs = batch_data['prev']
@@ -73,12 +74,15 @@ class Model(nn.Module):
                 encoder_hidden_states = outputs[0]
                 self.encoder_hidden = encoder_hidden_states
             # Decoder
-            prediction_output = self.decoder_model(
+            prediction = self.decoder_model(
                 input_ids=prev_tensors,
                 attention_mask=decoder_mask_tensors,
                 encoder_hidden_states=encoder_hidden_states,
-                encoder_attention_mask=encoder_mask_tensors
-            )[0]
+                output_hidden_states=self.selfkd,
+                return_dict=True,
+            )
+            prediction_output = prediction['last_hidden_state']
+            prediction_all_hidden = prediction.get('hidden_states')
         else:
             if eval and self.encoder_hidden is not None and not beamsearch:
                 prev_tensors = prev_tensors[..., -1:]
@@ -88,9 +92,9 @@ class Model(nn.Module):
                     decoder_input_ids=prev_tensors,
                     decoder_attention_mask=decoder_mask_tensors,
                     past_key_values=self.past_key_values,
-                    output_hidden_states=True,
+                    output_hidden_states=self.selfkd,
                     use_cache=True,
-                    return_dict=True
+                    return_dict=True,
                 )
             else:
                 prediction = self.pretrained(
@@ -99,29 +103,30 @@ class Model(nn.Module):
                     decoder_input_ids=prev_tensors,
                     decoder_attention_mask=decoder_mask_tensors,
                     past_key_values=self.past_key_values,
+                    output_hidden_states=self.selfkd,
                     use_cache=True,
                     return_dict=True
                 )
             prediction_output = prediction['last_hidden_state']
+            prediction_all_hidden = prediction.get('decoder_hidden_states')
             if eval and not beamsearch:
                 self.encoder_hidden = prediction['encoder_last_hidden_state']
                 self.past_key_values = prediction['past_key_values']
-        prediction_scores = self.model(prediction_output)
 
+        prediction_scores = self.model(prediction_output)
         if eval:
-            result_dict = {
-                'label_prob_all': [],
-                'label_map': [],
-                'prob_list': []
-            }
+            result_dict = {}
             start = batch_data['start'][0]
             softmax_score = softmax(prediction_scores[0][start], dim=0)
-            topK = torch.topk(softmax_score, 50)
-            prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
-                           zip(topK.values.data.tolist(), topK.indices.data.tolist())]
-            result_dict['prob_list'].append(softmax_score.data.tolist())
-            result_dict['label_prob_all'].append(prob_result)
-            result_dict['label_map'].append(prob_result[0])
+            max_item_id = torch.argmax(softmax_score, -1).item()
+            max_item_prob = softmax_score[max_item_id].item()
+            result_dict['max_item'] = (self.tokenizer.convert_ids_to_tokens(max_item_id), max_item_prob)
+            if return_topN_prob > 1:
+                topK = torch.topk(softmax_score, return_topN_prob)
+                prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
+                               zip(topK.values.data.tolist(), topK.indices.data.tolist())]
+                result_dict['prob_list'] = softmax_score.data.tolist()[:return_topN_prob]
+                result_dict['label_prob'] = prob_result
             outputs = result_dict
         else:
             targets = batch_data['target']
@@ -130,8 +135,15 @@ class Model(nn.Module):
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                loss_tensors.view(-1))
+            if self.selfkd:
+                selfkdloss_fct = SelfKDLoss(ignore_index=-1)
+                for decoder_hidden in prediction_all_hidden[:-1]:
+                    student = self.model(decoder_hidden)
+                    lm_loss += selfkdloss_fct(student.view(-1, self.vocab_size),
+                                              prediction_scores.view(-1, self.vocab_size), loss_tensors.view(-1))
+
             negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
-            if not torch.all(negative_targets.eq(-1)).item():
+            if not torch.all(negativeloss_tensors.eq(-1)).item():
                 negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
                 negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
                                                   negativeloss_tensors.view(-1))

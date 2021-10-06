@@ -50,6 +50,22 @@ class SeqCTCLoss(nn.Module):
         return loss
 
 
+class SelfKDLoss(nn.Module):
+
+    def __init__(self, alpha=0.1, temperature=2,ignore_index=-1):
+        super(SelfKDLoss, self).__init__()
+        self.alpha = alpha
+        self.temperature = temperature
+        self.ignore_index = ignore_index
+
+    def forward(self, outputs, teacher_outputs, labels):
+        loss = nn.KLDivLoss()(F.log_softmax(outputs / self.temperature, dim=-1),
+                              F.softmax(teacher_outputs / self.temperature, dim=-1)) * (
+                       self.alpha * self.temperature * self.temperature) + F.cross_entropy(outputs, labels,ignore_index=self.ignore_index,) * (
+                       1. - self.alpha)
+        return loss
+
+
 class DiceLoss(nn.Module):
     """From 'Dice Loss for Data-imbalanced NLP Tasks'"""
 
