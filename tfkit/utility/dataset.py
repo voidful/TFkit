@@ -22,19 +22,26 @@ def check_type_for_dataloader(data_item):
         return False
 
 
-def dataloader_collate(batch):
-    batch = copy.deepcopy(batch)
-    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch])
+def batch_reduce_pad(batch):
+    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and \
+              batch[0]['input'][-1] == batch[0]['input'][-2]
     if has_pad:
         pad_token = batch[0]['input'][-1]
         pad_start = max([list(dat['input']).index(pad_token) for dat in batch])
         for ind, dat in enumerate(batch):
             for k, v in dat.items():
-                if isinstance(v, numpy.ndarray) and v.size > 1:
+                if ((isinstance(v, numpy.ndarray) and v.size > 1) or (isinstance(v, list) and len(v) > 1)) and \
+                        'prev' is not k and \
+                        'decoder_mask' is not k:
                     batch[ind][k] = v[:pad_start]
                 if k == 'input_length':
                     batch[ind][k] = pad_start - 1
-    return torch.utils.data._utils.collate.default_collate(batch)
+    return batch
+
+
+def dataloader_collate(batch):
+    batch = copy.deepcopy(batch)
+    return torch.utils.data._utils.collate.default_collate(batch_reduce_pad(batch))
 
 
 def get_dataset(file_path, model_class, tokenizer, parameter):

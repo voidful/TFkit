@@ -64,30 +64,33 @@ def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,
                           handle_exceed='noop', **kwargs):
     feature_dict_list = []
-
+    tok_pad = tok.tok_pad(tokenizer)
+    tok_bos = tok.tok_begin(tokenizer)
+    tok_sep = tok.tok_sep(tokenizer)
+    tok_mask = tok.tok_mask(tokenizer)
     pred_len = len(tokenizer.convert_tokens_to_ids(target)) + 1 if target is not None else len(previous) - 1
     t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2 - pred_len, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep
         row_dict = dict()
-        t_input = [tok.tok_begin(tokenizer)] + \
+        t_input = [tok_bos] + \
                   t_input[:maxlen - reserved_len - 2] + \
-                  [tok.tok_sep(tokenizer)]
+                  [tok_sep]
         t_input_id = tokenizer.convert_tokens_to_ids(t_input)
         encoder_mask_id = [1] * (len(t_input))
         encoder_mask_id.extend([0] * (maxlen - len(encoder_mask_id)))
-        t_input_id.extend(tokenizer.convert_tokens_to_ids([tok.tok_pad(tokenizer)]) * (maxlen - len(t_input_id)))
+        t_input_id.extend(tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(t_input_id)))
 
         if target is not None:
             tokenized_target_id = []
             if previous is None:  # pm
-                tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_mask(tokenizer))] * maxlen
+                tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok_mask)] * maxlen
             else:
-                tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok.tok_sep(tokenizer)] + target)
-            tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(target + [tok.tok_sep(tokenizer)]))
+                tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok_sep] + target)
+            tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(target + [tok_sep]))
             decoder_mask_id = [1] * (len(tokenized_prev_id))
             decoder_mask_id.extend([0] * (maxlen - len(decoder_mask_id)))
             tokenized_prev_id.extend(
-                tokenizer.convert_tokens_to_ids([tok.tok_pad(tokenizer)]) * (maxlen - len(tokenized_prev_id)))
+                tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(tokenized_prev_id)))
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
             row_dict['prev'] = tokenized_prev_id
@@ -99,7 +102,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarg
                 if len(tokenized_ntarget_id) <= maxlen:
                     row_dict['ntarget'] = tokenized_ntarget_id
         else:
-            tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok.tok_sep(tokenizer))]
+            tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok_sep)]
             tokenized_prev_id.extend(tokenizer.convert_tokens_to_ids(previous))
             target_start = len(tokenized_prev_id) - 1
             row_dict['start'] = target_start

@@ -28,7 +28,7 @@ class Model(nn.Module):
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, return_topN_prob=1, **args):
         inputs = batch_data['input']
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
@@ -41,19 +41,18 @@ class Model(nn.Module):
         prediction_scores = self.model(outputs[0])
 
         if eval:
-            result_dict = {
-                'label_prob_all': [],
-                'label_map': [],
-                'prob_list': []
-            }
+            result_dict = {}
             start = batch_data['start'][0]
-            logit_prob = softmax(prediction_scores[0][start], dim=0)
-            topK = torch.topk(logit_prob, 50)
-            prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
-                           zip(topK.values.data.tolist(), topK.indices.data.tolist())]
-            result_dict['prob_list'].append(logit_prob.data.tolist())
-            result_dict['label_prob_all'].append(prob_result)
-            result_dict['label_map'].append(prob_result[0])
+            softmax_score = softmax(prediction_scores[0][start], dim=0)
+            max_item_id = torch.argmax(softmax_score, -1).item()
+            max_item_prob = softmax_score[max_item_id].item()
+            result_dict['max_item'] = (self.tokenizer.convert_ids_to_tokens(max_item_id), max_item_prob)
+            if return_topN_prob > 1:
+                topK = torch.topk(softmax_score, return_topN_prob)
+                prob_result = [(self.tokenizer.convert_ids_to_tokens(id), prob) for prob, id in
+                               zip(topK.values.data.tolist(), topK.indices.data.tolist())]
+                result_dict['prob_list'] = softmax_score.data.tolist()[:return_topN_prob]
+                result_dict['label_prob'] = prob_result
             outputs = result_dict
         else:
             loss_tensors = torch.as_tensor(targets).to(self.device)

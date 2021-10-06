@@ -165,7 +165,7 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
 
         # load model
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
-                                  maxlen=input_arg.get('maxlen'))
+                                  maxlen=input_arg.get('maxlen'), **model_arg)
         model = model.to(device)
 
         # append to max len

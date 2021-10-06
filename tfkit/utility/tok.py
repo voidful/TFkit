@@ -5,43 +5,45 @@ from tqdm import tqdm
 
 UNIVERSAL_SEP = "///"
 
+
 def tok_begin(tokenizer):
-    if isinstance(tokenizer._bos_token, str):
-        return tokenizer._bos_token
-    elif isinstance(tokenizer._cls_token, str):
-        return tokenizer._cls_token
+    if tokenizer.special_tokens_map.get('bos_token'):
+        return tokenizer.special_tokens_map.get('bos_token')
+    elif tokenizer.special_tokens_map.get('cls_token'):
+        tokenizer.special_tokens_map.get('cls_token')
     return 'cls'
 
 
+
 def tok_sep(tokenizer):
-    if isinstance(tokenizer._eos_token, str):
-        return tokenizer._eos_token
-    elif isinstance(tokenizer._sep_token, str):
-        return tokenizer._sep_token
+    if tokenizer.special_tokens_map.get('sep_token'):
+        return tokenizer.special_tokens_map.get('sep_token')
+    elif tokenizer.special_tokens_map.get('eos_token'):
+        tokenizer.special_tokens_map.get('eos_token')
     return 'sep'
 
 
 def tok_mask(tokenizer):
-    if isinstance(tokenizer._mask_token, str):
-        return tokenizer._mask_token
-    elif isinstance(tokenizer.mask_token, str):
-        return tokenizer.mask_token
+    if tokenizer.special_tokens_map.get('mask_token'):
+        return tokenizer.special_tokens_map.get('mask_token')
     return 'msk'
 
 
 def tok_pad(tokenizer):
-    if isinstance(tokenizer._pad_token, str):
-        return tokenizer._pad_token
+    if tokenizer.special_tokens_map.get('pad_token'):
+        return tokenizer.special_tokens_map.get('pad_token')
     return 'pad'
 
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],
                   keep_after_sep=True):
     mode = mode[0] if isinstance(mode, list) else mode
-    seq = seq.replace("[MASK]", tok_mask(tokenizer)).replace("[SEP]", tok_sep(tokenizer)).replace("[CLS]",
-                                                                                                  tok_begin(tokenizer))
-    sep_split = seq.split(tok_sep(tokenizer))
-    ext_seq = [tok_sep(tokenizer)] + tokenizer.tokenize(tok_sep(tokenizer).join(sep_split[1:])) \
+    mask_tok = tok_mask(tokenizer)
+    sep_tok = tok_sep(tokenizer)
+    bos_tok = tok_begin(tokenizer)
+    seq = seq.replace("[MASK]", mask_tok).replace("[SEP]", sep_tok).replace("[CLS]", bos_tok)
+    sep_split = seq.split(sep_tok)
+    ext_seq = [sep_tok] + tokenizer.tokenize(sep_tok.join(sep_split[1:])) \
         if len(sep_split) > 1 and keep_after_sep else []
     t_seq = tokenizer.tokenize(sep_split[0])
     if mode == 'noop':

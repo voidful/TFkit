@@ -1,5 +1,6 @@
 import unittest
 
+from tfkit.utility import tok
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
 
@@ -295,7 +296,7 @@ class TestModel(unittest.TestCase):
             print(model(feature))
             self.assertTrue(isinstance(model(feature), Tensor))
             model_dict = model(feature, eval=True)
-            self.assertTrue('label_map' in model_dict)
+            self.assertTrue('max_item' in model_dict)
 
         # greedy
         result, model_dict = model.predict(input=input)
@@ -371,7 +372,7 @@ class TestModel(unittest.TestCase):
         input = "See you next time"
         previous = ""
         target = "ok sure bye"
-        maxlen = 20
+        maxlen = 32
         # tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
         tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
         pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
@@ -385,7 +386,7 @@ class TestModel(unittest.TestCase):
                 feature[k] = [v, v]
             self.assertTrue(isinstance(model(feature, eval=True), dict))
             model_dict = model(feature, eval=True)
-            self.assertTrue('label_map' in model_dict)
+            self.assertTrue('max_item' in model_dict)
 
         # greedy
         result, model_dict = model.predict(input=input)
@@ -436,6 +437,62 @@ class TestModel(unittest.TestCase):
         print("exceed max len with reserved len:", result)
         self.assertTrue(result)
 
+    def testSeq2seqSelfKD(self):
+        input = "See you next time"
+        target = "ok sure bye"
+        maxlen = 32
+        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
+
+        model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        for feature in tfkit.model.seq2seq.get_feature_from_data(tokenizer, input=input,
+                                                                 target=tokenizer.tokenize(target),
+                                                                 previous=[],
+                                                                 maxlen=maxlen):
+            for k, v in feature.items():
+                feature[k] = [v, v]
+            model_dict = model(feature, selfkd=True)
+            print(model_dict)
+
+    def testSeq2seqTime(self):
+        input_sent = "testing testing testing"
+        maxlen = 64
+        from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+        tokenizer = AutoTokenizer.from_pretrained("sshleifer/tinier_bart")
+        model = AutoModelForSeq2SeqLM.from_pretrained("sshleifer/tinier_bart")
+        pretrained = AutoModel.from_pretrained("sshleifer/tinier_bart")
+        seq2seq_model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        import statistics
+        times = []
+        for i in range(3):
+            s = timeit.default_timer()
+            text = tokenizer.batch_decode(
+                model.generate(
+                    tokenizer(input_sent, add_special_tokens=True, return_tensors='pt')['input_ids'].to(model.device),
+                    max_length=maxlen,
+                    output_hidden_states=True, num_beams=1))[0]
+            print(len(text), text)
+            e = timeit.default_timer()
+            times.append(e - s)
+        print("hf time", statistics.mean(times))
+
+        times = []
+        for i in range(3):
+            start = timeit.default_timer()
+            text = seq2seq_model.predict(input=input_sent)[0][0]
+            print(len(text), text)
+            stop = timeit.default_timer()
+            times.append(stop - start)
+        print("tfkit time", statistics.mean(times))
+
+        # from line_profiler import LineProfiler
+        # lp = LineProfiler()
+        # lp_wrapper = lp(seq2seq_model.predict)
+        # lp_wrapper(input_sent)
+        # lp.print_stats()
+
     def testOnebyoneSeq2seqTime(self):
         maxlen = 512
         tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
@@ -454,4 +511,4 @@ class TestModel(unittest.TestCase):
         start = timeit.default_timer()
         onebyone_model.predict(input="T " * 256)
         stop = timeit.default_timer()
-        print('Once Time: ', stop - start)
+        print('onebyone Time: ', stop - start)
