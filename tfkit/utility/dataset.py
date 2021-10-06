@@ -26,14 +26,14 @@ def batch_reduce_pad(batch):
     has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and \
               batch[0]['input'][-1] == batch[0]['input'][-2]
     if has_pad:
-        pad_token = batch[0]['input'][-1]
-        pad_start = max([list(dat['input']).index(pad_token) for dat in batch])
+        pad_token_input = batch[0]['input'][-1]
+        pad_token_target = batch[0]['target'][-1]
+        pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
+        if isinstance(pad_token_target, int):
+            pad_start = max(pad_start, max([list(dat['target']).index(pad_token_target) for dat in batch]))
         for ind, dat in enumerate(batch):
             for k, v in dat.items():
-                if ((isinstance(v, numpy.ndarray) and v.size > 1) or (isinstance(v, list) and len(v) > 1)) and \
-                        'prev' != k and \
-                        'decoder_mask' != k and \
-                        'target' == k and 'decoder_mask' not in dat.keys():
+                if (isinstance(v, numpy.ndarray) and v.size > 1) or (isinstance(v, list) and len(v) > 1):
                     batch[ind][k] = v[:pad_start]
                 if k == 'input_length':
                     batch[ind][k] = pad_start - 1
