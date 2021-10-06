@@ -31,8 +31,8 @@ def batch_reduce_pad(batch):
         for ind, dat in enumerate(batch):
             for k, v in dat.items():
                 if ((isinstance(v, numpy.ndarray) and v.size > 1) or (isinstance(v, list) and len(v) > 1)) and \
-                        'prev' is not k and \
-                        'decoder_mask' is not k:
+                        'prev' != k and \
+                        'decoder_mask' != k:
                     batch[ind][k] = v[:pad_start]
                 if k == 'input_length':
                     batch[ind][k] = pad_start - 1
