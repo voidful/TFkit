@@ -455,6 +455,26 @@ class TestModel(unittest.TestCase):
             model_dict = model(feature, selfkd=True)
             print(model_dict)
 
+    def testSeq2seqbt(self):
+        input = "See you next time"
+        target = "ok sure bye"
+        bt_target = "goodbye"
+        maxlen = 32
+        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
+
+        model = tfkit.model.seq2seqbt.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        for feature in tfkit.model.seq2seqbt.get_feature_from_data(tokenizer, input=input,
+                                                                   target=tokenizer.tokenize(target),
+                                                                   previous=[],
+                                                                   btarget=bt_target,
+                                                                   maxlen=maxlen):
+            for k, v in feature.items():
+                feature[k] = [v, v]
+            model_dict = model(feature, selfkd=True)
+            print(model_dict)
+
     def testSeq2seqTime(self):
         input_sent = "testing testing testing"
         maxlen = 64

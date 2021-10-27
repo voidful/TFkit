@@ -1,3 +1,4 @@
+import copy
 import importlib
 import os
 
@@ -5,7 +6,7 @@ import inquirer
 import nlp2
 import torch
 from transformers import BertTokenizer, AutoTokenizer, AutoModel
-import tfkit
+import copy
 
 
 def list_all_model(ignore_list=[]):
@@ -42,10 +43,16 @@ def load_pretrained_tokenizer(pretrained_config):
 
 
 def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens):
+    origin_vocab_size = tokenizer.vocab_size
     print("===ADD TOKEN===")
     num_added_toks = tokenizer.add_tokens(add_tokens)
     print('We have added', num_added_toks, 'tokens')
     pretrained.resize_token_embeddings(len(tokenizer))
+    input_embedding = pretrained.get_input_embeddings()
+    state_dict_weight = input_embedding.state_dict()['weight']
+    state_dict_weight[origin_vocab_size:len(tokenizer)] = copy.copy(
+        state_dict_weight[100:100 + num_added_toks])
+    pretrained.set_input_embeddings(input_embedding)
     print("===============")
     return pretrained, tokenizer
 
