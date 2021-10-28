@@ -269,3 +269,13 @@ class TestDataLoader(unittest.TestCase):
             for j in tfkit.seq2seq.preprocessing_data(i, tokenizer, maxlen=maxlen):
                 print(j)
             break
+
+    def testSeq2seqBT(self):
+        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
+
+        maxlen = 10
+        feature = tfkit.seq2seqbt.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
+                                                        tokenizer.tokenize("go"),
+                                                        btarget="out" * 10,  # should able to Handel over max length
+                                                        reserved_len=3)[-1]
+        print(feature)

@@ -74,7 +74,7 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, btarg
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
             row_dict['prev'] = tokenized_prev_id
-            row_dict['btarget'] = [-1] * maxlen
+            row_dict['btarget'] = [tok_pad] * maxlen
             if btarget is not None and len(tokenizer.tokenize(btarget)) > 0:
                 tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(btarget))
                 tokenized_ntarget_id = tokenized_ntarget

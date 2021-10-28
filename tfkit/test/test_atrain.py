@@ -1,8 +1,10 @@
+import os
 import unittest
 import pytest
 import tfkit
 from tfkit.test import *
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
+
 
 class TestTrain(unittest.TestCase):
 
@@ -174,6 +176,35 @@ class TestTrain(unittest.TestCase):
         result = os.system(
             f'tfkit-train --batch 2 --add_tokens_file {NEWTOKEN_FILE}  --savedir {ADDTOKFILE_SAVE_DIR} --epoch 2  --train {ADDTOK_DATASET}  --test {ADDTOK_DATASET} --model clm --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
+
+    def testResume(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', ONCE_MODEL_DIR, '--train',
+             GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--model', 'once', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'testresume'])
+
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', ONCE_MODEL_DIR, '--train',
+             GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--model', 'once', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--resume', os.path.join(ONCE_MODEL_DIR, "1.pt")])
+
+    def testResumeMultiModel(self):
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train', CLAS_DATASET, GEN_DATASET,
+             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--model', 'clas', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'clas', 'clm'])
+        # resume to train all task
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train', CLAS_DATASET, GEN_DATASET,
+             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--model', 'clas', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'clas', 'clm', '--resume',
+             os.path.join(MTTASK_MODEL_DIR, "1.pt") ])
+        # resume to train only one task
+        tfkit.train.main(
+            ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train',
+             GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--model', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--resume', os.path.join(MTTASK_MODEL_DIR, "1.pt"),
+             '--tag', 'clm'])
 
     @pytest.mark.skip()
     def testLoggerwandb(self):

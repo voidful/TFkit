@@ -246,9 +246,16 @@ def main(arg=None):
         if 'model_state_dict' in package:
             models[0].load_state_dict(package['model_state_dict'])
         else:
-            for model_tag, state_dict in zip(package['tags'], package['models']):
+            if len(models) != len(package['models']) and not input_arg.get('tag'):
+                raise Exception(
+                    f"resuming from multi-task model, you should specific which task to use with --tag, from {package['tags']}")
+            elif len(models) != len(package['models']):
+                tags = input_arg.get('tag')
+            else:
+                tags = package['tags']
+            for ind, model_tag in enumerate(tags):
                 tag_ind = package['tags'].index(model_tag)
-                models[tag_ind].load_state_dict(state_dict)
+                models[ind].load_state_dict(package['models'][tag_ind])
         start_epoch = int(package.get('epoch', 1)) + 1
 
     # train/eval loop
