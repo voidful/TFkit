@@ -1,21 +1,7 @@
-import csv
-from collections import defaultdict
-from tqdm import tqdm
 import tfkit.utility.tok as tok
+from tfkit.utility.dataloader import get_gen_data_from_file
 
-
-def get_data_from_file(fpath):
-    tasks = defaultdict(list)
-    task = 'default'
-    tasks[task] = []
-    with open(fpath, encoding='utf') as csvfile:
-        for i in tqdm(list(csv.reader(csvfile))):
-            source_text = i[0].strip()
-            target_text = i[1].strip()
-            negative_text = i[2].strip() if len(i) > 2 else None
-            input = source_text
-            target = target_text
-            yield tasks, task, input, [target, negative_text]
+get_data_from_file = get_gen_data_from_file
 
 
 def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice', reserved_len=0, **kwargs):
@@ -74,11 +60,12 @@ def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, btarg
             tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
             row_dict['target'] = tokenized_target_id
             row_dict['prev'] = tokenized_prev_id
-            row_dict['btarget'] = [tok_pad] * maxlen
+            row_dict['btarget'] = tokenizer.convert_tokens_to_ids([tok_pad]) * maxlen
             if btarget is not None and len(tokenizer.tokenize(btarget)) > 0:
                 tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(btarget))
                 tokenized_ntarget_id = tokenized_ntarget
-                tokenized_ntarget_id.extend(tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(tokenized_ntarget_id)))
+                tokenized_ntarget_id.extend(
+                    tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(tokenized_ntarget_id)))
                 if len(tokenized_ntarget_id) <= maxlen:
                     row_dict['btarget'] = tokenized_ntarget_id
         else:

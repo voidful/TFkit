@@ -273,6 +273,9 @@ class TestDataLoader(unittest.TestCase):
     def testSeq2seqBT(self):
         tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
 
+        for i in tfkit.seq2seqbt.get_data_from_file(GEN_DATASET):
+            print("data", i)
+
         maxlen = 10
         feature = tfkit.seq2seqbt.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
                                                         tokenizer.tokenize("go"),

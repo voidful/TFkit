@@ -4,28 +4,12 @@ import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-import csv
 from collections import defaultdict
 from tqdm import tqdm
 import tfkit.utility.tok as tok
+from tfkit.utility.dataloader import get_tag_data_from_file
 
-
-def get_data_from_file(fpath, text_index: int = 0, label_index: int = 1, separator=" ", **kwargs):
-    tasks = defaultdict(list)
-    task = 'default'
-    labels = []
-    with open(fpath, 'r', encoding='utf-8') as f:
-        f_csv = csv.reader(f)
-        for row in f_csv:
-            for i in row[1].split(separator):
-                if i not in labels and len(i.strip()) > 0:
-                    labels.append(i)
-                    labels.sort()
-    tasks[task] = labels
-    with open(fpath, 'r', encoding='utf-8') as f:
-        f_csv = csv.reader(f)
-        for row in tqdm(f_csv):
-            yield tasks, task, row[text_index].strip(), [row[label_index].strip()]
+get_data_from_file = get_tag_data_from_file
 
 
 def get_data_from_file_col(fpath, text_index: int = 0, label_index: int = 1, separator=" ", **kwargs):

@@ -1,17 +1,8 @@
-import csv
-from collections import defaultdict
 import nlp2
 import tfkit.utility.tok as tok
+from tfkit.utility.dataloader import get_qa_data_from_file
 
-
-def get_data_from_file(fpath):
-    tasks = defaultdict(list)
-    task = 'default'
-    with open(fpath, 'r', encoding='utf8', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            context, start, end = row
-            yield tasks, task, context, [start, end]
+get_data_from_file = get_qa_data_from_file
 
 
 def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='slide', **kwargs):

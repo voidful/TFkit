@@ -3,9 +3,10 @@ tensorboardX
 torch
 sklearn
 matplotlib
-nlp2>=1.8.32
+nlp2>=1.8.39
 tqdm>=4.45.0
 inquirer
 numpy
 pytorch-crf
 sentencepiece
+pandas

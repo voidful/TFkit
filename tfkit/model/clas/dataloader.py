@@ -2,7 +2,7 @@ import csv
 from collections import defaultdict
 from sklearn.preprocessing import MultiLabelBinarizer
 import tfkit.utility.tok as tok
-
+import pandas as pd
 
 def get_data_from_file(fpath):
     tasks = defaultdict(list)
