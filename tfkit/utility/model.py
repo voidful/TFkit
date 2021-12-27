@@ -112,7 +112,6 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
 
     model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=task_detail,
                               maxlen=maxlen)
-    model = model.to(device)
     model.load_state_dict(models_state[type_ind], strict=False)
 
     print("finish loading")

@@ -30,14 +30,14 @@ class Model(nn.Module):
         self.tasks_detail = tasks_detail
         self.classifier_list = nn.ModuleList()
         for task, labels in tasks_detail.items():
-            self.classifier_list.append(nn.Linear(self.pretrained.config.hidden_size, len(labels)).to(self.device))
+            self.classifier_list.append(nn.Linear(self.pretrained.config.hidden_size, len(labels)))
             self.tasks[task] = len(self.classifier_list) - 1
         self.maxlen = maxlen
 
-        self.pretrained = self.pretrained.to(self.device)
-        self.classifier_list = self.classifier_list.to(self.device)
-        self.loss_fct = self.loss_fct.to(self.device)
-        self.loss_fct_mt = self.loss_fct_mt.to(self.device)
+        self.pretrained = self.pretrained
+        self.classifier_list = self.classifier_list
+        self.loss_fct = self.loss_fct
+        self.loss_fct_mt = self.loss_fct_mt
 
     # from https://github.com/UKPLab/sentence-transformers
     # Mean Pooling - Take attention mask into account for correct averaging
@@ -51,9 +51,9 @@ class Model(nn.Module):
 
     def forward(self, batch_data, eval=False, **args):
         tasks = batch_data['task']
-        inputs = torch.as_tensor(batch_data['input']).to(self.device)
-        targets = torch.as_tensor(batch_data['target']).to(self.device)
-        masks = torch.as_tensor(batch_data['mask']).to(self.device)
+        inputs = torch.as_tensor(batch_data['input'])
+        targets = torch.as_tensor(batch_data['target'])
+        masks = torch.as_tensor(batch_data['mask'])
 
         result_dict = {
             'label_prob_all': [],

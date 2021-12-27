@@ -28,16 +28,16 @@ class Model(nn.Module):
         self.maxlen = maxlen
         self.loss_fct = FocalLoss()
 
-        self.pretrained = self.pretrained.to(self.device)
-        self.loss_fct = self.loss_fct.to(self.device)
+        self.pretrained = self.pretrained
+        self.loss_fct = self.loss_fct
 
     def forward(self, batch_data, eval=False, separator=" ", **args):
         inputs = batch_data["input"]
         masks = batch_data["mask"]
 
         # bert embedding
-        token_tensor = torch.as_tensor(inputs, dtype=torch.long).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
+        token_tensor = torch.as_tensor(inputs, dtype=torch.long)
+        mask_tensors = torch.as_tensor(masks)
         bert_output = self.pretrained(token_tensor, attention_mask=mask_tensors)
         res = bert_output[0]
         pooled_output = self.dropout(res)
@@ -73,7 +73,7 @@ class Model(nn.Module):
             outputs = result_dict
         else:
             targets = batch_data["target"]
-            target_tensor = torch.as_tensor(targets, dtype=torch.long).to(self.device)
+            target_tensor = torch.as_tensor(targets, dtype=torch.long)
             loss = self.loss_fct(reshaped_logits.view(-1, len(self.labels)), target_tensor.view(-1))
             outputs = loss
 

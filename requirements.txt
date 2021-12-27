@@ -10,3 +10,4 @@ numpy
 pytorch-crf
 sentencepiece
 pandas
+accelerate>=0.5.1

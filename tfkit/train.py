@@ -16,6 +16,11 @@ from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
 from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model
 import logging
+from accelerate import Accelerator, notebook_launcher, DistributedDataParallelKwargs
+
+ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
+accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
+device = accelerator.device
 
 transformers_logger = logging.getLogger('transformers')
 transformers_logger.setLevel(logging.CRITICAL)
@@ -84,9 +89,10 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
         model = torch.nn.DataParallel(m)
         model.train()
         models.append(model)
-        optims_schs.append(
-            optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
-                      total_iter_length))
+        optim = optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
+                          total_iter_length)
+        optim = accelerator.prepare(optim)
+        optims_schs.append(optim)
 
     while not end:
         for (model, optim_sch, mtag, batch) in zip(models, optims_schs, models_tag, iters):
@@ -96,7 +102,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
             if train_batch is not None:
                 loss = model(train_batch)
                 loss = loss / input_arg.get('grad_accum')
-                loss.mean().backward()
+                accelerator.backward(loss.mean())
                 if (total_iter + 1) % input_arg.get('grad_accum') == 0:
                     optim.step()
                     model.zero_grad()
@@ -166,11 +172,12 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
         # load model
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
                                   maxlen=input_arg.get('maxlen'), **model_arg)
-        model = model.to(device)
 
         # append to max len
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
         test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
+
+        model, train_ds, test_ds = accelerator.prepare(model, train_ds, test_ds)
 
         train_dataset.append(train_ds)
         test_dataset.append(test_ds)
@@ -283,4 +290,4 @@ def main(arg=None):
 
 
 if __name__ == "__main__":
-    main()
+    notebook_launcher(main)

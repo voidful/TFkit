@@ -23,7 +23,7 @@ class Model(nn.Module):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         print('Using device:', self.device)
-        self.model.to(self.device)
+        self.model
 
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict
@@ -34,8 +34,8 @@ class Model(nn.Module):
         negative_targets = batch_data['ntarget']
         masks = batch_data['mask']
 
-        tokens_tensor = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs)
+        mask_tensors = torch.as_tensor(masks)
 
         outputs = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         prediction_scores = self.model(outputs[0])
@@ -55,13 +55,13 @@ class Model(nn.Module):
                 result_dict['label_prob'] = prob_result
             outputs = result_dict
         else:
-            loss_tensors = torch.as_tensor(targets).to(self.device)
-            negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
+            loss_tensors = torch.as_tensor(targets)
+            negativeloss_tensors = torch.as_tensor(negative_targets)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       loss_tensors.view(-1))
             if not torch.all(negativeloss_tensors.eq(-1)).item():
-                negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
+                negative_loss_fct = NegativeCElLoss(ignore_index=-1)
                 negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
                                                   negativeloss_tensors.view(-1))
                 masked_lm_loss += negative_loss

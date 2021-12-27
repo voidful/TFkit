@@ -14,15 +14,15 @@ class Model(nn.Module):
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.model.to(self.device)
+        self.model
 
     def forward(self, batch_data, eval=False, **args):
         inputs = batch_data['input']
         targets = batch_data['target']
         masks = batch_data['mask']
-        tokens_tensor = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
-        loss_tensors = torch.as_tensor(targets).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs)
+        mask_tensors = torch.as_tensor(masks)
+        loss_tensors = torch.as_tensor(targets)
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)

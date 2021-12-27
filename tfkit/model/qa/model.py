@@ -29,14 +29,14 @@ class Model(nn.Module):
         # self.loss_fct = FocalLoss(ignore_index=-1)
         # self.loss_fct = GWLoss()
 
-        self.pretrained = self.pretrained.to(self.device)
-        self.qa_classifier = nn.Linear(self.pretrained.config.hidden_size, 2).to(self.device)
-        self.loss_fct = self.loss_fct.to(self.device)
+        self.pretrained = self.pretrained
+        self.qa_classifier = nn.Linear(self.pretrained.config.hidden_size, 2)
+        self.loss_fct = self.loss_fct
 
     def forward(self, batch_data, eval=False, **args):
-        inputs = torch.as_tensor(batch_data['input']).to(self.device)
-        masks = torch.as_tensor(batch_data['mask']).to(self.device)
-        targets = torch.as_tensor(batch_data['target']).to(self.device)
+        inputs = torch.as_tensor(batch_data['input'])
+        masks = torch.as_tensor(batch_data['mask'])
+        targets = torch.as_tensor(batch_data['target'])
         start_positions, end_positions = targets.split(1, dim=1)
         start_positions = start_positions.squeeze(1)
         end_positions = end_positions.squeeze(1)

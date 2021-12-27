@@ -42,13 +42,11 @@ class Model(nn.Module):
                 self.decoder_model.base_model_prefix
             )
             decoder_hidden_size = decoder_config.hidden_size
-            self.decoder_model.to(self.device)
 
         self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
         self.model = nn.Linear(decoder_hidden_size, self.vocab_size, bias=False)
         if init_weight is not None:
             self.model.weight = init_weight
-        self.model.to(self.device)
         self.encoder_hidden = None
         self.past_key_values = None
         predictor = Predictor(self, get_feature_from_data)
@@ -61,10 +59,10 @@ class Model(nn.Module):
         encoder_mask = batch_data['encoder_mask']
         decoder_mask = batch_data['decoder_mask']
 
-        input_tensors = torch.as_tensor(inputs).to(self.device)
-        prev_tensors = torch.as_tensor(prevs).to(self.device)
-        encoder_mask_tensors = torch.as_tensor(encoder_mask).to(self.device)
-        decoder_mask_tensors = torch.as_tensor(decoder_mask).to(self.device)
+        input_tensors = torch.as_tensor(inputs)
+        prev_tensors = torch.as_tensor(prevs)
+        encoder_mask_tensors = torch.as_tensor(encoder_mask)
+        decoder_mask_tensors = torch.as_tensor(decoder_mask)
 
         if self.decoder_model is not None:
             if eval and self.encoder_hidden is not None:
@@ -131,7 +129,7 @@ class Model(nn.Module):
         else:
             targets = batch_data['target']
             negative_targets = batch_data['ntarget']
-            loss_tensors = torch.as_tensor(targets).to(self.device)
+            loss_tensors = torch.as_tensor(targets)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                loss_tensors.view(-1))
@@ -142,9 +140,9 @@ class Model(nn.Module):
                     lm_loss += selfkdloss_fct(student.view(-1, self.vocab_size),
                                               prediction_scores.view(-1, self.vocab_size), loss_tensors.view(-1))
 
-            negativeloss_tensors = torch.as_tensor(negative_targets).to(self.device)
+            negativeloss_tensors = torch.as_tensor(negative_targets)
             if not torch.all(negativeloss_tensors.eq(-1)).item():
-                negative_loss_fct = NegativeCElLoss(ignore_index=-1).to(self.device)
+                negative_loss_fct = NegativeCElLoss(ignore_index=-1)
                 negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
                                                   negativeloss_tensors.view(-1))
                 lm_loss += negative_loss

@@ -26,7 +26,7 @@ class Model(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.model.to(self.device)
+        self.model
 
     def forward(self, batch_data, eval=False, **args):
         inputs = batch_data['input']
@@ -36,12 +36,12 @@ class Model(nn.Module):
         input_lengths = batch_data['input_length']
         target_lengths = batch_data['target_length']
 
-        tokens_tensor = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
-        target_tensors = torch.as_tensor(targets).to(self.device)
-        target_once_tensors = torch.as_tensor(targets_once).to(self.device)
-        input_length_tensors = torch.as_tensor(input_lengths).to(self.device)
-        target_length_tensors = torch.as_tensor(target_lengths).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs)
+        mask_tensors = torch.as_tensor(masks)
+        target_tensors = torch.as_tensor(targets)
+        target_once_tensors = torch.as_tensor(targets_once)
+        input_length_tensors = torch.as_tensor(input_lengths)
+        target_length_tensors = torch.as_tensor(target_lengths)
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)

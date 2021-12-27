@@ -18,7 +18,7 @@ class Model(nn.Module):
         self.maxlen = maxlen
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         print('Using device:', self.device)
-        self.model.to(self.device)
+        self.model
 
     def batched_index_select(self, input, dim, index):
         for ii in range(1, len(input.shape)):
@@ -35,10 +35,10 @@ class Model(nn.Module):
         targets = batch_data['target']
         masks = batch_data['mask']
         targets_pos = batch_data['target_pos']
-        tokens_tensor = torch.as_tensor(inputs).to(self.device)
-        mask_tensors = torch.as_tensor(masks).to(self.device)
-        loss_tensors = torch.as_tensor(targets).to(self.device)
-        indices_tensor = torch.as_tensor(targets_pos).to(self.device)
+        tokens_tensor = torch.as_tensor(inputs)
+        mask_tensors = torch.as_tensor(masks)
+        loss_tensors = torch.as_tensor(targets)
+        indices_tensor = torch.as_tensor(targets_pos)
         indices_tensor = indices_tensor[indices_tensor > 0].unsqueeze(0)
         output = self.pretrained(tokens_tensor, attention_mask=mask_tensors)
         sequence_output = output[0]
