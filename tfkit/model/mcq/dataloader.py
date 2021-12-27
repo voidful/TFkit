@@ -1,20 +1,7 @@
-import csv
-from collections import defaultdict
-from tqdm import tqdm
 import tfkit.utility.tok as tok
+from tfkit.utility.dataloader import get_clas_data_from_file
 
-
-def get_data_from_file(fpath):
-    tasks = defaultdict(list)
-    task = 'default'
-    tasks[task] = []
-    with open(fpath, encoding='utf') as csvfile:
-        for i in tqdm(list(csv.reader(csvfile))):
-            source_text = i[0]
-            target_text = i[1]
-            input = source_text
-            target = target_text
-            yield tasks, task, input, [target]
+get_data_from_file = get_clas_data_from_file
 
 
 def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice', **kwargs):

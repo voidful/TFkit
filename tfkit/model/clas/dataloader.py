@@ -1,43 +1,8 @@
-import csv
-from collections import defaultdict
 from sklearn.preprocessing import MultiLabelBinarizer
 import tfkit.utility.tok as tok
-import pandas as pd
+from tfkit.utility.dataloader import get_multiclas_data_from_file
 
-def get_data_from_file(fpath):
-    tasks = defaultdict(list)
-    with open(fpath, 'r', encoding='utf8', newline='') as csvfile:
-        reader = csv.reader(csvfile)
-        reader = list(reader)
-        headers = ['input'] + ['target_' + str(i) for i in range(len(reader[0]) - 1)]
-        is_multi_label = ""
-        for row in reader:
-            if tok.UNIVERSAL_SEP in row[1]:
-                is_multi_label = "_multi_label"
-                break
-
-        for row in reader:
-            start_pos = 1
-            for pos, item in enumerate(row[start_pos:]):
-                pos += start_pos
-                task = headers[0] + "_" + headers[pos] + is_multi_label
-                item = item.strip()
-                if tok.UNIVERSAL_SEP in item:
-                    for i in item.split(tok.UNIVERSAL_SEP):
-                        tasks[task].append(i) if i not in tasks[task] else tasks[task]
-                else:
-                    tasks[task].append(item) if item not in tasks[task] else tasks[task]
-                tasks[task].sort()
-
-        for row in reader:
-            start_pos = 1
-            for pos, item in enumerate(row[start_pos:]):
-                pos += start_pos
-                task = headers[0] + "_" + headers[pos] + is_multi_label
-                item = item.strip()
-                target = item.split(tok.UNIVERSAL_SEP) if tok.UNIVERSAL_SEP in item else [item]
-                input = row[0]
-                yield tasks, task, input, target
+get_data_from_file= get_multiclas_data_from_file
 
 
 def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='slide', **kwargs):
