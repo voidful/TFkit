@@ -18,8 +18,6 @@ class Model(nn.Module):
 
     def __init__(self, tokenizer, pretrained, maxlen=128, dropout=0.1, **kwargs):
         super().__init__()
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
         self.tokenizer = tokenizer
         self.pretrained = pretrained
         self.maxlen = maxlen

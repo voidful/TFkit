@@ -5,7 +5,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='tfkit',
-    version='0.7.53',
+    version='0.7.54',
     description='Transformers kit - Multi-task QA/Tagging/Multi-label Multi-Class Classification/Generation with BERT/ALBERT/T5/BERT',
     url='https://github.com/voidful/TFkit',
     author='Voidful',
@@ -27,6 +27,7 @@ setup(
     entry_points={
         'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']
     },
+    py_modules=['tfkit'],
     python_requires=">=3.5.0",
     zip_safe=False,
 )

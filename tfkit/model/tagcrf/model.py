@@ -19,8 +19,6 @@ class Model(nn.Module):
     def __init__(self, tokenizer, pretrained, tasks_detail, maxlen=512, dropout=0.2, **kwargs):
         super().__init__()
         labels = list(tasks_detail.values())[0]
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
         self.tokenizer = tokenizer
         self.pretrained = pretrained
         self.dropout = nn.Dropout(dropout)

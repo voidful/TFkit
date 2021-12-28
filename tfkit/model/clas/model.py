@@ -17,8 +17,6 @@ class Model(nn.Module):
 
     def __init__(self, tokenizer, pretrained, tasks_detail, maxlen=512, dropout=0.1, **kwargs):
         super().__init__()
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
         self.tokenizer = tokenizer
         self.pretrained = pretrained
 
@@ -50,7 +48,8 @@ class Model(nn.Module):
         return sum_embeddings / sum_mask
 
     def forward(self, batch_data, eval=False, **args):
-        tasks = batch_data['task']
+        tasks = batch_data['task'] if isinstance(batch_data['task'], list) else batch_data['task'].tolist()
+        tasks = [bytes(t).decode(encoding="utf-8", errors="ignore") for t in tasks]
         inputs = torch.as_tensor(batch_data['input'])
         targets = torch.as_tensor(batch_data['target'])
         masks = torch.as_tensor(batch_data['mask'])

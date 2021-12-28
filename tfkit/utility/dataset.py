@@ -14,7 +14,6 @@ from tqdm.contrib.concurrent import process_map
 def check_type_for_dataloader(data_item):
     if (isinstance(data_item, list) and not isinstance(data_item[-1], str) and check_type_for_dataloader(
             data_item[-1])) or \
-            isinstance(data_item, str) or \
             isinstance(data_item, numpy.ndarray) or \
             isinstance(data_item, int):
         return True
@@ -69,7 +68,7 @@ class LoadDataset(data.Dataset):
         for get_feature_from_data, feature_param in self.preprocessing_data(i, self.tokenizer, **self.input_arg):
             for feature in get_feature_from_data(**feature_param):
                 feature = {k: v for k, v in feature.items() if check_type_for_dataloader(v)}
-                feature.update((k, np.asarray(v)) for k, v in feature.items() if k != 'task')
+                feature.update((k, np.asarray(v)) for k, v in feature.items())
                 sample.append(feature)
         return sample
 

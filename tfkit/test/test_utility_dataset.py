@@ -12,8 +12,8 @@ from tfkit.test import *
 class TestDataset(unittest.TestCase):
 
     def test_check_type_for_dataloader(self):
-        self.assertTrue(tfkit.utility.check_type_for_dataloader('a'))
         self.assertTrue(tfkit.utility.check_type_for_dataloader(123))
+        self.assertFalse(tfkit.utility.check_type_for_dataloader('a'))
         self.assertFalse(tfkit.utility.check_type_for_dataloader(['a']))
         self.assertFalse(tfkit.utility.check_type_for_dataloader([{'a'}]))
 

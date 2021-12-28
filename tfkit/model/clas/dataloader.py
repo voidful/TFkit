@@ -2,7 +2,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 import tfkit.utility.tok as tok
 from tfkit.utility.dataloader import get_multiclas_data_from_file
 
-get_data_from_file= get_multiclas_data_from_file
+get_data_from_file = get_multiclas_data_from_file
 
 
 def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='slide', **kwargs):
@@ -18,7 +18,7 @@ def get_feature_from_data(tokenizer, maxlen, tasks, task, input, target=None, ha
     t_input_list, _ = tok.handle_exceed(tokenizer, input, maxlen - 2, handle_exceed)
     for t_input in t_input_list:  # -2 for cls and sep
         row_dict = dict()
-        row_dict['task'] = task
+        row_dict['task'] = list(task.encode("utf-8"))
         input_token = [tok.tok_begin(tokenizer)] + t_input + [tok.tok_sep(tokenizer)]
         tokenized_input_id = tokenizer.convert_tokens_to_ids(input_token)
         mask_id = [1] * len(tokenized_input_id)

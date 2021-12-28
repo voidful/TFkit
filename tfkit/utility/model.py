@@ -118,9 +118,10 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     return model, type, model_class, model_info
 
 
-def save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=None):
+def save_model(models, input_arg, models_tag, epoch, fname, logger, accelerator, add_tokens=None):
+    accelerator.wait_for_everyone()
     save_model = {
-        'models': [m.state_dict() for m in models],
+        'models': [accelerator.get_state_dict(m) for m in models],
         'model_config': input_arg.get('config'),
         'add_tokens': add_tokens,
         'tags': models_tag,
@@ -130,6 +131,7 @@ def save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=N
     }
 
     for ind, m in enumerate(input_arg.get('model')):
+        m = accelerator.unwrap_model(m)
         if 'tag' in m:
             save_model['label'] = models[ind].labels
         if "clas" in m:

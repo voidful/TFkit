@@ -12,9 +12,6 @@ class Model(nn.Module):
         self.pretrained = pretrained
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.maxlen = maxlen
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
-        self.model
 
     def forward(self, batch_data, eval=False, **args):
         inputs = batch_data['input']

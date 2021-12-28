@@ -16,11 +16,7 @@ from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
 from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model
 import logging
-from accelerate import Accelerator, notebook_launcher, DistributedDataParallelKwargs
-
-ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
-accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
-device = accelerator.device
+from accelerate import Accelerator
 
 transformers_logger = logging.getLogger('transformers')
 transformers_logger.setLevel(logging.CRITICAL)
@@ -74,31 +70,32 @@ def optimizer(model, lr, total_step):
     return [optim, scheduler]
 
 
-def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger):
+def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, accelerator):
     optims_schs = []
     models = []
     total_iter = 0
     t_loss = 0
-
-    iters = [iter(ds) for ds in train_dataset]
-    total_iter_length = len(iters[0])
     end = False
+    total_iter_length = len(dataloaders[0])
     pbar = tqdm(total=total_iter_length)
 
-    for i, m in enumerate(models_list):
-        model = torch.nn.DataParallel(m)
+    data_iters = []
+    for i, (model, dataloader) in enumerate(zip(models_list, dataloaders)):
+        if not accelerator.state.backend:
+            model = torch.nn.DataParallel(model)
         model.train()
-        models.append(model)
-        optim = optimizer(m, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
+        optim = optimizer(model, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
                           total_iter_length)
-        optim = accelerator.prepare(optim)
+        model, optim, dataloader = accelerator.prepare(model, optim, dataloader)
         optims_schs.append(optim)
+        models.append(model)
+        data_iters.append(iter(dataloader))
 
     while not end:
-        for (model, optim_sch, mtag, batch) in zip(models, optims_schs, models_tag, iters):
-            train_batch = next(batch, None)
+        for (model, optim_sch, mtag, train_batch) in zip(models, optims_schs, models_tag, data_iters):
             optim = optim_sch[0]
             scheduler = optim_sch[1]
+            train_batch = next(train_batch, None)
             if train_batch is not None:
                 loss = model(train_batch)
                 loss = loss / input_arg.get('grad_accum')
@@ -111,7 +108,7 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
                 logger.write_metric("loss/step", loss.mean().detach(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     logger.write_log(
-                        f"epoch: {epoch}, tag: {mtag}, model: {model.module.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
+                        f"epoch: {epoch}, tag: {mtag}, model: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
             else:
                 end = True
         pbar.update(1)
@@ -122,16 +119,15 @@ def model_train(models_list, train_dataset, models_tag, input_arg, epoch, logger
     return t_loss / total_iter
 
 
-def model_eval(models, test_dataset, fname, input_arg, epoch, logger):
+def model_eval(models, dataloaders, fname, input_arg, epoch, logger, accelerator):
     t_loss = 0
     t_length = 0
     for m in models:
         m.eval()
-
     with torch.no_grad():
-        iters = [iter(ds) for ds in test_dataset]
+        total_iter_length = len(dataloaders[0])
+        iters = [iter(accelerator.prepare(ds)) for ds in dataloaders]
         end = False
-        total_iter_length = len(iters[0])
         pbar = tqdm(total=total_iter_length)
         while not end:
             for model, batch in zip(models, iters):
@@ -152,7 +148,7 @@ def model_eval(models, test_dataset, fname, input_arg, epoch, logger):
     return avg_t_loss
 
 
-def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
+def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_arg):
     models = []
     train_dataset = []
     test_dataset = []
@@ -177,8 +173,6 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
         train_ds_maxlen = train_ds.__len__() if train_ds.__len__() > train_ds_maxlen else train_ds_maxlen
         test_ds_maxlen = test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
 
-        model, train_ds, test_ds = accelerator.prepare(model, train_ds, test_ds)
-
         train_dataset.append(train_ds)
         test_dataset.append(test_ds)
         models.append(model)
@@ -188,10 +182,14 @@ def load_model_and_datas(tokenizer, pretrained, device, model_arg, input_arg):
 
 def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
+    accelerator = Accelerator()
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
     logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard', False),
-                    wandb=input_arg.get('wandb', False))
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+                    wandb=input_arg.get('wandb', False), print_fn=accelerator.print)
+    logger.write_log("Accelerator")
+    logger.write_log("=======================")
+    logger.write_log(accelerator.state)
+    logger.write_log("=======================")
     nlp2.set_seed(input_arg.get('seed'))
 
     tokenizer = load_pretrained_tokenizer(input_arg.get('config'))
@@ -219,7 +217,7 @@ def main(arg=None):
                                                                                       enumerate(input_arg.get('model'))]
 
     models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen = load_model_and_datas(tokenizer, pretrained,
-                                                                                                device, model_arg,
+                                                                                                accelerator, model_arg,
                                                                                                 input_arg)
     # balance sample for multi-task
     for ds in train_dataset:
@@ -232,24 +230,26 @@ def main(arg=None):
     [logger.write_log(str(key) + " : " + str(value)) for key, value in input_arg.items()]
     logger.write_log("=======================")
 
-    train_dataset = [data.DataLoader(dataset=ds,
-                                     batch_size=input_arg.get('batch'),
-                                     shuffle=True,
-                                     pin_memory=True,
-                                     collate_fn=dataloader_collate,
-                                     num_workers=input_arg.get('worker')) for ds in train_dataset]
-    test_dataset = [data.DataLoader(dataset=ds,
-                                    batch_size=input_arg.get('batch'),
-                                    shuffle=False,
-                                    pin_memory=True,
-                                    collate_fn=dataloader_collate,
-                                    num_workers=input_arg.get('worker')) for ds in test_dataset]
+    train_dataloaders = [data.DataLoader(dataset=ds,
+                                         batch_size=input_arg.get('batch'),
+                                         shuffle=True,
+                                         pin_memory=False,
+                                         collate_fn=dataloader_collate,
+                                         num_workers=input_arg.get('worker')) for ds in
+                         train_dataset]
+    test_dataloaders = [data.DataLoader(dataset=ds,
+                                        batch_size=input_arg.get('batch'),
+                                        shuffle=False,
+                                        pin_memory=False,
+                                        collate_fn=dataloader_collate,
+                                        num_workers=input_arg.get('worker')) for ds in
+                        test_dataset]
 
     # loading model back
     start_epoch = 1
     if input_arg.get('resume'):
         logger.write_log("Loading back:", input_arg.get('resume'))
-        package = torch.load(input_arg.get('resume'), map_location=device)
+        package = torch.load(input_arg.get('resume'))
         if 'model_state_dict' in package:
             models[0].load_state_dict(package['model_state_dict'])
         else:
@@ -273,21 +273,22 @@ def main(arg=None):
 
         logger.write_log(f"=========train at epoch={epoch}=========")
         try:
-            train_avg_loss = model_train(models, train_dataset, models_tag, input_arg, epoch, logger)
+            train_avg_loss = model_train(models, train_dataloaders, models_tag, input_arg, epoch, logger, accelerator)
             logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
-            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, add_tokens=add_tokens)
+            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, add_tokens=add_tokens,
+                       accelerator=accelerator)
             pass
 
         logger.write_log(f"=========save at epoch={epoch}=========")
-        save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=add_tokens)
+        save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=add_tokens, accelerator=accelerator)
 
         if input_arg.get('no_eval') is False:
             logger.write_log(f"=========eval at epoch={epoch}=========")
-            eval_avg_loss = model_eval(models, test_dataset, fname, input_arg, epoch, logger)
+            eval_avg_loss = model_eval(models, test_dataloaders, fname, input_arg, epoch, logger, accelerator)
             logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
         logger.write_log(f"=== Epoch execution time: {timedelta(seconds=(time.time() - start_time))} ===")
 
 
 if __name__ == "__main__":
-    notebook_launcher(main)
+    main()

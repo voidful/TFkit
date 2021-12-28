@@ -20,13 +20,11 @@ import copy
 class Model(nn.Module):
     def __init__(self, tokenizer, pretrained, maxlen=512, selfkd=False, **kwargs):
         super().__init__()
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
         self.tokenizer = tokenizer
         self.pretrained = pretrained
         self.selfkd = selfkd
         init_weight = None
-        print('Using device:', self.device)
         if hasattr(pretrained, 'decoder'):
             self.decoder_model = None
             decoder_hidden_size = pretrained.config.hidden_size
@@ -53,7 +51,6 @@ class Model(nn.Module):
         self.predict = predictor.gen_predict
 
     def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **args):
-
         inputs = batch_data['input']
         prevs = batch_data['prev']
         encoder_mask = batch_data['encoder_mask']

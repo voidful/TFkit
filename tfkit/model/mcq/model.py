@@ -16,9 +16,6 @@ class Model(nn.Module):
         self.pretrained = pretrained
         self.model = nn.Linear(self.pretrained.config.hidden_size, 2)
         self.maxlen = maxlen
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
-        self.model
 
     def batched_index_select(self, input, dim, index):
         for ii in range(1, len(input.shape)):

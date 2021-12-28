@@ -20,10 +20,7 @@ class Model(nn.Module):
         self.pretrained = pretrained
         self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.maxlen = maxlen
-        print('Using device:', self.device)
-        self.model
 
         predictor = Predictor(self, get_feature_from_data)
         self.predict = predictor.gen_predict

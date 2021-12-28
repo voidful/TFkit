@@ -18,9 +18,6 @@ class Model(nn.Module):
         self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.maxlen = maxlen
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        print('Using device:', self.device)
-        self.model
 
     def forward(self, batch_data, eval=False, **args):
         inputs = batch_data['input']
