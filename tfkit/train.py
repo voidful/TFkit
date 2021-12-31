@@ -70,7 +70,7 @@ def optimizer(model, lr, total_step):
     return [optim, scheduler]
 
 
-def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, accelerator):
+def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, accelerator, fname, add_tokens):
     optims_schs = []
     models = []
     total_iter = 0
@@ -109,6 +109,11 @@ def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, 
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     logger.write_log(
                         f"epoch: {epoch}, tag: {mtag}, model: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
+                if total_iter_length * epoch + total_iter % 100000 == 0 and total_iter != 0:  # cache
+                    save_model(models, input_arg, models_tag, epoch,
+                               f"{fname}_iter_{total_iter_length * epoch + total_iter}", logger,
+                               add_tokens=add_tokens,
+                               accelerator=accelerator)
             else:
                 end = True
         pbar.update(1)
@@ -273,7 +278,8 @@ def main(arg=None):
 
         logger.write_log(f"=========train at epoch={epoch}=========")
         try:
-            train_avg_loss = model_train(models, train_dataloaders, models_tag, input_arg, epoch, logger, accelerator)
+            train_avg_loss = model_train(models, train_dataloaders, models_tag, input_arg, epoch, logger, accelerator,
+                                         fname, add_tokens)
             logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
             save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, add_tokens=add_tokens,
