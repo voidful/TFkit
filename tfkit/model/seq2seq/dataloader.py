@@ -12,7 +12,7 @@ class preprocessor(GeneralNLPPreprocessor):
         likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
         tokenizer = param_dict['tokenizer']
         input, p_target, n_target = item['input'], item.get('target', None), item.get('ntarget', None)
-        previous = []
+        previous = item.get("previous",[])
         if tok.UNIVERSAL_SEP in input:
             part = input.split(tok.UNIVERSAL_SEP)
             previous = tokenizer.tokenize(part[-1])

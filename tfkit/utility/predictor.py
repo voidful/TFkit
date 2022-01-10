@@ -65,7 +65,7 @@ class Predictor:
                         proc = self.preprocessor(self.model.tokenizer, maxlen=self.model.maxlen,
                                                  handle_exceed=handle_exceed,
                                                  reserved_len=reserved_len)
-                        for items in proc.prepare({"task": task, "input": input}):
+                        for items in proc.prepare({"task": task, "input": input, 'previous': tokens}):
                             feature_dict = self.get_feature_from_data(items, self.model.tokenizer, self.model.maxlen)
 
                         # check input exceed
