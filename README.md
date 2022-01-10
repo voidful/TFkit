@@ -56,7 +56,7 @@ Learn more from the [document](https://voidful.github.io/TFkit/).
 ### Step 0: Install
 Simple installation from PyPI
 ```bash
-pip install tfkit
+pip install git+https://github.com/voidful/TFkit.git@refactor-dataset
 ```
 
 ### Step 1: Prepare dataset in csv format

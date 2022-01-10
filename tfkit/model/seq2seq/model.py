@@ -60,7 +60,6 @@ class Model(nn.Module):
         prev_tensors = torch.as_tensor(prevs)
         encoder_mask_tensors = torch.as_tensor(encoder_mask)
         decoder_mask_tensors = torch.as_tensor(decoder_mask)
-        print(input_tensors.shape,prev_tensors.shape,encoder_mask_tensors.shape,decoder_mask_tensors.shape,)
         if self.decoder_model is not None:
             if eval and self.encoder_hidden is not None:
                 encoder_hidden_states = self.encoder_hidden
