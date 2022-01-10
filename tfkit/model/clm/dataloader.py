@@ -1,45 +1,37 @@
 import tfkit.utility.tok as tok
-import tfkit.model.once as once
 
-
-from tfkit.utility.dataloader import get_gen_data_from_file
+from tfkit.utility.datafile import get_gen_data_from_file
+from tfkit.utility.datapreprocess import GeneralNLPPreprocessor
 
 get_data_from_file = get_gen_data_from_file
 
 
-def preprocessing_data(item, tokenizer, maxlen=512, handle_exceed='start_slice',
-                       likelihood=['none', 'pos', 'neg', 'both'], reserved_len=0, **kwargs):
-    likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
-    tasks, task, input, targets = item
-    p_target, n_target = targets
-    tokenized_target = tokenizer.tokenize(p_target)
-    param_dict = {'tokenizer': tokenizer, 'maxlen': maxlen, 'handle_exceed': handle_exceed,
-                  'reserved_len': reserved_len}
-
-    if "neg" in likelihood or 'both' in likelihood:
-        # formatting neg data in csv
-        if n_target is None:
-            ntext_arr = [tokenizer.convert_tokens_to_string([tok.tok_begin(tokenizer)] + tokenized_target)]
-        elif "[SEP]" in n_target:
-            ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
+class preprocessor(GeneralNLPPreprocessor):
+    def custom_preprocess_fn(self, item, likelihood=['none', 'pos', 'neg', 'both'], **param_dict):
+        likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
+        tokenizer = param_dict.tokenizer
+        input, target, n_target = item['input'], item['target'], item['ntarget']
+        tokenized_target = tokenizer.tokenize(target)
+        if "neg" in likelihood or 'both' in likelihood:
+            if n_target is None:
+                ntext_arr = [tokenizer.convert_tokens_to_string([tok.tok_begin(tokenizer)] + tokenized_target)]
+            elif "[SEP]" in n_target:
+                ntext_arr = [ntext.strip() for ntext in n_target.split("[SEP]")]
+            else:
+                ntext_arr = [n_target.strip()]
+            for neg_text in ntext_arr:
+                yield {**{'input': input, 'previous': [],
+                          'target': tokenized_target, 'ntarget': neg_text}, **param_dict}
         else:
-            ntext_arr = [n_target.strip()]
-        for neg_text in ntext_arr:
-            yield get_feature_from_data, {**{'input': input, 'previous': [],
-                                             'target': tokenized_target, 'ntarget': neg_text}, **param_dict}
-    else:
-        yield get_feature_from_data, {**{'input': input, 'previous': [],
-                                         'target': tokenized_target, 'ntarget': None}, **param_dict}
+            yield {**{'input': input, 'previous': [],
+                      'target': tokenized_target, 'ntarget': None}, **param_dict}
 
-    # whole sentence masking
-    if 'pos' in likelihood:
-        yield once.get_feature_from_data, {**{'input': input, 'target': p_target}, **param_dict}
-    elif 'both' in likelihood:
-        for neg_text in ntext_arr:
-            yield once.get_feature_from_data, {**{'input': input, 'target': p_target, 'ntarget': neg_text},
-                                               **param_dict}
-
-    return get_feature_from_data, param_dict
+        # whole sentence masking
+        if 'pos' in likelihood:
+            yield {**{'input': input, 'target': target}, **param_dict}
+        elif 'both' in likelihood:
+            for neg_text in ntext_arr:
+                yield {**{'input': input, 'target': target, 'ntarget': neg_text}, **param_dict}
 
 
 def get_feature_from_data(tokenizer, maxlen, input, previous, target=None, ntarget=None, reserved_len=0,

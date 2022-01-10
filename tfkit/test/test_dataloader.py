@@ -9,6 +9,65 @@ from tfkit.test import *
 
 class TestDataLoader(unittest.TestCase):
 
+    def testClassifier(self):
+        for i in tfkit.model.clas.get_data_from_file(CLAS_DATASET):
+            print(i)
+        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        for i in LoadDataset(CLAS_DATASET,
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.clas.get_data_from_file,
+                             preprocessor=tfkit.model.clas.preprocessor,
+                             get_feature_from_data=tfkit.model.clas.get_feature_from_data):
+            print(i)
+            self.assertTrue(len(i['input']) <= 512)
+            self.assertTrue(len(i['target']) <= 512)
+
+    def testProcessingArg_maxlen(self):
+        maxlen = 128
+        tokenizer = AutoTokenizer.from_pretrained('voidful/albert_chinese_small')
+        for m in [tfkit.model.seq2seq,tfkit.model.clas]:
+            for i in LoadDataset(GEN_DATASET,
+                                 tokenizer=tokenizer,
+                                 get_data_from_file=m.get_data_from_file,
+                                 preprocessor=m.preprocessor,
+                                 get_feature_from_data=m.get_feature_from_data,
+                                 preprocessing_arg={'maxlen': maxlen, }):
+                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+                print(len(i['input']), i['input'])
+                self.assertTrue(len(i['input']) <= maxlen)
+                print(len(i['target']), i['target'])
+                self.assertTrue(len(i['target']) <= maxlen)
+
+    def testSeq2seq(self):
+        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
+
+        for i in tfkit.model.seq2seq.get_data_from_file(GEN_DATASET):
+            print(i)
+        for i in LoadDataset(GEN_DATASET,
+                             tokenizer=tokenizer,
+                             get_data_from_file=tfkit.model.seq2seq.get_data_from_file,
+                             preprocessor=tfkit.model.seq2seq.preprocessor,
+                             get_feature_from_data=tfkit.model.seq2seq.get_feature_from_data):
+            print(i.keys())
+            self.assertTrue(len(i['prev']) == 512)
+            self.assertTrue(len(i['input']) == 512)
+            self.assertTrue(len(i['target']) == 512)
+
+        maxlen = 100
+        for likelihood in ['none', 'neg', 'pos', 'both']:
+            for i in LoadDataset(GEN_DATASET,
+                                 tokenizer=tokenizer,
+                                 get_data_from_file=tfkit.model.seq2seq.get_data_from_file,
+                                 preprocessor=tfkit.model.seq2seq.preprocessor,
+                                 get_feature_from_data=tfkit.model.seq2seq.get_feature_from_data,
+                                 preprocessing_arg={'maxlen': maxlen, 'likelihood': likelihood}):
+                print(likelihood, i)
+                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
+                print(len(i['input']), i['input'])
+                self.assertTrue(len(i['input']) == maxlen)
+                print(len(i['target']), i['target'])
+                self.assertTrue(len(i['target']) == maxlen)
+
     def testTag(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         for i in tfkit.tag.get_data_from_file(TAG_DATASET):
@@ -24,21 +83,21 @@ class TestDataLoader(unittest.TestCase):
             self.assertTrue(len(i['target']) == maxlen)
 
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
-                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
-                                                  handle_exceed='slide')
+        feature = tfkit.tag.preprocessing_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                               target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                               handle_exceed='slide')
         self.assertEqual(len(feature[0]['target']), 5)
 
         print("start_slice")
-        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
-                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
-                                                  handle_exceed='start_slice')
+        feature = tfkit.tag.preprocessing_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                               target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                               handle_exceed='start_slice')
         self.assertEqual(feature[0]['pos'], [0, 4])
 
         print("end_slice")
-        feature = tfkit.tag.get_feature_from_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
-                                                  target="O O O O O O O O O O", maxlen=5, separator=" ",
-                                                  handle_exceed='end_slice')
+        feature = tfkit.tag.preprocessing_data(tokenizer, ["B_Thing", "I_Thing", "O"], "狼 煙 逝 去 ， 幽 夢 醒 來 。",
+                                               target="O O O O O O O O O O", maxlen=5, separator=" ",
+                                               handle_exceed='end_slice')
         self.assertEqual(feature[0]['pos'], [6, 10])
 
     def testMask(self):
@@ -83,7 +142,7 @@ class TestDataLoader(unittest.TestCase):
                              input_arg={'maxlen': maxlen}):
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
             print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['target'])))
-            print(len(i['target']))
+            print(i)
             self.assertEqual(maxlen, len(i['input']))
             self.assertEqual(maxlen, len(i['target']))
 
@@ -109,9 +168,9 @@ class TestDataLoader(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
         maxlen = 10
-        feature = tfkit.clm.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                  target=["hi"],
-                                                  reserved_len=3)[-1]
+        feature = tfkit.clm.preprocessing_data(tokenizer, maxlen, "go go go go go go go", '',
+                                               target=["hi"],
+                                               reserved_len=3)[-1]
         print(feature)
 
         for i in tfkit.clm.get_data_from_file(GEN_DATASET):
@@ -139,9 +198,9 @@ class TestDataLoader(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
 
         maxlen = 10
-        feature = tfkit.onebyone.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                       target=["hi"],
-                                                       reserved_len=3)[-1]
+        feature = tfkit.onebyone.preprocessing_data(tokenizer, maxlen, "go go go go go go go", '',
+                                                    target=["hi"],
+                                                    reserved_len=3)[-1]
         print(feature)
         self.assertTrue(feature['start'] == maxlen - 3)  ## -reserved_len
 
@@ -182,17 +241,7 @@ class TestDataLoader(unittest.TestCase):
                 print(output)
             print(tokenizer.convert_tokens_to_string(output) + "\n")
 
-    def testClassifier(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        for i in tfkit.model.clas.get_data_from_file(CLAS_DATASET):
-            print(i)
-        for i in LoadDataset(CLAS_DATASET,
-                             tokenizer=tokenizer,
-                             get_data_from_file=tfkit.model.clas.get_data_from_file,
-                             preprocessing_data=tfkit.model.clas.preprocessing_data):
-            print(i)
-            self.assertTrue(len(i['input']) <= 512)
-            self.assertTrue(len(i['target']) < 512)
+
 
     def testQA(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_small')
@@ -231,35 +280,7 @@ class TestDataLoader(unittest.TestCase):
         print("after increase_with_sampling", ds.__len__())
         self.assertTrue(ds.__len__() == 50)
 
-    def testSeq2seq(self):
-        tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
 
-        maxlen = 10
-        feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
-                                                      reserved_len=3)[-1]
-        print(feature)
-        self.assertTrue(len(feature['prev']) > 0)
-
-        feature = tfkit.seq2seq.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", '',
-                                                      target=["hi", "bye"],
-                                                      reserved_len=3)[-1]
-        print("feature", feature)
-
-        for i in tfkit.seq2seq.get_data_from_file(GEN_DATASET):
-            print("data", i)
-
-        maxlen = 512
-        for likelihood in ['none', 'neg', 'pos', 'both']:
-            print(likelihood)
-            for i in LoadDataset(GEN_DATASET,
-                                 tokenizer=tokenizer,
-                                 get_data_from_file=tfkit.seq2seq.get_data_from_file,
-                                 preprocessing_data=tfkit.seq2seq.preprocessing_data,
-                                 input_arg={'maxlen': maxlen, 'likelihood': likelihood}):
-                print(likelihood, i)
-                print(tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(i['input'])))
-                self.assertTrue(len(i['input']) == maxlen)
-                self.assertTrue(len(i['target']) == maxlen)
 
     def testSeq2seqWithPrev(self):
         tokenizer = AutoTokenizer.from_pretrained('facebook/bart-base')
@@ -277,8 +298,8 @@ class TestDataLoader(unittest.TestCase):
             print("data", i)
 
         maxlen = 10
-        feature = tfkit.seq2seqbt.get_feature_from_data(tokenizer, maxlen, "go go go go go go go", [],
-                                                        tokenizer.tokenize("go"),
-                                                        btarget="out" * 10,  # should able to Handel over max length
-                                                        reserved_len=3)[-1]
+        feature = tfkit.seq2seqbt.preprocessing_data(tokenizer, maxlen, "go go go go go go go", [],
+                                                     tokenizer.tokenize("go"),
+                                                     btarget="out" * 10,  # should able to Handel over max length
+                                                     reserved_len=3)[-1]
         print(feature)

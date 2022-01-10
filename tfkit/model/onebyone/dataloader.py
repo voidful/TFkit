@@ -2,7 +2,7 @@ from collections import defaultdict
 import tfkit.utility.tok as tok
 import tfkit.model.once as once
 
-from tfkit.utility.dataloader import get_gen_data_from_file
+from tfkit.utility.datafile import get_gen_data_from_file
 
 get_data_from_file = get_gen_data_from_file
 

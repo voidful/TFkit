@@ -25,7 +25,7 @@ class Model(nn.Module):
         self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = batch_data['input']
         targets = batch_data['target']
         targets_once = batch_data['target_once']

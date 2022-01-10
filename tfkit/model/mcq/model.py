@@ -27,7 +27,7 @@ class Model(nn.Module):
         index = index.expand(expanse)
         return torch.gather(input, dim, index)
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = batch_data['input']
         targets = batch_data['target']
         masks = batch_data['mask']

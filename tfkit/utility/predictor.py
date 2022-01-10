@@ -31,13 +31,14 @@ def _filter_similar(d, top_k):
 
 
 class Predictor:
-    def __init__(self, model, get_feature_from_data):
+    def __init__(self, model, preprocessor, get_feature_from_data):
         self.get_feature_from_data = get_feature_from_data
+        self.preprocessor = preprocessor
         self.model = model
 
-    def gen_predict(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1,
-                    filtersim=False, reserved_len=0, task=None, handle_exceed='noop', eos_num=1, decode_maxlen=0,
-                    no_repeat=False):
+    def generate(self, input='', topK=1, topP=0.85, mode=['greedy', 'topK', 'topP'], decodenum=1,
+                 filtersim=False, reserved_len=0, task=None, handle_exceed='noop', eos_num=1, decode_maxlen=0,
+                 no_repeat=False):
         filtersim = json.loads(str(filtersim).lower())
         topK = int(topK)
         eos_num = int(eos_num)
@@ -60,10 +61,13 @@ class Predictor:
                         tokens, score = seq
                         if not tokens:
                             tokens = previous
-                        feature_dict = \
-                            self.get_feature_from_data(self.model.tokenizer, self.model.maxlen, input, tokens,
-                                                       reserved_len=reserved_len,
-                                                       handle_exceed=handle_exceed)[-1]
+
+                        proc = self.preprocessor(self.model.tokenizer, maxlen=self.model.maxlen,
+                                                 handle_exceed=handle_exceed,
+                                                 reserved_len=reserved_len)
+                        for items in proc.prepare({"task": task, "input": input}):
+                            feature_dict = self.get_feature_from_data(items, self.model.tokenizer, self.model.maxlen)
+
                         # check input exceed
                         if len(tokens) >= self.model.maxlen or feature_dict['start'] >= self.model.maxlen:
                             exceed = True

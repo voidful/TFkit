@@ -8,7 +8,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 from torch import softmax, sigmoid
-from tfkit.model.clas.dataloader import get_feature_from_data
+from tfkit.model.clas.dataloader import get_feature_from_data, preprocessor
 from tfkit.utility.loss import FocalLoss, BCEFocalLoss
 from torch.distributions import Categorical
 
@@ -47,8 +47,8 @@ class Model(nn.Module):
         sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
         return sum_embeddings / sum_mask
 
-    def forward(self, batch_data, eval=False, **args):
-        tasks = batch_data['task'] if isinstance(batch_data['task'], list) else batch_data['task'].tolist()
+    def forward(self, batch_data, eval=False, **kwargs):
+        tasks = batch_data['task']
         tasks = [bytes(t).decode(encoding="utf-8", errors="ignore") for t in tasks]
         inputs = torch.as_tensor(batch_data['input'])
         targets = torch.as_tensor(batch_data['target'])
@@ -60,7 +60,6 @@ class Model(nn.Module):
         }
         result_logits = []
         result_labels = []
-
         for p, zin in enumerate(zip(tasks, inputs, masks)):
             task, input, mask = zin
             task_id = self.tasks[task]
@@ -112,12 +111,14 @@ class Model(nn.Module):
         handle_exceed = handle_exceed[0] if isinstance(handle_exceed, list) else handle_exceed
         merge_strategy = merge_strategy[0] if isinstance(merge_strategy, list) else merge_strategy
         self.eval()
+        print("task", task)
         with torch.no_grad():
             ret_result = []
             ret_detail = []
-            for feature in get_feature_from_data(tokenizer=self.tokenizer, maxlen=self.maxlen,
-                                                 tasks=self.tasks_detail[task], task=task, input=input,
-                                                 handle_exceed=handle_exceed):
+            proc = preprocessor(self.tokenizer, maxlen=self.maxlen, handle_exceed=handle_exceed,
+                                reserved_len=0)
+            for items in proc.prepare({"task": task, "input": input}):
+                feature = get_feature_from_data(items, self.tokenizer, self.maxlen, self.tasks_detail)
                 for k, v in feature.items():
                     feature[k] = [v]
                 result = self.forward(feature, eval=True)

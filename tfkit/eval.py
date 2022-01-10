@@ -44,14 +44,13 @@ def main(arg=None):
                 if '.pt' == f[-3:]:
                     models.append(f)
         for model_path in models:
-            try:
                 start_time = time.time()
                 valid = eval_arg.get('valid')[0]
                 model, model_type, model_class, model_info = load_trained_model(model_path,
                                                                                 pretrained_config=eval_arg.get(
                                                                                     'config'),
                                                                                 tag=eval_arg.get('tag'))
-                eval_dataset = model_class.get_data_from_file(valid)
+                tasks, eval_dataset = model_class.get_data_from_file(valid)
                 predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
                 if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
@@ -65,15 +64,15 @@ def main(arg=None):
                 print("=======================")
 
                 for i in tqdm(eval_dataset):
-                    tasks = i[0]
-                    task = i[1]
-                    input = i[2]
-                    target = i[3]
-
+                    input = i['input']
+                    target = i['target']
                     predict_parameter.update({'input': input})
-                    if 'task' not in predict_parameter:
-                        predict_parameter.update({'task': task})
+                    # if 'task' not in predict_parameter:
+                    #     predict_parameter.update({'task': task})
+                    # print("predict_parameter",predict_parameter)
+                    # print( model.predict(**predict_parameter))
                     result, result_dict = model.predict(**predict_parameter)
+                    # print("result",result,result_dict)
                     for eval_pos, eval_metric in enumerate(eval_metrics):
                         # predicted can be list of string or string
                         # target should be list of string
@@ -86,15 +85,15 @@ def main(arg=None):
                             else:
                                 predicted = ''
                         elif 'onebyone' in model_type or 'seq2seq' in model_type or 'clm' in model_type:
-                            processed_target = target[0]
+                            processed_target = target
                             if len(result) < eval_pos:
                                 print("Decode size smaller than decode num:", result_dict['label_map'])
                             predicted = result[eval_pos]
                         elif 'once' in model_type:
-                            processed_target = target[0]
+                            processed_target = target
                             predicted = result[eval_pos]
                         elif 'mask' in model_type:
-                            processed_target = target[0].split(" ")
+                            processed_target = target.split(" ")
                             predicted = result
                         elif 'tag' in model_type:
                             predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
@@ -145,9 +144,6 @@ def main(arg=None):
                         print(i[1])
 
                 print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
-            except Exception as e:
-                print(f"Exception: {e}")
-                pass
 
 
 if __name__ == "__main__":

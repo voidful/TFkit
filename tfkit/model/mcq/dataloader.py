@@ -1,5 +1,5 @@
 import tfkit.utility.tok as tok
-from tfkit.utility.dataloader import get_clas_data_from_file
+from tfkit.utility.datafile import get_clas_data_from_file
 
 get_data_from_file = get_clas_data_from_file
 

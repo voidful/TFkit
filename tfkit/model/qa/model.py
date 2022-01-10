@@ -31,7 +31,7 @@ class Model(nn.Module):
         self.qa_classifier = nn.Linear(self.pretrained.config.hidden_size, 2)
         self.loss_fct = self.loss_fct
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = torch.as_tensor(batch_data['input'])
         masks = torch.as_tensor(batch_data['mask'])
         targets = torch.as_tensor(batch_data['target'])

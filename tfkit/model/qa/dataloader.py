@@ -1,6 +1,6 @@
 import nlp2
 import tfkit.utility.tok as tok
-from tfkit.utility.dataloader import get_qa_data_from_file
+from tfkit.utility.datafile import get_qa_data_from_file
 
 get_data_from_file = get_qa_data_from_file
 

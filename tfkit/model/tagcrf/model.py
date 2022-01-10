@@ -30,7 +30,7 @@ class Model(nn.Module):
         self.pretrained = self.pretrained
         self.loss_fct = self.loss_fct
 
-    def forward(self, batch_data, eval=False, separator=" ", **args):
+    def forward(self, batch_data, eval=False, separator=" ", **kwargs):
         inputs = batch_data["input"]
         masks = batch_data["mask"]
 

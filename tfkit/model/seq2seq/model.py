@@ -11,7 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 import torch
 from torch import nn
-from tfkit.model.seq2seq.dataloader import get_feature_from_data
+from tfkit.model.seq2seq.dataloader import get_feature_from_data, preprocessor
 from torch.nn.functional import softmax
 from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
 import copy
@@ -47,10 +47,10 @@ class Model(nn.Module):
             self.model.weight = init_weight
         self.encoder_hidden = None
         self.past_key_values = None
-        predictor = Predictor(self, get_feature_from_data)
-        self.predict = predictor.gen_predict
+        predictor = Predictor(self, preprocessor, get_feature_from_data)
+        self.predict = predictor.generate
 
-    def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **args):
+    def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **kwargs):
         inputs = batch_data['input']
         prevs = batch_data['prev']
         encoder_mask = batch_data['encoder_mask']
@@ -60,7 +60,7 @@ class Model(nn.Module):
         prev_tensors = torch.as_tensor(prevs)
         encoder_mask_tensors = torch.as_tensor(encoder_mask)
         decoder_mask_tensors = torch.as_tensor(decoder_mask)
-
+        print(input_tensors.shape,prev_tensors.shape,encoder_mask_tensors.shape,decoder_mask_tensors.shape,)
         if self.decoder_model is not None:
             if eval and self.encoder_hidden is not None:
                 encoder_hidden_states = self.encoder_hidden

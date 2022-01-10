@@ -19,14 +19,13 @@ class Model(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.maxlen = maxlen
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = batch_data['input']
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
         masks = batch_data['mask']
         starts = batch_data['start']
         ends = batch_data['end']
-
         tokens_tensor = torch.as_tensor(inputs)
         mask_tensors = torch.as_tensor(masks)
         loss_tensors = torch.as_tensor(targets)
@@ -80,7 +79,8 @@ class Model(nn.Module):
         with torch.no_grad():
             ret_result = []
             ret_detail = []
-            feature = get_feature_from_data(self.tokenizer, self.maxlen, input, handle_exceed=handle_exceed)[-1]
+            feature = get_feature_from_data(self.tokenizer, self.maxlen, self.tokenizer.tokenize(input),
+                                            handle_exceed=handle_exceed)
             for k, v in feature.items():
                 feature[k] = [v]
             predictions = self.forward(feature, eval=True)

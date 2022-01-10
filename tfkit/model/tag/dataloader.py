@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 from collections import defaultdict
 from tqdm import tqdm
 import tfkit.utility.tok as tok
-from tfkit.utility.dataloader import get_tag_data_from_file
+from tfkit.utility.datafile import get_tag_data_from_file
 
 get_data_from_file = get_tag_data_from_file
 

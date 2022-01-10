@@ -16,14 +16,15 @@ class TestModel(unittest.TestCase):
         target = "a"
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
-
+        maxlen = 512
         model = tfkit.model.clas.Model(tokenizer, pretrained, tasks_detail={"taskA": ["a", "b"]})
-        for feature in tfkit.model.clas.get_feature_from_data(tokenizer, tasks={"taskA": ["a", "b"]},
-                                                              task="taskA",
-                                                              input=input, target=target, maxlen=512):
+        preprocessor = tfkit.model.clas.preprocessor(tokenizer, maxlen=maxlen, handle_exceed='start_slice',
+                                                     reserved_len=0)
+        for preprocessed_item in preprocessor.prepare({'task': 'taskA', 'input': input, 'target': target}):
+            feature = tfkit.model.clas.get_feature_from_data(preprocessed_item, tokenizer, maxlen=maxlen,
+                                                             task_dict={"taskA": ["a", "b"]})
             for k, v in feature.items():
                 feature[k] = [v, v]
-
             print(feature)
             # test train
             print(model(feature))
@@ -33,13 +34,14 @@ class TestModel(unittest.TestCase):
             model_dict = model(feature, eval=True)
             self.assertTrue('label_prob_all' in model_dict)
             self.assertTrue('label_map' in model_dict)
-            # test predict
-            tok_label = model.predict(task="taskA", input=input)
-            self.assertTrue(len(tok_label) == 2)
-            # test predict with top k 2
-            top_k_label, top_k_dict = model.predict(task="taskA", input=input, topk=2)
-            print("test predict with top k 2, ", top_k_label, top_k_dict)
-            self.assertTrue(len(top_k_label) == 2)
+
+        # test predict
+        tok_label = model.predict(task="taskA", input=input)
+        self.assertTrue(len(tok_label) == 2)
+        # test predict with top k 2
+        top_k_label, top_k_dict = model.predict(task="taskA", input=input, topk=2)
+        print("test predict with top k 2, ", top_k_label, top_k_dict)
+        self.assertTrue(len(top_k_label) == 2)
 
         # test exceed 512
         for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
@@ -48,6 +50,76 @@ class TestModel(unittest.TestCase):
             print(result, len(model_dict), model_dict)
             self.assertTrue(isinstance(result, list))
             self.assertTrue(len(result) == 1)
+
+    def testSeq2seq(self):
+        input = "See you next time"
+        previous = ""
+        target = "ok sure bye"
+        maxlen = 32
+        # tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
+        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
+
+        model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
+
+        preprocessor = tfkit.model.seq2seq.preprocessor(tokenizer, maxlen=128, handle_exceed='start_slice',
+                                                        reserved_len=0)
+        for preprocessed_item in preprocessor.prepare({'task': 'taskA', 'input': input}):
+            feature = tfkit.model.seq2seq.get_feature_from_data(preprocessed_item, tokenizer, maxlen=maxlen)
+            for k, v in feature.items():
+                feature[k] = [v, v]
+            self.assertTrue(isinstance(model(feature, eval=True), dict))
+            model_dict = model(feature, eval=True)
+            self.assertTrue('max_item' in model_dict)
+
+        # greedy
+        result, model_dict = model.predict(input=input)
+        print(result, model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 1)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
+        print("TopK no filter sim", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # beamsearch
+        result, model_dict = model.predict(input=input, decodenum=3)
+        print("beamsaerch", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopK
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
+        print("TopK", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # TopP
+        result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
+        print("TopP", result, len(result), model_dict)
+        self.assertTrue('label_map' in model_dict[0])
+        self.assertTrue(len(result) == 3)
+        self.assertTrue(isinstance(result, list))
+        self.assertTrue(isinstance(result[0][0], str))
+
+        # test exceed 512
+        result, model_dict = model.predict(input="T " * 540)
+        self.assertTrue(isinstance(result, list))
+        print("exceed max len", result)
+        result, model_dict = model.predict(input="T " * 550, reserved_len=10)
+        self.assertTrue(isinstance(result, list))
+        print("exceed max len with reserved len:", result)
+        self.assertTrue(result)
 
     def testQA(self):
         input = "梵 語 在 社 交 中 口 頭 使 用 , 並 且 在 早 期 古 典 梵 語 文 獻 的 發 展 中 維 持 口 頭 傳 統 。 在 印 度 , 書 寫 形 式 是 當 梵 語 發 展 成 俗 語 之 後 才 出 現 的 ; 在 書 寫 梵 語 的 時 候 , 書 寫 系 統 的 選 擇 受 抄 寫 者 所 處 地 域 的 影 響 。 同 樣 的 , 所 有 南 亞 的 主 要 書 寫 系 統 事 實 上 都 用 於 梵 語 文 稿 的 抄 寫 。 自 1 9 世 紀 晚 期 , 天 城 文 被 定 為 梵 語 的 標 準 書 寫 系 統 , 十 分 可 能 的 原 因 是 歐 洲 人 有 用 這 種 文 字 印 刷 梵 語 文 本 的 習 慣 。 最 早 的 已 知 梵 語 碑 刻 可 確 定 為 公 元 前 一 世 紀 。 它 們 採 用 了 最 初 用 於 俗 語 而 非 梵 語 的 婆 羅 米 文 。 第 一 個 書 寫 梵 語 的 證 據 , 出 現 在 晚 於 它 的 俗 語 的 書 寫 證 據 之 後 的 幾 個 世 紀 , 這 被 描 述 為 一 種 悖 論 。 在 梵 語 被 書 寫 下 來 的 時 候 , 它 首 先 用 於 行 政 、 文 學 或 科 學 類 的 文 本 。 宗 教 文 本 口 頭 傳 承 , 在 相 當 晚 的 時 候 才 「 不 情 願 」 地 被 書 寫 下 來 。 [Question] 最 初 梵 語 以 什 麼 書 寫 系 統 被 記 錄 下 來 ?"
@@ -210,15 +282,17 @@ class TestModel(unittest.TestCase):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
 
-        for feature in tfkit.model.once.get_feature_from_data(tokenizer, input=input, target=target, maxlen=20):
-            for k, v in feature.items():
-                feature[k] = [v, v]
-            model = tfkit.model.once.Model(tokenizer, pretrained, maxlen=20)
-            self.assertTrue(isinstance(model(feature), Tensor))
-            print(model(feature))
-            model_dict = model(feature, eval=True)
-            self.assertTrue('label_prob_all' in model_dict)
-            self.assertTrue('label_map' in model_dict)
+        t_input = tokenizer.tokenize(input)
+        t_target = tokenizer.tokenize(target)
+        feature = tfkit.model.once.get_feature_from_data(tokenizer, input=t_input, target=t_target, maxlen=20)
+        for k, v in feature.items():
+            feature[k] = [v, v]
+        model = tfkit.model.once.Model(tokenizer, pretrained, maxlen=20)
+        self.assertTrue(isinstance(model(feature), Tensor))
+        print(model(feature))
+        model_dict = model(feature, eval=True)
+        self.assertTrue('label_prob_all' in model_dict)
+        self.assertTrue('label_map' in model_dict)
 
         result, model_dict = model.predict(input=input)
         self.assertTrue('label_prob_all' in model_dict[0])
@@ -367,75 +441,6 @@ class TestModel(unittest.TestCase):
                 if tokenized_target is not None:
                     print(
                         f"target: {len(feature['target'])}, {tokenizer.convert_ids_to_tokens(feature['target'][target_start])} ")
-
-    def testSeq2seq(self):
-        input = "See you next time"
-        previous = ""
-        target = "ok sure bye"
-        maxlen = 32
-        # tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
-        tokenizer = AutoTokenizer.from_pretrained('prajjwal1/bert-small')
-        pretrained = AutoModel.from_pretrained('prajjwal1/bert-small')
-
-        model = tfkit.model.seq2seq.Model(tokenizer, pretrained, maxlen=maxlen)
-
-        for feature in tfkit.model.seq2seq.get_feature_from_data(tokenizer, input=input,
-                                                                 previous=tokenizer.tokenize(previous),
-                                                                 maxlen=maxlen):
-            for k, v in feature.items():
-                feature[k] = [v, v]
-            self.assertTrue(isinstance(model(feature, eval=True), dict))
-            model_dict = model(feature, eval=True)
-            self.assertTrue('max_item' in model_dict)
-
-        # greedy
-        result, model_dict = model.predict(input=input)
-        print(result, model_dict)
-        self.assertTrue('label_map' in model_dict[0])
-        self.assertTrue(len(result) == 1)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopK
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
-        print("TopK no filter sim", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict[0])
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # beamsearch
-        result, model_dict = model.predict(input=input, decodenum=3)
-        print("beamsaerch", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict[0])
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopK
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topK', topK=20)
-        print("TopK", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict[0])
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # TopP
-        result, model_dict = model.predict(input=input, decodenum=3, mode='topP', topP=0.8)
-        print("TopP", result, len(result), model_dict)
-        self.assertTrue('label_map' in model_dict[0])
-        self.assertTrue(len(result) == 3)
-        self.assertTrue(isinstance(result, list))
-        self.assertTrue(isinstance(result[0][0], str))
-
-        # test exceed 512
-        result, model_dict = model.predict(input="T " * 540)
-        self.assertTrue(isinstance(result, list))
-        print("exceed max len", result)
-        result, model_dict = model.predict(input="T " * 550, reserved_len=10)
-        self.assertTrue(isinstance(result, list))
-        print("exceed max len with reserved len:", result)
-        self.assertTrue(result)
 
     def testSeq2seqSelfKD(self):
         input = "See you next time"

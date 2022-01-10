@@ -50,9 +50,9 @@ class Model(nn.Module):
         self.encoder_hidden = None
         self.past_key_values = None
         predictor = Predictor(self, get_feature_from_data)
-        self.predict = predictor.gen_predict
+        self.predict = predictor.generate
 
-    def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **args):
+    def forward(self, batch_data, eval=False, beamsearch=False, return_topN_prob=1, **kwargs):
 
         inputs = batch_data['input']
         prevs = batch_data['prev']

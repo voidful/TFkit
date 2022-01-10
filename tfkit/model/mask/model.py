@@ -13,7 +13,7 @@ class Model(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.tokenizer.__len__())
         self.maxlen = maxlen
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = batch_data['input']
         targets = batch_data['target']
         masks = batch_data['mask']

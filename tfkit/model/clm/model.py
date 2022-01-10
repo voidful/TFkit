@@ -22,9 +22,9 @@ class Model(nn.Module):
         self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
         self.maxlen = maxlen
         predictor = Predictor(self, get_feature_from_data)
-        self.predict = predictor.gen_predict
+        self.predict = predictor.generate
 
-    def forward(self, batch_data, eval=False, **args):
+    def forward(self, batch_data, eval=False, **kwargs):
         inputs = batch_data['input']
         targets = batch_data['target']
         negative_targets = batch_data['ntarget']
