@@ -20,7 +20,8 @@ def check_type_for_dataloader(data_item):
 
 
 def batch_reduce_pad(batch):
-    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and batch[0]['input'][-1] == batch[0]['input'][-2]
+    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and batch[0]['input'][-1] == \
+              batch[0]['input'][-2]
     if has_pad:
         pad_token_input = batch[0]['input'][-1]
         pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
@@ -45,8 +46,8 @@ def dataloader_collate(batch):
 def get_dataset(file_path, model_class, tokenizer, parameter):
     panel = nlp2.Panel()
     all_arg = nlp2.function_get_all_arg_with_value(model_class.preprocessor)
-    print("Operation panel for data preprocessing.")
     if parameter.get('panel'):
+        print("Operation panel for data preprocessing.")
         for missarg in nlp2.function_check_missing_arg(model_class.preprocessor,
                                                        parameter):
             panel.add_element(k=missarg, v=all_arg[missarg], msg=missarg, default=all_arg[missarg])
@@ -62,7 +63,7 @@ def get_dataset(file_path, model_class, tokenizer, parameter):
 
 class LoadDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, get_data_from_file, preprocessor, get_feature_from_data, preprocessing_arg={},
-                 cache=False,**kwargs):
+                 cache=False, **kwargs):
         cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
@@ -74,6 +75,7 @@ class LoadDataset(data.Dataset):
                 sample = outdata['sample']
                 self.task_dict = outdata['task']
         else:
+            print(f"Start preprocessing...")
             tasks, items = get_data_from_file(fpath)
             sample = self.preprocessor.prepare(items)
             self.task_dict = tasks

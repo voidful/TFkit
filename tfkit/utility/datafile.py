@@ -64,6 +64,7 @@ def get_gen_data_from_file(fpath, chunksize=10000):
     task = 'gen'
     task_label_dict[task] = []
     datas = []
+    print("Reading data from file...")
     for row in nlp2.read_csv_row(fpath, chunksize):
         if len(row) > 1:
             source_text = str(row[0]).strip()

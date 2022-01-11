@@ -1,3 +1,5 @@
+from tqdm.auto import tqdm
+
 from tfkit.utility import tok
 
 
@@ -13,7 +15,8 @@ class GeneralNLPPreprocessor:
 
     def prepare(self, items):
         items = [items] if not isinstance(items, list) else items
-        for item in items:
+        print("Preprocessing File...")
+        for item in tqdm(items):
             maxlen = self.parameters.get('maxlen')
             t_input_list, _ = tok.handle_exceed(self.tokenizer, item['input'],
                                                 maxlen=maxlen - 3,
