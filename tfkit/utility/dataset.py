@@ -76,8 +76,14 @@ class LoadDataset(data.Dataset):
                 self.task_dict = outdata['task']
         else:
             print(f"Start preprocessing...")
-            tasks, items = get_data_from_file(fpath)
-            sample = self.preprocessor.prepare(items)
+            sample = []
+            get_data_item = get_data_from_file(fpath)
+            while True:
+                try:
+                    sample.append(self.preprocessor.prepare(next(get_data_item)))
+                except StopIteration as e:
+                    tasks = e.value
+                    break
             self.task_dict = tasks
             print(f"There are {len(sample)} datas after preprocessing.")
             if cache:
