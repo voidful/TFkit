@@ -108,7 +108,8 @@ class LoadDataset(data.Dataset):
     def increase_with_sampling(self, total):
         inc_samp = [choice(self.sample) for _ in range(total - len(self.sample))]
         if len(inc_samp) > 0:
-            self.sample.extend(inc_samp)
+            for key in self.sample.keys():
+                self.sample[key].extend(inc_samp)
 
     def __len__(self):
         return self.length
