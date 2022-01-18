@@ -78,12 +78,13 @@ class LoadDataset(data.Dataset):
             with open(cache_path, "rb") as cf:
                 outdata = pickle.load(cf)
                 sample = outdata['sample']
+                length = outdata['length']
                 self.task_dict = outdata['task']
         else:
             print(f"Start preprocessing...")
             sample = defaultdict(list)
             length = 0
-            get_data_item = get_data_from_file(fpath, chunksize=100000)
+            get_data_item = get_data_from_file(fpath, chunksize=1000000)
             while True:
                 try:
                     for items in process_map(self.preprocessor.prepare, next(get_data_item), chunksize=1000):
@@ -99,23 +100,22 @@ class LoadDataset(data.Dataset):
             print(f"There are {length} datas after preprocessing.")
             if cache:
                 with open(cache_path, 'wb') as cf:
-                    outdata = {'sample': sample, 'task': self.task_dict}
+                    outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
                     pickle.dump(outdata, cf)
         self.length = length
         self.sample = sample
         self.task = self.task_dict
 
     def increase_with_sampling(self, total):
-        inc_samp = [choice(self.sample) for _ in range(total - len(self.sample))]
-        if len(inc_samp) > 0:
+        for _ in range(total - len(self.length)):
             for key in self.sample.keys():
-                self.sample[key].extend(inc_samp)
+                self.sample[key].append(choice(self.sample[key]))
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx):
-        return self.get_feature_from_data({key: value[idx].tolist() for key, value in self.sample.items()},
+        return self.get_feature_from_data({key: self.sample[key][idx].tolist() for key in self.sample.keys()},
                                           self.tokenizer,
                                           self.preprocessor.parameters['maxlen'],
                                           self.task_dict)
