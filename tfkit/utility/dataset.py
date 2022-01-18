@@ -107,7 +107,7 @@ class LoadDataset(data.Dataset):
         self.task = self.task_dict
 
     def increase_with_sampling(self, total):
-        for _ in range(total - len(self.length)):
+        for _ in range(total - self.length):
             for key in self.sample.keys():
                 self.sample[key].append(choice(self.sample[key]))
 
