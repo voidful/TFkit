@@ -44,35 +44,31 @@ def main(arg=None):
                 if '.pt' == f[-3:]:
                     models.append(f)
         for model_path in models:
-                start_time = time.time()
-                valid = eval_arg.get('valid')[0]
-                model, model_type, model_class, model_info = load_trained_model(model_path,
-                                                                                pretrained_config=eval_arg.get(
-                                                                                    'config'),
-                                                                                tag=eval_arg.get('tag'))
-                tasks, eval_dataset = model_class.get_data_from_file(valid)
-                predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
+            start_time = time.time()
+            valid = eval_arg.get('valid')[0]
+            model, model_type, model_class, model_info = load_trained_model(model_path,
+                                                                            pretrained_config=eval_arg.get(
+                                                                                'config'),
+                                                                            tag=eval_arg.get('tag'))
+            predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
-                if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-                    eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
-                else:
-                    eval_metrics = [EvalMetric(model.tokenizer)]
+            if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+                eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
+            else:
+                eval_metrics = [EvalMetric(model.tokenizer)]
 
-                print("PREDICT PARAMETER")
-                print("=======================")
-                print(predict_parameter)
-                print("=======================")
+            print("PREDICT PARAMETER")
+            print("=======================")
+            print(predict_parameter)
+            print("=======================")
 
-                for i in tqdm(eval_dataset):
+            get_data_item = model_class.get_data_from_file(valid, chunksize=1)
+            for chunk in tqdm(get_data_item):
+                for i in chunk:
                     input = i['input']
                     target = i['target']
                     predict_parameter.update({'input': input})
-                    # if 'task' not in predict_parameter:
-                    #     predict_parameter.update({'task': task})
-                    # print("predict_parameter",predict_parameter)
-                    # print( model.predict(**predict_parameter))
                     result, result_dict = model.predict(**predict_parameter)
-                    # print("result",result,result_dict)
                     for eval_pos, eval_metric in enumerate(eval_metrics):
                         # predicted can be list of string or string
                         # target should be list of string
@@ -109,41 +105,41 @@ def main(arg=None):
 
                         eval_metric.add_record(input, predicted, processed_target, eval_arg.get('metric'))
 
-                for eval_pos, eval_metric in enumerate(eval_metrics):
-                    argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
-                    if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-                        argtype += "_num_" + str(eval_pos)
-                    if 'mode' in predict_parameter:
-                        para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
-                            predict_parameter['mode'].lower()
-                        argtype += "_mode_" + str(para_mode)
-                    if 'filtersim' in predict_parameter:
-                        argtype += "_filtersim_" + str(predict_parameter['filtersim'])
-                    outfile_name = model_path + argtype
+            for eval_pos, eval_metric in enumerate(eval_metrics):
+                argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
+                if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+                    argtype += "_num_" + str(eval_pos)
+                if 'mode' in predict_parameter:
+                    para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
+                        predict_parameter['mode'].lower()
+                    argtype += "_mode_" + str(para_mode)
+                if 'filtersim' in predict_parameter:
+                    argtype += "_filtersim_" + str(predict_parameter['filtersim'])
+                outfile_name = model_path + argtype
 
-                    with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
-                        writer = csv.writer(f)
-                        records = eval_metric.get_record(eval_arg.get('metric'))
-                        writer.writerow(['input', 'predicted', 'targets'])
-                        for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
-                            writer.writerow([i, p, t])
-                    print("write result at:", outfile_name)
+                with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
+                    writer = csv.writer(f)
+                    records = eval_metric.get_record(eval_arg.get('metric'))
+                    writer.writerow(['input', 'predicted', 'targets'])
+                    for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
+                        writer.writerow([i, p, t])
+                print("write result at:", outfile_name)
 
-                    with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
-                        eds = csv.writer(edsf)
-                        with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
-                            for i in eval_metric.cal_score(eval_arg.get('metric')):
-                                f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
-                                f.write(str(i[1]) + '\n')
-                                eds.writerows(i[2])
+                with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
+                    eds = csv.writer(edsf)
+                    with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+                        for i in eval_metric.cal_score(eval_arg.get('metric')):
+                            f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
+                            f.write(str(i[1]) + '\n')
+                            eds.writerows(i[2])
 
-                    print("write score at:", outfile_name)
+                print("write score at:", outfile_name)
 
-                    for i in eval_metric.cal_score(eval_arg.get('metric')):
-                        print("TASK: ", i[0], eval_pos)
-                        print(i[1])
+                for i in eval_metric.cal_score(eval_arg.get('metric')):
+                    print("TASK: ", i[0], eval_pos)
+                    print(i[1])
 
-                print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
+            print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
 
 
 if __name__ == "__main__":
