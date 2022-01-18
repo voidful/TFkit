@@ -92,7 +92,7 @@ class LoadDataset(data.Dataset):
                         for i in items:
                             length += 1
                             for k, v in i.items():
-                                sample[k].append(np.array(v, dtype=uint16))
+                                sample[k].append(v)
                     print(f"loaded {length} data.")
                 except StopIteration as e:
                     tasks = e.value
