@@ -1,12 +1,11 @@
 import os
-import pickle
+import joblib
 from collections import defaultdict
 from random import choice
 
 import nlp2
 import numpy
 import numpy as np
-import pandas as pd
 import torch
 from numpy import uint16
 from torch.utils import data
@@ -76,8 +75,8 @@ class LoadDataset(data.Dataset):
         self.get_feature_from_data = get_feature_from_data
         self.tokenizer = tokenizer
         if os.path.isfile(cache_path) and cache:
-            with open(cache_path, "rb") as cf:
-                outdata = pickle.load(cf)
+            with open(cache_path, "rb") as fo:
+                outdata = joblib.load(fo)
                 sample = outdata['sample']
                 length = outdata['length']
                 self.task_dict = outdata['task']
@@ -100,9 +99,9 @@ class LoadDataset(data.Dataset):
             self.task_dict = tasks
             print(f"There are {length} datas after preprocessing.")
             if cache:
-                with open(cache_path, 'wb') as cf:
+                with open(cache_path, 'wb') as fo:
                     outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
-                    pickle.dump(outdata, cf)
+                    joblib.dump(outdata, fo)
         self.length = length
         self.sample = sample
         self.task = self.task_dict
