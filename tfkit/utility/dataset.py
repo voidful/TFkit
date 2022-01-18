@@ -31,8 +31,9 @@ def batch_reduce_pad(batch):
         pad_token_input = batch[0]['input'][-1]
         pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
         pad_token_target = batch[0]['target'][-1] if 'target' in batch[0] else None
-        if isinstance(pad_token_target, int):
+        if pad_token_target:
             pad_start = max(pad_start, max([list(dat['target']).index(pad_token_target) for dat in batch]))
+        pad_start = max(pad_start, max([data['start'] for data in batch if 'start' in data]) + 1)
         for ind, dat in enumerate(batch):
             for k, v in dat.items():
                 if (isinstance(v, list) and len(v) > 1):
