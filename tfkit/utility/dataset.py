@@ -1,12 +1,17 @@
 import os
 import pickle
+from collections import defaultdict
 from random import choice
 
 import nlp2
 import numpy
+import numpy as np
+import pandas as pd
 import torch
+from numpy import uint16
 from torch.utils import data
 import copy
+from tqdm.contrib.concurrent import process_map
 
 
 def check_type_for_dataloader(data_item):
@@ -76,20 +81,27 @@ class LoadDataset(data.Dataset):
                 self.task_dict = outdata['task']
         else:
             print(f"Start preprocessing...")
-            sample = []
-            get_data_item = get_data_from_file(fpath)
+            sample = defaultdict(list)
+            length = 0
+            get_data_item = get_data_from_file(fpath, chunksize=100000)
             while True:
                 try:
-                    sample.append(self.preprocessor.prepare(next(get_data_item)))
+                    for items in process_map(self.preprocessor.prepare, next(get_data_item), chunksize=1000):
+                        for i in items:
+                            length += 1
+                            for k, v in i.items():
+                                sample[k].append(np.array(v, dtype=uint16))
+                    print(f"loaded {length} data.")
                 except StopIteration as e:
                     tasks = e.value
                     break
             self.task_dict = tasks
-            print(f"There are {len(sample)} datas after preprocessing.")
+            print(f"There are {length} datas after preprocessing.")
             if cache:
                 with open(cache_path, 'wb') as cf:
                     outdata = {'sample': sample, 'task': self.task_dict}
                     pickle.dump(outdata, cf)
+        self.length = length
         self.sample = sample
         self.task = self.task_dict
 
@@ -99,8 +111,10 @@ class LoadDataset(data.Dataset):
             self.sample.extend(inc_samp)
 
     def __len__(self):
-        return len(self.sample)
+        return self.length
 
     def __getitem__(self, idx):
-        return self.get_feature_from_data(self.sample[idx], self.tokenizer, self.preprocessor.parameters['maxlen'],
+        return self.get_feature_from_data({key: value[idx].tolist() for key, value in self.sample.items()},
+                                          self.tokenizer,
+                                          self.preprocessor.parameters['maxlen'],
                                           self.task_dict)

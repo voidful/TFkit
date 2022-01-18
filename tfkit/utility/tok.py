@@ -14,6 +14,9 @@ def tok_begin(tokenizer):
     return 'cls'
 
 
+def tok_begin_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_begin(tokenizer))
+
 
 def tok_sep(tokenizer):
     if tokenizer.special_tokens_map.get('sep_token'):
@@ -23,16 +26,28 @@ def tok_sep(tokenizer):
     return 'sep'
 
 
+def tok_sep_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_sep(tokenizer))
+
+
 def tok_mask(tokenizer):
     if tokenizer.special_tokens_map.get('mask_token'):
         return tokenizer.special_tokens_map.get('mask_token')
     return 'msk'
 
 
+def tok_mask_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_mask(tokenizer))
+
+
 def tok_pad(tokenizer):
     if tokenizer.special_tokens_map.get('pad_token'):
         return tokenizer.special_tokens_map.get('pad_token')
     return 'pad'
+
+
+def tok_pad_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_pad(tokenizer))
 
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],

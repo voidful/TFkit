@@ -14,7 +14,8 @@ import tfkit
 import tfkit.utility.tok as tok
 from tfkit.utility.dataset import get_dataset, dataloader_collate
 from tfkit.utility.logger import Logger
-from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model
+from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model, \
+    resize_pretrain_tok
 import logging
 from accelerate import Accelerator
 
@@ -47,6 +48,8 @@ def parse_train_args(args):
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
+    parser.add_argument("--tok_config", type=str,
+                        help='tokenizer config')
     parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
@@ -197,9 +200,9 @@ def main(arg=None):
     logger.write_log("=======================")
     nlp2.set_seed(input_arg.get('seed'))
 
-    tokenizer = load_pretrained_tokenizer(input_arg.get('config'))
+    tokenizer = load_pretrained_tokenizer(input_arg.get('tok_config', input_arg['config']))
     pretrained = load_pretrained_model(input_arg.get('config'), input_arg.get('model'))
-
+    pretrained, tokenizer = resize_pretrain_tok(pretrained, tokenizer)
     if input_arg.get('maxlen') == 0:
         input_arg.update({'maxlen': pretrained.config.max_position_embeddings})
 

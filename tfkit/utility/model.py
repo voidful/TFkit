@@ -35,11 +35,14 @@ def load_pretrained_model(pretrained_config, model_type):
 
 
 def load_pretrained_tokenizer(pretrained_config):
-    if 'albert_chinese' in pretrained_config:
-        tokenizer = BertTokenizer.from_pretrained(pretrained_config)
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
     return tokenizer
+
+
+def resize_pretrain_tok(pretrained, tokenizer):
+    if pretrained.config.vocab_size != len(tokenizer):
+        pretrained.resize_token_embeddings(len(tokenizer))
+    return pretrained, tokenizer
 
 
 def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens):

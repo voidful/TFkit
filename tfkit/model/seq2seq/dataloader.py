@@ -10,82 +10,84 @@ preprocessor = GeneralNLPPreprocessor
 class preprocessor(GeneralNLPPreprocessor):
     def custom_preprocess_fn(self, item, likelihood=['none', 'pos', 'neg', 'both'], **param_dict):
         likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
-        tokenizer = param_dict['tokenizer']
         input, p_target, n_target = item['input'], item.get('target', None), item.get('ntarget', None)
-        previous = item.get("previous",[])
+        previous = item.get("previous", [])
         if tok.UNIVERSAL_SEP in input:
             part = input.split(tok.UNIVERSAL_SEP)
-            previous = tokenizer.tokenize(part[-1])
+            previous = self.tokenizer.tokenize(part[-1])
             input = "".join(part[:-1])
         if p_target is None:
-            yield {**{'input': input, 'previous': previous}, **param_dict}
+            yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                   'previous': self.tokenizer.convert_tokens_to_ids(previous)}
         else:
-            tokenized_target = tokenizer.tokenize(p_target)
+            tokenized_target = self.tokenizer.tokenize(p_target)
             if "neg" in likelihood or 'both' in likelihood:
                 # formatting neg data in csv
                 if n_target is None:
-                    ntext_arr = [tok.tok_sep(tokenizer) + tokenizer.convert_tokens_to_string(tokenized_target)]
-                elif tok.tok_sep(tokenizer) in n_target:
-                    ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(tokenizer))]
+                    ntext_arr = [tok.tok_sep(self.tokenizer) + self.tokenizer.convert_tokens_to_string(tokenized_target)]
+                elif tok.tok_sep(self.tokenizer) in n_target:
+                    ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(self.tokenizer))]
                 else:
                     ntext_arr = [n_target.strip()]
                 for neg_text in ntext_arr:
-                    yield {**{'input': input, 'previous': previous,
-                              'target': tokenized_target, 'ntarget': neg_text}, **param_dict}
+                    yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                           'previous': self.tokenizer.convert_tokens_to_ids(previous),
+                           'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
+                           'ntarget': self.tokenizer.convert_tokens_to_ids(neg_text)}
             else:
-                yield {**{'input': input, 'previous': previous,
-                          'target': tokenized_target}, **param_dict}
+                yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                       'previous': self.tokenizer.convert_tokens_to_ids(previous),
+                       'target': self.tokenizer.convert_tokens_to_ids(tokenized_target)}
 
             # whole sentence masking
             if 'pos' in likelihood:
-                yield {**{'input': input, 'target': tokenized_target,
-                          'previous': [tok.tok_mask(tokenizer)] * len(tokenized_target)},
-                       **param_dict}
+                yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                       'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
+                       'previous': self.tokenizer.convert_tokens_to_ids([tok.tok_mask(self.tokenizer)] * len(tokenized_target))}
             elif 'both' in likelihood:
                 for neg_text in ntext_arr:
-                    yield {**{'input': input, 'target': tokenized_target,
-                              'previous': [tok.tok_mask(tokenizer)] * len(tokenized_target), 'ntarget': neg_text},
-                           **param_dict}
+                    yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                           'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
+                           'previous': self.tokenizer.convert_tokens_to_ids(
+                               [tok.tok_mask(self.tokenizer)] * len(tokenized_target)),
+                           'ntarget': self.tokenizer.convert_tokens_to_ids(neg_text)}
 
 
 def get_feature_from_data(item, tokenizer, maxlen, task_dict={}, **kwargs):
-    tok_pad = tok.tok_pad(tokenizer)
-    tok_bos = tok.tok_begin(tokenizer)
-    tok_sep = tok.tok_sep(tokenizer)
-    tok_mask = tok.tok_mask(tokenizer)
+    tok_pad = tok.tok_pad_id(tokenizer)
+    tok_bos = tok.tok_begin_id(tokenizer)
+    tok_sep = tok.tok_sep_id(tokenizer)
+    tok_mask = tok.tok_mask_id(tokenizer)
 
-    t_input, previous = item['input'], item['previous'],
-    t_input_id = tokenizer.convert_tokens_to_ids(t_input)
-    encoder_mask_id = [1] * (len(t_input))
+    t_input_id, previous = item['input'], item['previous'],
+    encoder_mask_id = [1] * (len(t_input_id))
     encoder_mask_id.extend([0] * (maxlen - len(encoder_mask_id)))
-    t_input_id.extend(tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(t_input_id)))
+    t_input_id.extend([tok_pad] * (maxlen - len(t_input_id)))
     row_dict = {}
     if 'target' in item:
         target = item['target']
         tokenized_target_id = []
         if len(previous) == len(target):
-            tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok_mask)] * maxlen
+            tokenized_prev_id = [tok_mask] * maxlen
         else:
-            tokenized_prev_id = tokenizer.convert_tokens_to_ids([tok_sep] + target)
-        tokenized_target_id.extend(tokenizer.convert_tokens_to_ids(target + [tok_sep]))
+            tokenized_prev_id = [tok_sep] + target
+        tokenized_target_id.extend(target + [tok_sep])
         decoder_mask_id = [1] * (len(tokenized_prev_id))
         decoder_mask_id.extend([0] * (maxlen - len(decoder_mask_id)))
-        tokenized_prev_id.extend(
-            tokenizer.convert_tokens_to_ids([tok_pad]) * (maxlen - len(tokenized_prev_id)))
+        tokenized_prev_id.extend([tok_pad] * (maxlen - len(tokenized_prev_id)))
         tokenized_target_id.extend([-1] * (maxlen - len(tokenized_target_id)))
+
         row_dict['target'] = tokenized_target_id
         row_dict['prev'] = tokenized_prev_id
         row_dict['ntarget'] = [-1] * maxlen
         if 'ntarget' in item and len(item['ntarget'].strip()) > 0:
-            ntarget = item['ntarget']
-            tokenized_ntarget = tokenizer.convert_tokens_to_ids(tokenizer.tokenize(ntarget))
-            tokenized_ntarget_id = tokenized_ntarget
+            tokenized_ntarget_id = item['ntarget']
             tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
             if len(tokenized_ntarget_id) <= maxlen:
                 row_dict['ntarget'] = tokenized_ntarget_id
     else:
-        tokenized_prev_id = [tokenizer.convert_tokens_to_ids(tok_sep)]
-        tokenized_prev_id.extend(tokenizer.convert_tokens_to_ids(previous))
+        tokenized_prev_id = [tok_sep]
+        tokenized_prev_id.extend(previous)
         target_start = len(tokenized_prev_id) - 1
         row_dict['start'] = target_start
         decoder_mask_id = [1] * (len(tokenized_prev_id))

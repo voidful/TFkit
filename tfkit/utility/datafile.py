@@ -56,17 +56,20 @@ def get_clas_data_from_file(fpath, chunksize=10000):
     return task_label_dict
 
 
-def get_gen_data_from_file(fpath, chunksize=500000):
+def get_gen_data_from_file(fpath, chunksize=10000):
     task_label_dict = defaultdict(list)
     task = 'gen'
     task_label_dict[task] = []
     print("Reading data from file...")
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        if len(row) > 1:
-            source_text = str(row[0]).strip()
-            target_text = str(row[1]).strip()
-            negative_text = str(row[2]).strip() if len(row) > 2 else None
-            yield {"task": task, "input": source_text, "target": target_text, "ntarget": negative_text}
+    for rows in nlp2.read_csv_rows(fpath, chunksize):
+        d_list = []
+        for row in rows:
+            if len(row) > 1:
+                source_text = str(row[0]).strip()
+                target_text = str(row[1]).strip()
+                negative_text = str(row[2]).strip() if len(row) > 2 else None
+                d_list.append({"task": task, "input": source_text, "target": target_text, "ntarget": negative_text})
+        yield d_list
     return task_label_dict
 
 
