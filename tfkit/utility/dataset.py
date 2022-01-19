@@ -23,16 +23,22 @@ def check_type_for_dataloader(data_item):
         return False
 
 
+def index_of(val, in_list):
+    try:
+        return in_list.index(val)
+    except ValueError:
+        return -1
+
+
 def batch_reduce_pad(batch):
     has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and batch[0]['input'][-1] == \
               batch[0]['input'][-2]
-    print("b", {k: len(v) for k, v in batch[0].items()})
     if has_pad:
         pad_token_input = batch[0]['input'][-1]
         pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
         pad_token_target = batch[0]['target'][-1] if 'target' in batch[0] else None
         if pad_token_target:
-            pad_start = max(pad_start, max([list(dat['target']).index(pad_token_target) for dat in batch]))
+            pad_start = max(pad_start, max([index_of(pad_token_target, list(dat['target'])) for dat in batch]))
         if 'start' in batch[0]:
             pad_start = max(pad_start, max([data['start'] for data in batch if 'start' in data]) + 1)
         for ind, dat in enumerate(batch):
@@ -42,7 +48,6 @@ def batch_reduce_pad(batch):
                 if k == 'input_length':
                     batch[ind][k] = pad_start - 1
                 batch[ind][k] = numpy.asarray(batch[ind][k])
-    print("a", {k: len(v) for k, v in batch[0].items()})
     return batch
 
 
