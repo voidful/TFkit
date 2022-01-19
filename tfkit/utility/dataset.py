@@ -26,6 +26,7 @@ def check_type_for_dataloader(data_item):
 def batch_reduce_pad(batch):
     has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and batch[0]['input'][-1] == \
               batch[0]['input'][-2]
+    print("b", {k: len(v) for k, v in batch[0].items()})
     if has_pad:
         pad_token_input = batch[0]['input'][-1]
         pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
@@ -41,6 +42,7 @@ def batch_reduce_pad(batch):
                 if k == 'input_length':
                     batch[ind][k] = pad_start - 1
                 batch[ind][k] = numpy.asarray(batch[ind][k])
+    print("a", {k: len(v) for k, v in batch[0].items()})
     return batch
 
 
@@ -63,13 +65,13 @@ def get_dataset(file_path, model_class, tokenizer, parameter):
                      get_data_from_file=model_class.get_data_from_file,
                      preprocessor=model_class.preprocessor,
                      get_feature_from_data=model_class.get_feature_from_data,
-                     **parameter)
+                     preprocessing_arg=parameter)
     return ds
 
 
 class LoadDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, get_data_from_file, preprocessor, get_feature_from_data, preprocessing_arg={},
-                 cache=False, **kwargs):
+                 cache=False, ):
         cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
