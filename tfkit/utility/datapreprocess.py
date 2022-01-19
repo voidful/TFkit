@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 from numpy import uint16
 
 from tfkit.utility import tok
@@ -17,12 +16,26 @@ class GeneralNLPPreprocessor:
     def prepare(self, item):
         preprocessed_data = []
         maxlen = self.parameters.get('maxlen')
+        # if tok.UNIVERSAL_SEP in item['input']:
+        #     part = item['input'].split(tok.UNIVERSAL_SEP)
+        #     previous = self.tokenizer.tokenize(part[-1])
+        #     input = "".join(part[:-1])
         t_input_list, _ = tok.handle_exceed(self.tokenizer, item['input'],
                                             maxlen=maxlen - 3,
                                             mode=self.parameters.get('handle_exceed'))
-        for t_input in t_input_list:
+
+        if 'target' in item:
+            t_target_list, _ = tok.handle_exceed(self.tokenizer, item['target'],
+                                                 maxlen=maxlen - 3,
+                                                 mode=self.parameters.get('handle_exceed'))
+        else:
+            t_target_list = [['' * len(t_input_list)]]
+
+        for t_input, t_target in zip(t_input_list, t_target_list):
             slice_length = maxlen - self.parameters.get('reserved_len') - 3
             item['input'] = [tok.tok_begin(self.tokenizer)] + t_input[:slice_length]
+            if len(t_target[0]) > 0:
+                item['target'] = t_target
             for convert_feature_input_dict in self.custom_preprocess_fn(item, **self.parameters):
                 preprocessed_data.append({k: np.array(v, dtype=uint16) for k, v in convert_feature_input_dict.items()})
         return preprocessed_data

@@ -1,6 +1,6 @@
 import unittest
 
-from tfkit.utility import tok
+from tfkit.utility import tok, get_dataset
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
 

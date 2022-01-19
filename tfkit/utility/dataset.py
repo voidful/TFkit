@@ -5,9 +5,7 @@ from random import choice
 
 import nlp2
 import numpy
-import numpy as np
 import torch
-from numpy import uint16
 from torch.utils import data
 import copy
 from tqdm.contrib.concurrent import process_map
@@ -123,7 +121,7 @@ class LoadDataset(data.Dataset):
         return self.length
 
     def __getitem__(self, idx):
-        return self.get_feature_from_data({key: self.sample[key][idx].tolist() for key in self.sample.keys()},
+        return self.get_feature_from_data({key: self.sample[key][idx] for key in self.sample.keys()},
                                           self.tokenizer,
                                           self.preprocessor.parameters['maxlen'],
                                           self.task_dict)

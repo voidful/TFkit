@@ -10,43 +10,40 @@ preprocessor = GeneralNLPPreprocessor
 class preprocessor(GeneralNLPPreprocessor):
     def custom_preprocess_fn(self, item, likelihood=['none', 'pos', 'neg', 'both'], **param_dict):
         likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
-        input, p_target, n_target = item['input'], item.get('target', None), item.get('ntarget', None)
+        tokenized_input, tokenized_target, n_target = item['input'], item.get('target', None), item.get('ntarget', None)
         previous = item.get("previous", [])
-        if tok.UNIVERSAL_SEP in input:
-            part = input.split(tok.UNIVERSAL_SEP)
-            previous = self.tokenizer.tokenize(part[-1])
-            input = "".join(part[:-1])
-        if p_target is None:
-            yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+        if tokenized_target is None:
+            yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                    'previous': self.tokenizer.convert_tokens_to_ids(previous)}
         else:
-            tokenized_target = self.tokenizer.tokenize(p_target)
             if "neg" in likelihood or 'both' in likelihood:
                 # formatting neg data in csv
                 if n_target is None:
-                    ntext_arr = [tok.tok_sep(self.tokenizer) + self.tokenizer.convert_tokens_to_string(tokenized_target)]
+                    ntext_arr = [
+                        tok.tok_sep(self.tokenizer) + self.tokenizer.convert_tokens_to_string(tokenized_target)]
                 elif tok.tok_sep(self.tokenizer) in n_target:
                     ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(self.tokenizer))]
                 else:
                     ntext_arr = [n_target.strip()]
                 for neg_text in ntext_arr:
-                    yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                    yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                            'previous': self.tokenizer.convert_tokens_to_ids(previous),
                            'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
                            'ntarget': self.tokenizer.convert_tokens_to_ids(neg_text)}
             else:
-                yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                        'previous': self.tokenizer.convert_tokens_to_ids(previous),
                        'target': self.tokenizer.convert_tokens_to_ids(tokenized_target)}
 
             # whole sentence masking
             if 'pos' in likelihood:
-                yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                        'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
-                       'previous': self.tokenizer.convert_tokens_to_ids([tok.tok_mask(self.tokenizer)] * len(tokenized_target))}
+                       'previous': self.tokenizer.convert_tokens_to_ids(
+                           [tok.tok_mask(self.tokenizer)] * len(tokenized_target))}
             elif 'both' in likelihood:
                 for neg_text in ntext_arr:
-                    yield {'input': self.tokenizer.convert_tokens_to_ids(input),
+                    yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                            'target': self.tokenizer.convert_tokens_to_ids(tokenized_target),
                            'previous': self.tokenizer.convert_tokens_to_ids(
                                [tok.tok_mask(self.tokenizer)] * len(tokenized_target)),
@@ -54,6 +51,7 @@ class preprocessor(GeneralNLPPreprocessor):
 
 
 def get_feature_from_data(item, tokenizer, maxlen, task_dict={}, **kwargs):
+    item = {key: value.tolist() for key, value in item.items()}
     tok_pad = tok.tok_pad_id(tokenizer)
     tok_bos = tok.tok_begin_id(tokenizer)
     tok_sep = tok.tok_sep_id(tokenizer)
