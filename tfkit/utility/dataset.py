@@ -73,14 +73,13 @@ def get_dataset(file_path, model_class, tokenizer, parameter):
 
 
 class LoadDataset(data.Dataset):
-    def __init__(self, fpath, tokenizer, get_data_from_file, preprocessor, get_feature_from_data, preprocessing_arg={},
-                 cache=False, ):
+    def __init__(self, fpath, tokenizer, get_data_from_file, preprocessor, get_feature_from_data, preprocessing_arg={}):
         cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
         self.get_feature_from_data = get_feature_from_data
         self.tokenizer = tokenizer
-        if os.path.isfile(cache_path) and cache:
+        if os.path.isfile(cache_path) and preprocessing_arg.get('cache', False):
             with open(cache_path, "rb") as fo:
                 outdata = joblib.load(fo)
                 sample = outdata['sample']
@@ -104,7 +103,7 @@ class LoadDataset(data.Dataset):
                     break
             self.task_dict = tasks
             print(f"There are {length} datas after preprocessing.")
-            if cache:
+            if preprocessing_arg.get('cache', False):
                 with open(cache_path, 'wb') as fo:
                     outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
                     joblib.dump(outdata, fo)
