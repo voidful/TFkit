@@ -106,7 +106,7 @@ class LoadDataset(data.Dataset):
             if preprocessing_arg.get('cache', False):
                 with open(cache_path, 'wb') as fo:
                     outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
-                    joblib.dump(outdata, fo)
+                    joblib.dump(outdata, fo, protocol=5)
         self.length = length
         self.sample = sample
         self.task = self.task_dict
