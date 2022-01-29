@@ -112,7 +112,7 @@ def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, 
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     logger.write_log(
                         f"epoch: {epoch}, tag: {mtag}, model: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
-                if total_iter % 100000 == 0 and total_iter != 0:  # cache
+                if total_iter % 50000 == 0 and total_iter != 0:  # cache
                     save_model(models, input_arg, models_tag, epoch,
                                f"{fname}_epoch_{epoch}_iter_{total_iter}", logger,
                                add_tokens=add_tokens,
