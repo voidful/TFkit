@@ -40,6 +40,8 @@ def parse_train_args(args):
                         help="auto add freq >= x UNK token to word table")
     parser.add_argument("--add_tokens_file", type=str,
                         help="add token from a list file")
+    parser.add_argument("--add_tokens_config", type=str,
+                        help="add token from tokenizer config")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--no_eval", action='store_true', help="not running evaluation")
@@ -215,6 +217,10 @@ def main(arg=None):
     if input_arg.get('add_tokens_file', None):
         logger.write_log("Add token from file")
         add_tokens = nlp2.read_files_into_lines(input_arg.get('add_tokens_file'))
+
+    if input_arg.get('add_tokens_config', None):
+        logger.write_log("Add token from config")
+        add_tokens = get_all_tok_from_config(input_arg.get('add_tokens_config'))
 
     if add_tokens:
         pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)

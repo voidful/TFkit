@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import nlp2
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 UNIVERSAL_SEP = "///"
 
@@ -48,6 +49,11 @@ def tok_pad(tokenizer):
 
 def tok_pad_id(tokenizer):
     return tokenizer.convert_tokens_to_ids(tok_pad(tokenizer))
+
+
+def get_all_tok_from_config(config):
+    tokenizer = AutoTokenizer.from_pretrained(config)
+    return list(tokenizer.get_vocab().keys())
 
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],
