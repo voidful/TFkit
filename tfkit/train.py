@@ -220,7 +220,7 @@ def main(arg=None):
 
     if input_arg.get('add_tokens_config', None):
         logger.write_log("Add token from config")
-        add_tokens = get_all_tok_from_config(input_arg.get('add_tokens_config'))
+        add_tokens = tok.get_all_tok_from_config(input_arg.get('add_tokens_config'))
 
     if add_tokens:
         pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
