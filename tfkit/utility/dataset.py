@@ -80,11 +80,13 @@ class LoadDataset(data.Dataset):
         self.get_feature_from_data = get_feature_from_data
         self.tokenizer = tokenizer
         if os.path.isfile(cache_path) and preprocessing_arg.get('cache', False):
+            print(f"Loading cached dataset...")
             with open(cache_path, "rb") as fo:
                 outdata = joblib.load(fo)
                 sample = outdata['sample']
                 length = outdata['length']
                 self.task_dict = outdata['task']
+            print(f"Finish loading cached dataset.")
         else:
             print(f"Start preprocessing...")
             sample = defaultdict(list)
@@ -107,6 +109,7 @@ class LoadDataset(data.Dataset):
                 with open(cache_path, 'wb') as fo:
                     outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
                     joblib.dump(outdata, fo, protocol=5)
+            print(f"Finish preprocessing.")
         self.length = length
         self.sample = sample
         self.task = self.task_dict
