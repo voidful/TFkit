@@ -1,20 +1,20 @@
 import argparse
 import sys
 
+from tfkit.utility.model import add_tokens_to_pretrain, load_trained_model
 from transformers import AutoModelWithLMHead, AutoModelForSeq2SeqLM
-from tfkit.utility import load_trained_model, add_tokens_to_pretrain
 
 
 def parse_dump_args(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", required=True, type=str)
+    parser.add_argument("--task", required=True, type=str)
     parser.add_argument("--dumpdir", required=True, type=str)
     return vars(parser.parse_args(args))
 
 
 def main(arg=None):
     arg = parse_dump_args(sys.argv[1:]) if arg is None else parse_dump_args(arg)
-    model, model_type, model_class, model_info = load_trained_model(arg.get('model'))
+    model, model_type, model_class, model_info, model_preprocessor = load_trained_model(arg.get('task'))
     tokenizer = model.tokenizer
     pretrained_config = model_info.get("model_config")
     if model_type == 'clm' and "gpt" in pretrained_config:
@@ -39,7 +39,7 @@ def main(arg=None):
 
     tokenizer.save_pretrained(arg.get('dumpdir'))
     print('==================')
-    print("Finish model dump.")
+    print("Finish task dump.")
 
 
 if __name__ == "__main__":

@@ -58,11 +58,10 @@ def get_all_tok_from_config(config):
 
 def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],
                   keep_after_sep=True):
+    if isinstance(seq, list):
+        return seq, [[len(seq)]]
     mode = mode[0] if isinstance(mode, list) else mode
-    mask_tok = tok_mask(tokenizer)
     sep_tok = tok_sep(tokenizer)
-    bos_tok = tok_begin(tokenizer)
-    seq = seq.replace("[MASK]", mask_tok).replace("[SEP]", sep_tok).replace("[CLS]", bos_tok)
     sep_split = seq.split(sep_tok)
     ext_seq = [sep_tok] + tokenizer.tokenize(sep_tok.join(sep_split[1:])) \
         if len(sep_split) > 1 and keep_after_sep else []

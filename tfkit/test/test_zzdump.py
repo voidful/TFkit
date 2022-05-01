@@ -14,13 +14,13 @@ class TestEval(unittest.TestCase):
         assert (result == 0)
 
     def test_parser(self):
-        parser = tfkit.dump.parse_dump_args(['--model', 'a', '--dumpdir', 'b'])
-        self.assertTrue(parser.get('model') == 'a')
+        parser = tfkit.dump.parse_dump_args(['--task', 'a', '--dumpdir', 'b'])
+        self.assertTrue(parser.get('task') == 'a')
         self.assertTrue(parser.get('dumpdir') == 'b')
 
     def testDump(self):
         dump_dir = './cache/dump'
-        tfkit.dump.main(["--model", ADDTOKFILE_MODEL_PATH, '--dumpdir', dump_dir])
+        tfkit.dump.main(["--task", ADDTOKFILE_MODEL_PATH, '--dumpdir', dump_dir])
         result = os.system(
-            'tfkit-dump --model ' + ADDTOKFILE_MODEL_PATH + ' --dumpdir ' + dump_dir)
+            'tfkit-dump --task ' + ADDTOKFILE_MODEL_PATH + ' --dumpdir ' + dump_dir)
         self.assertTrue(result == 0)

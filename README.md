@@ -68,7 +68,7 @@ input, target
 ### Step 2: Train model
 ```bash
 tfkit-train \
---model clas \
+--task clas \
 --config xlm-roberta-base \
 --train training_data.csv \
 --test testing_data.csv \
@@ -81,7 +81,7 @@ tfkit-train \
 ### Step 3: Evaluate
 ```bash
 tfkit-eval \
---model roberta_sentiment_classificer/1.pt \
+--task roberta_sentiment_classificer/1.pt \
 --metric clas \
 --valid testing_data.csv
 ```
@@ -92,7 +92,7 @@ tfkit-eval \
 
   ```bash
   tfkit-train \
-    --model clas clas \
+    --task clas clas \
     --config xlm-roberta-base \
     --train training_data_taskA.csv training_data_taskB.csv \
     --test testing_data_taskA.csv testing_data_taskB.csv \

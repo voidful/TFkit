@@ -1,15 +1,15 @@
 import argparse
+import csv
+import logging
 import sys
-from datetime import timedelta
 import time
+from datetime import timedelta
 
 import nlp2
 import torch
-from tqdm.auto import tqdm
-import csv
 from tfkit.utility.eval_metric import EvalMetric
 from tfkit.utility.model import load_trained_model, load_predict_parameter
-import logging
+from tqdm.auto import tqdm
 
 transformers_logger = logging.getLogger('transformers')
 transformers_logger.setLevel(logging.CRITICAL)
@@ -18,13 +18,13 @@ transformers_logger.setLevel(logging.CRITICAL)
 def parse_eval_args(args):
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--model", nargs='+', type=str, help="model path")
-    group.add_argument("--models", nargs='+', type=str, help="model dir for multiple model evaluation")
-    parser.add_argument("--config", type=str, help='pre-trained model path after add token')
+    group.add_argument("--task", nargs='+', type=str, help="task path")
+    group.add_argument("--models", nargs='+', type=str, help="task dir for multiple task evaluation")
+    parser.add_argument("--config", type=str, help='pre-trained task path after add token')
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas', 'er'],
                         help="evaluate metric")
     parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
-    parser.add_argument("--tag", type=str, help="evaluate model tag for select multi-task model")
+    parser.add_argument("--tag", type=str, help="evaluate task tag for select multi-task task")
     parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
 
@@ -38,7 +38,7 @@ def parse_eval_args(args):
 def main(arg=None):
     with torch.no_grad():
         eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
-        models = eval_arg.get('model', [])
+        models = eval_arg.get('task', [])
         for m in eval_arg.get('models', []):
             for f in nlp2.get_files_from_dir(m):
                 if '.pt' == f[-3:]:
@@ -46,10 +46,10 @@ def main(arg=None):
         for model_path in models:
             start_time = time.time()
             valid = eval_arg.get('valid')[0]
-            model, model_type, model_class, model_info = load_trained_model(model_path,
-                                                                            pretrained_config=eval_arg.get(
-                                                                                'config'),
-                                                                            tag=eval_arg.get('tag'))
+            model, model_type, model_class, model_info, preprocessor = load_trained_model(model_path,
+                                                                                          pretrained_config=eval_arg.get(
+                                                                                              'config'),
+                                                                                          tag=eval_arg.get('tag'))
             predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
             if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
@@ -62,7 +62,7 @@ def main(arg=None):
             print(predict_parameter)
             print("=======================")
 
-            get_data_item = model_class.get_data_from_file(valid, chunksize=1)
+            get_data_item = preprocessor.read_file_to_data(valid)
             for chunk in tqdm(get_data_item):
                 for i in chunk:
                     input = i['input']
