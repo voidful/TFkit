@@ -1,7 +1,8 @@
 import unittest
 
 import pytest
-from transformers import AutoModel, BertTokenizer
+from transformers import AutoModel
+from transformers import BertTokenizer
 
 import tfkit
 from tfkit.test import *

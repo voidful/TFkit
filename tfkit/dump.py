@@ -1,11 +1,12 @@
 import argparse
 import sys
 
-from transformers import (AutoModelForSeq2SeqLM,
-                          AutoModelForSequenceClassification,
-                          AutoModelWithLMHead)
+from transformers import AutoModelForSeq2SeqLM
+from transformers import AutoModelForSequenceClassification
+from transformers import AutoModelWithLMHead
 
-from tfkit.utility.model import add_tokens_to_pretrain, load_trained_model
+from tfkit.utility.model import add_tokens_to_pretrain
+from tfkit.utility.model import load_trained_model
 
 
 def parse_dump_args(args):

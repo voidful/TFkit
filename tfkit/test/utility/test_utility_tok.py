@@ -2,7 +2,8 @@ import os
 import sys
 import unittest
 
-from transformers import AutoTokenizer, BertTokenizer
+from transformers import AutoTokenizer
+from transformers import BertTokenizer
 
 import tfkit
 

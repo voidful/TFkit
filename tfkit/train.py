@@ -18,9 +18,11 @@ import tfkit.utility.tok as tok
 from tfkit.utility.dataloader import dataloader_collate
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
-from tfkit.utility.model import (load_model_class, load_pretrained_model,
-                                 load_pretrained_tokenizer,
-                                 resize_pretrain_tok, save_model)
+from tfkit.utility.model import load_model_class
+from tfkit.utility.model import load_pretrained_model
+from tfkit.utility.model import load_pretrained_tokenizer
+from tfkit.utility.model import resize_pretrain_tok
+from tfkit.utility.model import save_model
 
 transformers_logger = logging.getLogger("transformers")
 transformers_logger.setLevel(logging.CRITICAL)

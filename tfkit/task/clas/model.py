@@ -2,10 +2,13 @@ import os
 import sys
 
 import torch
-from torch import nn, sigmoid, softmax
+from torch import nn
+from torch import sigmoid
+from torch import softmax
 
 from tfkit.task.clas import Preprocessor
-from tfkit.utility.loss import BCEFocalLoss, FocalLoss
+from tfkit.utility.loss import BCEFocalLoss
+from tfkit.utility.loss import FocalLoss
 from tfkit.utility.predictor import ClassificationPredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

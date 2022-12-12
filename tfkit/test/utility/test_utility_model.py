@@ -2,10 +2,13 @@ import os
 import sys
 import unittest
 
-from transformers import AutoModel, BertTokenizer
+from transformers import AutoModel
+from transformers import BertTokenizer
 
-from tfkit.utility.model import (list_all_model, load_model_class,
-                                 load_predict_parameter, load_trained_model)
+from tfkit.utility.model import list_all_model
+from tfkit.utility.model import load_model_class
+from tfkit.utility.model import load_predict_parameter
+from tfkit.utility.model import load_trained_model
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

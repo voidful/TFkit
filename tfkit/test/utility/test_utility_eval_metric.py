@@ -3,7 +3,8 @@ import sys
 import unittest
 
 import pytest
-from transformers import AutoTokenizer, BertTokenizer
+from transformers import AutoTokenizer
+from transformers import BertTokenizer
 
 import tfkit
 

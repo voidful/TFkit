@@ -1,7 +1,8 @@
 import copy
 import re
 import string
-from collections import Counter, defaultdict
+from collections import Counter
+from collections import defaultdict
 
 from tqdm.auto import tqdm
 

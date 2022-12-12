@@ -1,6 +1,7 @@
 import os
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
+from collections import defaultdict
 
 from torch.distributions import Categorical
 from torch.nn.functional import softmax

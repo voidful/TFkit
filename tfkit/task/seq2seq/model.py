@@ -9,7 +9,8 @@ from torch.nn.functional import softmax
 from transformers import AutoModel
 
 from tfkit.task.seq2seq import Preprocessor
-from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
+from tfkit.utility.loss import NegativeCElLoss
+from tfkit.utility.loss import SelfKDLoss
 from tfkit.utility.model import tie_encoder_decoder_weights
 from tfkit.utility.predictor import AutoRegressivePredictor
 
