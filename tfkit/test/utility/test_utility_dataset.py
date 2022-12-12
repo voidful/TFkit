@@ -1,14 +1,14 @@
-from tfkit.test import *
-import tfkit
-import unittest
 import os
 import sys
+import unittest
 
 import numpy
 from transformers import AutoTokenizer
 
-from tfkit.utility.dataset import get_dataset, TFKitDataset
-from tfkit.utility.model import load_pretrained_tokenizer, load_model_class
+import tfkit
+from tfkit.test import *
+from tfkit.utility.dataset import TFKitDataset, get_dataset
+from tfkit.utility.model import load_model_class, load_pretrained_tokenizer
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

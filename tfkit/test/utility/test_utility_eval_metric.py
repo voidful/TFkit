@@ -1,10 +1,11 @@
-from transformers import BertTokenizer, AutoTokenizer
-import tfkit
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 import pytest
+from transformers import AutoTokenizer, BertTokenizer
+
+import tfkit
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

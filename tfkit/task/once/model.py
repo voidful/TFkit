@@ -1,12 +1,13 @@
-from tfkit.utility.tok import *
-from tfkit.utility.loss import *
-from torch.nn.functional import softmax
 import os
 import sys
 from collections import defaultdict
 
+from torch.nn.functional import softmax
+
 from tfkit.task.once import Preprocessor
+from tfkit.utility.loss import *
 from tfkit.utility.predictor import NonAutoRegressivePredictor
+from tfkit.utility.tok import *
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

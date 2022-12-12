@@ -1,11 +1,11 @@
 import copy
 import re
 import string
-from collections import Counter
-from collections import defaultdict
+from collections import Counter, defaultdict
+
+from tqdm.auto import tqdm
 
 from tfkit.utility import tok
-from tqdm.auto import tqdm
 
 
 def _normalize_answer(s, task="emf1"):
@@ -239,9 +239,9 @@ class EvalMetric:
                 )
                 data_score = sorted(data_score, key=lambda i: i[2]["ROUGE_L"])
             if "clas" in metric:
-                from sklearn.metrics import classification_report
+                from sklearn.metrics import (classification_report,
+                                             precision_recall_fscore_support)
                 from sklearn.preprocessing import MultiLabelBinarizer
-                from sklearn.metrics import precision_recall_fscore_support
 
                 target_key = [
                     t for t in self.target_list[task_name].keys() if len(t) > 0

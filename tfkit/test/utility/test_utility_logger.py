@@ -1,9 +1,9 @@
-import tfkit
-import unittest
 import csv
-import sys
 import os
+import sys
+import unittest
 
+import tfkit
 from tfkit.utility.logger import Logger
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

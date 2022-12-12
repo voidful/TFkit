@@ -1,30 +1,26 @@
 import argparse
-import sys
+import logging
 import os
-from datetime import timedelta
+import sys
 import time
+from datetime import timedelta
 from itertools import zip_longest
 
+import nlp2
 import torch
+from accelerate import Accelerator
 from torch.utils import data
 from tqdm.auto import tqdm
 from transformers import get_linear_schedule_with_warmup
-import nlp2
+
 import tfkit
 import tfkit.utility.tok as tok
 from tfkit.utility.dataloader import dataloader_collate
 from tfkit.utility.dataset import get_dataset
-
 from tfkit.utility.logger import Logger
-from tfkit.utility.model import (
-    load_model_class,
-    save_model,
-    load_pretrained_tokenizer,
-    load_pretrained_model,
-    resize_pretrain_tok,
-)
-import logging
-from accelerate import Accelerator
+from tfkit.utility.model import (load_model_class, load_pretrained_model,
+                                 load_pretrained_tokenizer,
+                                 resize_pretrain_tok, save_model)
 
 transformers_logger = logging.getLogger("transformers")
 transformers_logger.setLevel(logging.CRITICAL)

@@ -1,12 +1,13 @@
-from tfkit.utility.loss import *
-from torch.nn.functional import softmax
 import os
 import sys
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
+
+from torch.distributions import Categorical
+from torch.nn.functional import softmax
 
 from tfkit.task.tag import Preprocessor
+from tfkit.utility.loss import *
 from tfkit.utility.predictor import TaggingPredictor
-from torch.distributions import Categorical
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

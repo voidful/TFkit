@@ -1,8 +1,9 @@
-from torch.nn.functional import softmax
-from torch import nn
-import torch
 import os
 import sys
+
+import torch
+from torch import nn
+from torch.nn.functional import softmax
 
 from tfkit.task.clm import Preprocessor
 from tfkit.utility.predictor import AutoRegressivePredictor

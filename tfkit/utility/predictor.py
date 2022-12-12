@@ -1,10 +1,10 @@
 import json
 from collections import defaultdict
+from math import log
 
 import nlp2
 import numpy as np
 import torch
-from math import log
 from torch.distributions import Categorical
 
 from tfkit.utility import tok

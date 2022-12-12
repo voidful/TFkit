@@ -1,5 +1,6 @@
 import torch
 from sklearn.preprocessing import MultiLabelBinarizer
+
 from tfkit.utility import tok
 from tfkit.utility.datafile import get_multiclas_data_from_file
 from tfkit.utility.preprocess import GeneralNLPPreprocessor

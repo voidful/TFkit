@@ -1,10 +1,11 @@
-from tfkit.task.qa.preprocessor import Preprocessor
-from torch.nn.functional import softmax
-import torch.nn as nn
-import torch
 import os
 import sys
 
+import torch
+import torch.nn as nn
+from torch.nn.functional import softmax
+
+from tfkit.task.qa.preprocessor import Preprocessor
 from tfkit.utility.predictor import QuestionAnsweringPredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))

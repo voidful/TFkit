@@ -1,9 +1,10 @@
-from tfkit.utility import tok
-import warnings
 import csv
+import warnings
 from collections import defaultdict
 
 import nlp2
+
+from tfkit.utility import tok
 
 
 # ignore sklearn warning

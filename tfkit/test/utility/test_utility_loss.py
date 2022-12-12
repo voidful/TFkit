@@ -1,11 +1,12 @@
-import tfkit
-import unittest
 import os
 import sys
+import unittest
 
 import torch
 from torch import nn
 from torch.autograd import Variable
+
+import tfkit
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))

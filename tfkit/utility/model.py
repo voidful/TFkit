@@ -7,7 +7,7 @@ import inquirer
 import nlp2
 import torch
 from torch import nn
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoModel, AutoTokenizer
 
 
 def list_all_model(ignore_list=[]):

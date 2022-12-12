@@ -10,7 +10,7 @@ import torch
 from tqdm.auto import tqdm
 
 from tfkit.utility.eval_metric import EvalMetric
-from tfkit.utility.model import load_trained_model, load_predict_parameter
+from tfkit.utility.model import load_predict_parameter, load_trained_model
 
 transformers_logger = logging.getLogger("transformers")
 transformers_logger.setLevel(logging.CRITICAL)
