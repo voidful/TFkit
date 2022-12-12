@@ -63,15 +63,6 @@ class TestEval(unittest.TestCase):
         result = os.system(
             'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
-        result = os.system(
-            'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
-        self.assertTrue(result == 0)
-        result = os.system(
-            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
-        self.assertTrue(result == 0)
-        result = os.system(
-            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
-        self.assertTrue(result == 0)
 
     # def testEvalQA(self):
     #     tfkit.eval.main(
