@@ -13,6 +13,8 @@ import warnings
 
 warnings.warn = warn
 
+from tqdm.auto import tqdm
+
 from tfkit.utility import tok
 
 
@@ -101,7 +103,7 @@ def get_qa_data_from_file(fpath):
         chunk = []
         for row in rows:
             context, start, end = row
-            chunk.append({"task": task, "input": context, "target": [start,end]})
+            chunk.append({"task": task, "input": context, "target": [start, end]})
         yield chunk
     return task_label_dict
 
