@@ -12,7 +12,6 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class Model(nn.Module):
-
     def __init__(self, tokenizer, pretrained, maxlen=128, dropout=0.1, **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
@@ -34,9 +33,9 @@ class Model(nn.Module):
 
     def forward(self, batch_data, eval=False, **kwargs):
         print("batch_data", batch_data)
-        inputs = torch.as_tensor(batch_data['input'])
-        masks = torch.as_tensor(batch_data['mask'])
-        targets = torch.as_tensor(batch_data['target'])
+        inputs = torch.as_tensor(batch_data["input"])
+        masks = torch.as_tensor(batch_data["mask"])
+        targets = torch.as_tensor(batch_data["target"])
         start_positions, end_positions = targets.split(1, dim=1)
         start_positions = start_positions.squeeze(1)
         end_positions = end_positions.squeeze(1)
@@ -48,18 +47,23 @@ class Model(nn.Module):
         end_logits = end_logits.squeeze(-1)
 
         if eval:
-            result_dict = {
-                'label_prob_all': [],
-                'label_map': []
-            }
+            result_dict = {"label_prob_all": [], "label_map": []}
             reshaped_start_logits = softmax(start_logits, dim=1)
             reshaped_end_logits = softmax(end_logits, dim=1)
             start_prob = reshaped_start_logits.data.tolist()[0]
             end_prob = reshaped_end_logits.data.tolist()[0]
-            result_dict['label_prob_all'].append({'start': dict(zip(range(len(start_prob)), start_prob)),
-                                                  'end': dict(zip(range(len(end_prob)), end_prob))})
-            result_dict['label_map'].append({'start': start_prob.index(max(start_prob)),
-                                             'end': end_prob.index(max(end_prob))})
+            result_dict["label_prob_all"].append(
+                {
+                    "start": dict(zip(range(len(start_prob)), start_prob)),
+                    "end": dict(zip(range(len(end_prob)), end_prob)),
+                }
+            )
+            result_dict["label_map"].append(
+                {
+                    "start": start_prob.index(max(start_prob)),
+                    "end": end_prob.index(max(end_prob)),
+                }
+            )
             outputs = result_dict
         else:
             start_loss = self.loss_fct(start_logits, start_positions)

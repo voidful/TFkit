@@ -5,72 +5,183 @@ from tfkit.test import *
 
 
 class TestEval(unittest.TestCase):
-
     def testHelp(self):
-        result = os.system('tfkit-eval -h')
+        result = os.system("tfkit-eval -h")
         self.assertTrue(result == 0)
 
     def test_parser(self):
         parser, _ = tfkit.eval.parse_eval_args(
-            ['--model', 'once', '--metric', 'emf1', '--valid', 'test.csv', '--print'])
+            ["--model", "once", "--metric", "emf1", "--valid", "test.csv", "--print"]
+        )
         print(parser)
-        self.assertTrue(parser.get('model') == ['once'])
+        self.assertTrue(parser.get("model") == ["once"])
 
         eval_parser, model_parser = tfkit.eval.parse_eval_args(
-            ['--model', 'once', '--metric', 'emf1', '--valid', 'test.csv', '--print', '--decodenum', '2'])
-        self.assertTrue(eval_parser.get('model') == ['once'])
-        self.assertTrue(model_parser.get('decodenum') == '2')
+            [
+                "--model",
+                "once",
+                "--metric",
+                "emf1",
+                "--valid",
+                "test.csv",
+                "--print",
+                "--decodenum",
+                "2",
+            ]
+        )
+        self.assertTrue(eval_parser.get("model") == ["once"])
+        self.assertTrue(model_parser.get("decodenum") == "2")
 
     def testEvalGen(self):
         tfkit.eval.main(
-            ['--model', ONCE_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print'])
+            [
+                "--model",
+                ONCE_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+            ]
+        )
         result = os.system(
-            'tfkit-eval --model ' + ONCE_MODEL_PATH + ' --valid ' + GEN_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ONCE_MODEL_PATH
+            + " --valid "
+            + GEN_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     def testEvalGenOnce(self):
         tfkit.eval.main(
-            ['--model', ONCE_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print'])
+            [
+                "--model",
+                ONCE_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+            ]
+        )
         result = os.system(
-            'tfkit-eval --model ' + ONCE_MODEL_PATH + ' --valid ' + GEN_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ONCE_MODEL_PATH
+            + " --valid "
+            + GEN_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     def testEvalGenOnceCTC(self):
         tfkit.eval.main(
-            ['--model', ONCECTC_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print'])
+            [
+                "--model",
+                ONCECTC_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+            ]
+        )
         result = os.system(
-            'tfkit-eval --model ' + ONCECTC_MODEL_PATH + ' --valid ' + GEN_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ONCECTC_MODEL_PATH
+            + " --valid "
+            + GEN_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     def testEvalSeq2Seq(self):
         tfkit.eval.main(
-            ['--model', SEQ2SEQ_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print',
-             '--decodenum', '2'])
+            [
+                "--model",
+                SEQ2SEQ_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+                "--decodenum",
+                "2",
+            ]
+        )
         tfkit.eval.main(
-            ['--model', SEQ2SEQ_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print'])
+            [
+                "--model",
+                SEQ2SEQ_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+            ]
+        )
         result = os.system(
-            'tfkit-eval --model ' + SEQ2SEQ_MODEL_PATH + ' --valid ' + GEN_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + SEQ2SEQ_MODEL_PATH
+            + " --valid "
+            + GEN_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     def testEvalCLM(self):
         tfkit.eval.main(
-            ['--model', CLM_MODEL_PATH, '--valid', GEN_DATASET, '--metric', 'emf1', '--print'])
+            [
+                "--model",
+                CLM_MODEL_PATH,
+                "--valid",
+                GEN_DATASET,
+                "--metric",
+                "emf1",
+                "--print",
+            ]
+        )
         result = os.system(
-            'tfkit-eval --model ' + CLM_MODEL_PATH + ' --valid ' + GEN_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + CLM_MODEL_PATH
+            + " --valid "
+            + GEN_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     def testEvalAddedTokenModel(self):
         result = os.system(
-            'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ADDTOKFILE_MODEL_PATH
+            + " --valid "
+            + ADDTOK_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ADDTOKFILE_MODEL_PATH
+            + " --valid "
+            + ADDTOK_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ADDTOKFREQ_MODEL_PATH
+            + " --valid "
+            + ADDTOK_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
         result = os.system(
-            'tfkit-eval --model ' + ADDTOKFREQ_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
+            "tfkit-eval --model "
+            + ADDTOKFREQ_MODEL_PATH
+            + " --valid "
+            + ADDTOK_DATASET
+            + " --metric emf1 --print"
+        )
         self.assertTrue(result == 0)
 
     # def testEvalQA(self):

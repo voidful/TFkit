@@ -18,25 +18,27 @@ def get_dataset(file_path, task_class, tokenizer, parameter):
     #         panel.add_element(k=missarg, v=all_arg[missarg], msg=missarg, default=all_arg[missarg])
     #     filled_arg = panel.get_result_dict()
     #     parameter.update(filled_arg)
-    ds = TFKitDataset(fpath=file_path, tokenizer=tokenizer,
-                      preprocessor=task_class.Preprocessor,
-                      preprocessing_arg=parameter)
+    ds = TFKitDataset(
+        fpath=file_path,
+        tokenizer=tokenizer,
+        preprocessor=task_class.Preprocessor,
+        preprocessing_arg=parameter,
+    )
     return ds
 
 
 class TFKitDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, preprocessor, preprocessing_arg={}):
-        cache_path = fpath + "_" + \
-            tokenizer.name_or_path.replace("/", "_") + ".cache"
+        cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
         self.tokenizer = tokenizer
-        if os.path.isfile(cache_path) and preprocessing_arg.get('cache', False):
+        if os.path.isfile(cache_path) and preprocessing_arg.get("cache", False):
             with open(cache_path, "rb") as fo:
                 outdata = joblib.load(fo)
-                sample = outdata['sample']
-                length = outdata['length']
-                self.task_dict = outdata['task']
+                sample = outdata["sample"]
+                length = outdata["length"]
+                self.task_dict = outdata["task"]
         else:
             print(f"Start preprocessing...")
             sample = defaultdict(list)
@@ -44,8 +46,11 @@ class TFKitDataset(data.Dataset):
             get_data_item = self.preprocessor.read_file_to_data(fpath)
             while True:
                 try:
-                    for items in process_map(self.preprocessor.preprocess, next(get_data_item),
-                                             chunksize=1000):
+                    for items in process_map(
+                        self.preprocessor.preprocess,
+                        next(get_data_item),
+                        chunksize=1000,
+                    ):
                         for i in items:
                             length += 1
                             for k, v in i.items():
@@ -56,10 +61,13 @@ class TFKitDataset(data.Dataset):
                     break
             self.task_dict = tasks
             print(f"There are {length} datas after preprocessing.")
-            if preprocessing_arg.get('cache', False):
-                with open(cache_path, 'wb') as fo:
-                    outdata = {'sample': sample,
-                               'task': self.task_dict, 'length': length}
+            if preprocessing_arg.get("cache", False):
+                with open(cache_path, "wb") as fo:
+                    outdata = {
+                        "sample": sample,
+                        "task": self.task_dict,
+                        "length": length,
+                    }
                     joblib.dump(outdata, fo)
         self.length = length
         self.sample = sample
@@ -75,7 +83,10 @@ class TFKitDataset(data.Dataset):
 
     def __getitem__(self, idx):
         return self.preprocessor.postprocess(
-            {**{'task_dict': self.task_dict}, **
-                {key: self.sample[key][idx] for key in self.sample.keys()}},
+            {
+                **{"task_dict": self.task_dict},
+                **{key: self.sample[key][idx] for key in self.sample.keys()},
+            },
             self.tokenizer,
-            maxlen=self.preprocessor.parameters['maxlen'])
+            maxlen=self.preprocessor.parameters["maxlen"],
+        )

@@ -7,28 +7,35 @@ from transformers import BertTokenizer, AutoModel, AutoTokenizer
 
 
 class TestModel(unittest.TestCase):
-
     def testGenerationModel(self):
         input = "See you next time"
         maxlen = 32
-        tokenizer = AutoTokenizer.from_pretrained('sshleifer/bart-tiny-random')
-        pretrained = AutoModel.from_pretrained('sshleifer/bart-tiny-random')
+        tokenizer = AutoTokenizer.from_pretrained("sshleifer/bart-tiny-random")
+        pretrained = AutoModel.from_pretrained("sshleifer/bart-tiny-random")
         # tfkit.task.seq2seq, tfkit.task.once, tfkit.task.oncectc, tfkit.task.clm
-        for gmodel in [tfkit.task.seq2seq, tfkit.task.once, tfkit.task.oncectc, tfkit.task.clm]:
+        for gmodel in [
+            tfkit.task.seq2seq,
+            tfkit.task.once,
+            tfkit.task.oncectc,
+            tfkit.task.clm,
+        ]:
             print(str(gmodel))
             model = gmodel.Model(tokenizer, pretrained, maxlen=maxlen)
             preprocessor = gmodel.Preprocessor(
-                tokenizer, maxlen=maxlen, handle_exceed='start_slice', reserved_len=0)
+                tokenizer, maxlen=maxlen, handle_exceed="start_slice", reserved_len=0
+            )
             for preprocessed_item in preprocessor.preprocess(
-                    {'task': 'taskA', 'input': input}):
+                {"task": "taskA", "input": input}
+            ):
                 print("preprocessed_item", preprocessed_item)
                 feature = preprocessor.postprocess(
-                    preprocessed_item, tokenizer, maxlen=maxlen)
+                    preprocessed_item, tokenizer, maxlen=maxlen
+                )
                 feature = preprocessor.postprocess_batch(feature)
                 print(model(feature, eval=True))
                 self.assertTrue(isinstance(model(feature, eval=True), dict))
                 model_dict = model(feature, eval=True)
-                self.assertTrue('max_item' in model_dict)
+                self.assertTrue("max_item" in model_dict)
 
             # greedy
             print("greedy")
@@ -40,7 +47,8 @@ class TestModel(unittest.TestCase):
 
             # TopK
             result, detail = model.predict(
-                input=input, decodenum=3, mode='topK', topK=3, filtersim=False)
+                input=input, decodenum=3, mode="topK", topK=3, filtersim=False
+            )
             print("topK", result)
             self.assertTrue(len(result) == 3)
             self.assertTrue(isinstance(result, list))
@@ -55,7 +63,8 @@ class TestModel(unittest.TestCase):
 
             # TopP
             result, detail = model.predict(
-                input=input, decodenum=3, mode='topP', topP=0.8)
+                input=input, decodenum=3, mode="topP", topP=0.8
+            )
             print("TopP", len(result), result, model_dict)
             self.assertTrue(len(result) == 3)
             self.assertTrue(isinstance(result, list))
@@ -68,8 +77,7 @@ class TestModel(unittest.TestCase):
             self.assertTrue(isinstance(detail, dict))
             print("exceed max len", result)
 
-            result, model_dict = model.predict(
-                input="T " * 550, reserved_len=10)
+            result, model_dict = model.predict(input="T " * 550, reserved_len=10)
             print(result)
             self.assertTrue(isinstance(result, list))
             self.assertTrue(isinstance(detail, dict))
@@ -179,31 +187,31 @@ class TestModel(unittest.TestCase):
     #         print(result)
     #         self.assertTrue(isinstance(result, list))
 
-        # proc = tfkit.task.tag.Preprocessor(tokenizer, maxlen=512, handle_exceed='start_slice',
-        #                                   reserved_len=0)
-        # for items in proc.prepare_data({"input": input}):
-        #     raw_input = items['raw_input']
-        #     feature = proc.postprocess(items, tokenizer, 512)
-        #     for k, v in feature.items():
-        #         feature[k] = [v]
-        #     self.assertTrue(isinstance(model(feature), Tensor))
-        #     print(model(feature))
-        #     # test eval
-        #     model_dict = model(feature, eval=True)
-        #     self.assertTrue('label_prob_all' in model_dict)
-        #     self.assertTrue('label_map' in model_dict)
-        #     self.assertEqual(len(model_dict['label_map']), len(input.split(" ")))
-        #
-        # # test predict
-        # result, model_dict = model.predict(input=input, start_contain="A", end_contain="A")
-        # self.assertTrue('label_prob_all' in model_dict[0])
-        # self.assertTrue('label_map' in model_dict[0])
-        # print("result", result, len(result))
-        # self.assertTrue(isinstance(result, list))
-        #
-        # # test exceed 512
-        # for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
-        #     result, model_dict = model.predict(input=" ".join([str(i) for i in range(1000)]),
-        #                                        merge_strategy=merge_strategy, start_contain="A", end_contain="A")
-        #     print(result)
-        #     self.assertTrue(isinstance(result, list))
+    # proc = tfkit.task.tag.Preprocessor(tokenizer, maxlen=512, handle_exceed='start_slice',
+    #                                   reserved_len=0)
+    # for items in proc.prepare_data({"input": input}):
+    #     raw_input = items['raw_input']
+    #     feature = proc.postprocess(items, tokenizer, 512)
+    #     for k, v in feature.items():
+    #         feature[k] = [v]
+    #     self.assertTrue(isinstance(model(feature), Tensor))
+    #     print(model(feature))
+    #     # test eval
+    #     model_dict = model(feature, eval=True)
+    #     self.assertTrue('label_prob_all' in model_dict)
+    #     self.assertTrue('label_map' in model_dict)
+    #     self.assertEqual(len(model_dict['label_map']), len(input.split(" ")))
+    #
+    # # test predict
+    # result, model_dict = model.predict(input=input, start_contain="A", end_contain="A")
+    # self.assertTrue('label_prob_all' in model_dict[0])
+    # self.assertTrue('label_map' in model_dict[0])
+    # print("result", result, len(result))
+    # self.assertTrue(isinstance(result, list))
+    #
+    # # test exceed 512
+    # for merge_strategy in ['minentropy', 'maxcount', 'maxprob']:
+    #     result, model_dict = model.predict(input=" ".join([str(i) for i in range(1000)]),
+    #                                        merge_strategy=merge_strategy, start_contain="A", end_contain="A")
+    #     print(result)
+    #     self.assertTrue(isinstance(result, list))
