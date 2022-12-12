@@ -1,8 +1,8 @@
 import copy
-from collections import defaultdict
-import string
 import re
+import string
 from collections import Counter
+from collections import defaultdict
 
 from tfkit.utility import tok
 from tqdm.auto import tqdm
@@ -67,7 +67,7 @@ class EvalMetric:
 
     def add_record(self, ori_input, ori_predicted, ori_target, task='default'):
         input = predicted = target = ""
-        input_list = predicted_list = target_list = []
+        input_list = predicted_list = ori_predicted_list = target_list = []
 
         if isinstance(ori_input, str):
             input = self.tokenize_text(ori_input.strip())
@@ -81,12 +81,18 @@ class EvalMetric:
         if isinstance(ori_predicted, str):
             predicted = self.tokenize_text(ori_predicted)
             predicted_list = [predicted]
+            ori_predicted_list = [ori_predicted]
         if isinstance(ori_predicted, list):
             predicted_list = copy.copy(ori_predicted)
+            ori_predicted_list = copy.copy(ori_predicted)
             for i, t in enumerate(ori_predicted):
-                predicted_list[i] = self.tokenize_text(t.strip())
+                if not isinstance(t, list):
+                    predicted_list[i] = self.tokenize_text(t.strip())
+                    ori_predicted_list[i] = t
+                else:
+                    predicted_list[i] = ''
+                    ori_predicted_list[i] = ''
             predicted = " ".join(predicted_list)
-
         if isinstance(ori_target, str):
             target_list = []
             if tok.UNIVERSAL_SEP in ori_target:
@@ -97,7 +103,9 @@ class EvalMetric:
                 target_list.append(target)
         elif isinstance(ori_target, list):
             for i, t in enumerate(ori_target):
-                ori_target[i] = self.tokenize_text(t.strip())
+                if isinstance(t, list):
+                    ori_target[i] = self.tokenize_text(t.strip())
+
             target_list = ori_target
 
         for t in target_list:
@@ -111,6 +119,7 @@ class EvalMetric:
         self.tasks[task]['target_list'].append(target_list)
         self.tasks[task]['ori_input'].append(ori_input)
         self.tasks[task]['ori_predicted'].append(ori_predicted)
+        self.tasks[task]['ori_predicted_list'].append(ori_predicted_list)
         self.tasks[task]['ori_target'].append(ori_target)
 
     def get_record(self, task='default'):
@@ -158,8 +167,8 @@ class EvalMetric:
                     cer_list = []
                     for target in task['target_list'][pos]:
                         if len(target) > 0 and len(predict) > 0:
-                            wer_list.append(100 * asrp.chunked_wer([target], [predict]))
-                            cer_list.append(100 * asrp.chunked_cer([target], [predict]))
+                            wer_list.append(100 * asrp.wer([target], [predict]))
+                            cer_list.append(100 * asrp.cer([target], [predict]))
                         else:
                             wer_list.append(100)
                             cer_list.append(100)
@@ -170,8 +179,8 @@ class EvalMetric:
                     targets.append(target)
                     data_score.append([predict, target, {'wer': wer, 'cer': cer}])
 
-                wer = 100 * asrp.wer(targets, predicts, chunk_size=100) if len(target) > 0 else 100
-                cer = 100 * asrp.cer(targets, predicts, chunk_size=100) if len(target) > 0 else 100
+                wer = 100 * asrp.wer(targets, predicts) if len(target) > 0 else 100
+                cer = 100 * asrp.cer(targets, predicts) if len(target) > 0 else 100
                 result = {"WER": wer, "CER": cer}
                 data_score = sorted(data_score, key=lambda i: i[2]['wer'], reverse=False)
             if "nlg" in metric:
@@ -204,14 +213,16 @@ class EvalMetric:
                 # remove all blank target
                 task['target_list'] = [[j for j in sub if len(j) > 0] for sub in task['target_list']]
                 # modify for tagging result
-                if isinstance(task['predicted_list'][0][0], list):
-                    task['target_list'] = sum([[[j] for j in sub] for sub in task['target_list']], [])
-                    task['predicted_list'] = sum([[[j] for j in sub] for sub in task['predicted']], [])
-                    if len(task['target_list']) != len(task['predicted_list']):
-                        diff = len(task['target_list']) - len(task['predicted_list'])
-                        task['predicted_list'].extend([['']] * diff)
-                target_list = task['target_list']
-                predicted = task['predicted_list']
+                if isinstance(task['ori_predicted_list'][0][0], list):
+                    target_list = sum([[[j] for j in sub] for sub in task['target_list']], [])
+                    predicted = sum([[[j] for j in sub] for sub in task['ori_predicted_list']], [])
+                    if len(target_list) != len(predicted):
+                        diff = len(task['target_list']) - len(task['ori_predicted_list'])
+                        predicted.extend([['']] * diff)
+                else:
+                    target_list = task['target_list']
+                    predicted = task['ori_predicted_list']
+
                 for p, t in zip(predicted, target_list):
                     score = dict(zip(["precision", "recall", "fbeta_score", "support"],
                                      precision_recall_fscore_support(mlb.transform([t]), mlb.transform([p]),

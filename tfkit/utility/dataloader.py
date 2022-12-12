@@ -1,85 +1,54 @@
-import csv
-from collections import defaultdict
-import nlp2
-from tfkit.utility import tok
+import numpy
+import torch
+from torch import nn
+from torch.utils import data
 
 
-def get_multiclas_data_from_file(fpath, chunksize=10000):
-    tasks = defaultdict(list)
-    with open(fpath, 'r') as infile:
-        reader = csv.DictReader(infile)
-        fieldnames = reader.fieldnames
-        headers = ['input'] + ['target_' + str(i) for i in range(len(fieldnames) - 1)]
+def index_of(in_list, val):
+    """
+    get token index in list, return -1 when it is not in the list 
+    :rtype: int
+    :param in_list: query list
+    :param val: query target
+    :return: position index
+    """
+    try:
+        return in_list.index(val)
+    except ValueError:
+        return -1
 
-        is_multi_label = ""
-        for row in nlp2.read_csv_row(fpath, chunksize):
-            if tok.UNIVERSAL_SEP in row[1]:
-                is_multi_label = "_multi_label"
-                break
 
-        for row in nlp2.read_csv_row(fpath, chunksize):
-            start_pos = 1
-            for pos, item in enumerate(row[start_pos:]):
-                pos += start_pos
-                task = headers[0] + "_" + headers[pos] + is_multi_label
-                item = item.strip()
-                if tok.UNIVERSAL_SEP in item:
-                    for i in item.split(tok.UNIVERSAL_SEP):
-                        tasks[task].append(i) if i not in tasks[task] else tasks[task]
+def pad_batch(batch):
+    """
+    reduce batch data shape by reduce their padding to common max
+    it needs to Handel some exception since some key is no need to be padded
+    :param batch: list of dict, with key input and target as model input and target
+    :return: list of dict
+    """
+    keys = list(batch[0].keys())
+    for k in keys:
+        batch_key_length = [len(i[k]) if not isinstance(i[k], int) else 1 for i in batch]
+        if len(set(batch_key_length)) > 1:  # is all value same? if no, it need to pad with max length
+            pad_length = max(batch_key_length)
+            for idx, _ in enumerate(batch):
+                if f"{k}_pad" in batch[idx]:
+                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), batch[idx][f"{k}_pad"][0])
+
                 else:
-                    tasks[task].append(item) if item not in tasks[task] else tasks[task]
-                tasks[task].sort()
-
-        for row in nlp2.read_csv_row(fpath, chunksize):
-            start_pos = 1
-            for pos, item in enumerate(row[start_pos:]):
-                pos += start_pos
-                task = headers[0] + "_" + headers[pos] + is_multi_label
-                item = item.strip()
-                target = item.split(tok.UNIVERSAL_SEP) if tok.UNIVERSAL_SEP in item else [item]
-                input = row[0]
-                yield tasks, task, input, target
+                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), 0)
+                # batch[idx][k] = torch.unsqueeze(padded(batch[idx][k]), 0)
+                batch[idx][k] = padded(batch[idx][k])
+    for ind, dat in enumerate(batch):
+        for k, v in dat.items():
+            batch[ind][k] = numpy.asarray(batch[ind][k])
+    return batch
 
 
-def get_clas_data_from_file(fpath, chunksize=10000):
-    tasks = defaultdict(list)
-    task = 'default'
-    tasks[task] = []
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        source_text = row[0]
-        target_text = row[1]
-        yield tasks, task, source_text, [target_text]
-
-
-def get_gen_data_from_file(fpath, chunksize=10000):
-    tasks = defaultdict(list)
-    task = 'default'
-    tasks[task] = []
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        source_text = row[0].strip()
-        target_text = row[1].strip()
-        negative_text = row[2].strip() if len(row) > 2 else None
-        yield tasks, task, source_text, [target_text, negative_text]
-
-
-def get_qa_data_from_file(fpath, chunksize=10000):
-    tasks = defaultdict(list)
-    task = 'default'
-    tasks[task] = []
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        context, start, end = row
-        yield tasks, task, context, [start, end]
-
-
-def get_tag_data_from_file(fpath, chunksize=10000, text_index: int = 0, label_index: int = 1, separator=" ", **kwargs):
-    tasks = defaultdict(list)
-    task = 'default'
-    labels = []
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        for i in row[1].split(separator):
-            if i not in labels and len(i.strip()) > 0:
-                labels.append(i)
-                labels.sort()
-    tasks[task] = labels
-    for row in nlp2.read_csv_row(fpath, chunksize):
-        yield tasks, task, row[text_index].strip(), [row[label_index].strip()]
+def dataloader_collate(batch):
+    """
+    dataloader_collate function to apply batch reduce padding
+    :param batch: list of dict
+    :return: batch: list of dict
+    """
+    # batch = copy.deepcopy(batch)
+    return torch.utils.data._utils.collate.default_collate(pad_batch(batch))

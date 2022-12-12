@@ -66,7 +66,7 @@ you can leave the rest to the default config, or use `tfkit-train -h` to more co
 An example about training a sentiment classifier:
 ```bash
 tfkit-train \
---model clas \
+--task clas \
 --config xlm-roberta-base \
 --train training_data.csv \
 --test testing_data.csv \
@@ -98,23 +98,23 @@ After evaluate, It will print evaluate result in your console, and also generate
 #### Use distilbert to train NER Model
 ```bash
 nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
-tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen 512 --model tag --config distilbert-base-multilingual-cased 
-nlp2go --model ./checkpoints/3.pt  --cli     
+tfkit-train --batch 10 --epoch 3 --lr 5e-6 --train ./clner_row/train --test ./clner_row/test --maxlen 512 --task tag --config distilbert-base-multilingual-cased 
+nlp2go --task ./checkpoints/3.pt  --cli     
 ```
 
 #### Use Albert to train DRCD Model Model
 ```bash
 nlprep --dataset qa_zh --outdir ./zhqa/   
-tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --model qa --config voidful/albert_chinese_small  --cache
-nlp2go --model ./drcd_qa_model/3.pt --cli 
+tfkit-train --maxlen 512 --savedir ./drcd_qa_model/ --train ./zhqa/drcd-train --test ./zhqa/drcd-test --task qa --config voidful/albert_chinese_small  --cache
+nlp2go --task ./drcd_qa_model/3.pt --cli 
 ```
 
 #### Use Albert to train both DRCD Model and NER Model
 ```bash
 nlprep --dataset tag_clner  --outdir ./clner_row --util s2t
 nlprep --dataset qa_zh --outdir ./zhqa/ 
-tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --model tag qa --config voidful/albert_chinese_small
-nlp2go --model ./mt-qaner/3.pt --cli 
+tfkit-train --maxlen 300 --savedir ./mt-qaner --train ./clner_row/train ./zhqa/drcd-train --test ./clner_row/test ./zhqa/drcd-test --task tag qa --config voidful/albert_chinese_small
+nlp2go --task ./mt-qaner/3.pt --cli 
 ```
 
 **You can also try tfkit in Google Colab: [![Google Colab](https://colab.research.google.com/assets/colab-badge.svg "tfkit")](https://colab.research.google.com/drive/1hqaTKxd3VtX2XkvjiO0FMtY-rTZX30MJ?usp=sharing)**

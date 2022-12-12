@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import nlp2
 from tqdm import tqdm
+from transformers import AutoTokenizer
 
 UNIVERSAL_SEP = "///"
 
@@ -14,6 +15,9 @@ def tok_begin(tokenizer):
     return 'cls'
 
 
+def tok_begin_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_begin(tokenizer))
+
 
 def tok_sep(tokenizer):
     if tokenizer.special_tokens_map.get('sep_token'):
@@ -23,10 +27,18 @@ def tok_sep(tokenizer):
     return 'sep'
 
 
+def tok_sep_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_sep(tokenizer))
+
+
 def tok_mask(tokenizer):
     if tokenizer.special_tokens_map.get('mask_token'):
         return tokenizer.special_tokens_map.get('mask_token')
     return 'msk'
+
+
+def tok_mask_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_mask(tokenizer))
 
 
 def tok_pad(tokenizer):
@@ -35,13 +47,21 @@ def tok_pad(tokenizer):
     return 'pad'
 
 
+def tok_pad_id(tokenizer):
+    return tokenizer.convert_tokens_to_ids(tok_pad(tokenizer))
+
+
+def get_all_tok_from_config(config):
+    tokenizer = AutoTokenizer.from_pretrained(config)
+    return list(tokenizer.get_vocab().keys())
+
+
 def handle_exceed(tokenizer, seq, maxlen, mode=['noop', 'remove', 'slide', 'start_slice', 'end_slice'],
                   keep_after_sep=True):
+    if isinstance(seq, list):
+        return seq, [[len(seq)]]
     mode = mode[0] if isinstance(mode, list) else mode
-    mask_tok = tok_mask(tokenizer)
     sep_tok = tok_sep(tokenizer)
-    bos_tok = tok_begin(tokenizer)
-    seq = seq.replace("[MASK]", mask_tok).replace("[SEP]", sep_tok).replace("[CLS]", bos_tok)
     sep_split = seq.split(sep_tok)
     ext_seq = [sep_tok] + tokenizer.tokenize(sep_tok.join(sep_split[1:])) \
         if len(sep_split) > 1 and keep_after_sep else []

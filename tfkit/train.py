@@ -12,9 +12,12 @@ from transformers import get_linear_schedule_with_warmup
 import nlp2
 import tfkit
 import tfkit.utility.tok as tok
-from tfkit.utility.dataset import get_dataset, dataloader_collate
+from tfkit.utility.dataloader import dataloader_collate
+from tfkit.utility.dataset import get_dataset
+
 from tfkit.utility.logger import Logger
-from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model
+from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model, \
+    resize_pretrain_tok
 import logging
 from accelerate import Accelerator
 
@@ -31,22 +34,26 @@ def parse_train_args(args):
     parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
     parser.add_argument("--lr", type=float, nargs='+', default=[5e-5], help="learning rate, default 5e-5")
     parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
-    parser.add_argument("--maxlen", type=int, default=0, help="max tokenized sequence length, default model max len")
+    parser.add_argument("--maxlen", type=int, default=0, help="max tokenized sequence length, default task max len")
     parser.add_argument("--handle_exceed", choices=exceed_mode,
                         help='select ways to handle input exceed max length')
-    parser.add_argument("--savedir", type=str, default="checkpoints/", help="model saving dir, default /checkpoints")
+    parser.add_argument("--savedir", type=str, default="checkpoints/", help="task saving dir, default /checkpoints")
     parser.add_argument("--add_tokens_freq", type=int, default=0,
                         help="auto add freq >= x UNK token to word table")
     parser.add_argument("--add_tokens_file", type=str,
                         help="add token from a list file")
+    parser.add_argument("--add_tokens_config", type=str,
+                        help="add token from tokenizer config")
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
     parser.add_argument("--no_eval", action='store_true', help="not running evaluation")
-    parser.add_argument("--model", type=str, required=True, nargs='+',
-                        choices=tfkit.utility.model.list_all_model(), help="model task")
+    parser.add_argument("--task", type=str, required=True, nargs='+',
+                        choices=tfkit.utility.model.list_all_model(), help="task task")
     parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
     parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
                         help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
+    parser.add_argument("--tok_config", type=str,
+                        help='tokenizer config')
     parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
     parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
     parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
@@ -108,10 +115,10 @@ def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, 
                 logger.write_metric("loss/step", loss.mean().detach(), epoch)
                 if total_iter % 100 == 0 and total_iter != 0:  # monitoring
                     logger.write_log(
-                        f"epoch: {epoch}, tag: {mtag}, model: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
-                if total_iter_length * epoch + total_iter % 100000 == 0 and total_iter != 0:  # cache
+                        f"epoch: {epoch}, tag: {mtag}, task: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
+                if total_iter % 50000 == 0 and total_iter != 0:  # cache
                     save_model(models, input_arg, models_tag, epoch,
-                               f"{fname}_iter_{total_iter_length * epoch + total_iter}", logger,
+                               f"{fname}_epoch_{epoch}_iter_{total_iter}", logger,
                                add_tokens=add_tokens,
                                accelerator=accelerator)
             else:
@@ -148,7 +155,7 @@ def model_eval(models, dataloaders, fname, input_arg, epoch, logger, accelerator
         pbar.close()
 
     avg_t_loss = t_loss / t_length if t_length > 0 else 0
-    logger.write_log(f"model: {fname}, Total Loss: {avg_t_loss}")
+    logger.write_log(f"task: {fname}, Total Loss: {avg_t_loss}")
     logger.write_metric("eval_loss/step", avg_t_loss, epoch)
     return avg_t_loss
 
@@ -159,10 +166,10 @@ def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_ar
     test_dataset = []
     train_ds_maxlen = 0
     test_ds_maxlen = 0
-    for model_class_name, train_file, test_file in zip_longest(input_arg.get('model'), input_arg.get('train'),
+    for model_class_name, train_file, test_file in zip_longest(input_arg.get('task'), input_arg.get('train'),
                                                                input_arg.get('test'),
                                                                fillvalue=""):
-        # get model class
+        # get task class
         model_class = load_model_class(model_class_name)
 
         # load dataset
@@ -170,7 +177,7 @@ def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_ar
         train_ds = get_dataset(train_file, model_class, tokenizer, ds_parameter)
         test_ds = get_dataset(test_file, model_class, tokenizer, ds_parameter)
 
-        # load model
+        # load task
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=train_ds.task,
                                   maxlen=input_arg.get('maxlen'), **model_arg)
 
@@ -197,11 +204,14 @@ def main(arg=None):
     logger.write_log("=======================")
     nlp2.set_seed(input_arg.get('seed'))
 
-    tokenizer = load_pretrained_tokenizer(input_arg.get('config'))
-    pretrained = load_pretrained_model(input_arg.get('config'), input_arg.get('model'))
-
+    tokenizer = load_pretrained_tokenizer(input_arg.get('tok_config', input_arg['config']))
+    pretrained = load_pretrained_model(input_arg.get('config'), input_arg.get('task'))
+    pretrained, tokenizer = resize_pretrain_tok(pretrained, tokenizer)
     if input_arg.get('maxlen') == 0:
-        input_arg.update({'maxlen': pretrained.config.max_position_embeddings})
+        if hasattr(pretrained.config, 'max_position_embeddings'):
+            input_arg.update({'maxlen': pretrained.config.max_position_embeddings})
+        else:
+            input_arg.update({'maxlen': 1024})
 
     # handling add tokens
     add_tokens = None
@@ -213,13 +223,18 @@ def main(arg=None):
         logger.write_log("Add token from file")
         add_tokens = nlp2.read_files_into_lines(input_arg.get('add_tokens_file'))
 
-    if add_tokens:
-        pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
+    if input_arg.get('add_tokens_config', None):
+        logger.write_log("Add token from config")
+        add_tokens = tok.get_all_tok_from_config(input_arg.get('add_tokens_config'))
 
-    # load model and data
+    if add_tokens:
+        pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(pretrained, tokenizer, add_tokens,
+                                                                           sample_init=True)
+
+    # load task and data
     models_tag = input_arg.get('tag') if input_arg.get('tag', None) is not None else [m.lower() + "_" + str(ind) for
                                                                                       ind, m in
-                                                                                      enumerate(input_arg.get('model'))]
+                                                                                      enumerate(input_arg.get('task'))]
 
     models, train_dataset, test_dataset, train_ds_maxlen, test_ds_maxlen = load_model_and_datas(tokenizer, pretrained,
                                                                                                 accelerator, model_arg,
@@ -250,7 +265,7 @@ def main(arg=None):
                                         num_workers=input_arg.get('worker')) for ds in
                         test_dataset]
 
-    # loading model back
+    # loading task back
     start_epoch = 1
     if input_arg.get('resume'):
         logger.write_log("Loading back:", input_arg.get('resume'))
@@ -260,7 +275,7 @@ def main(arg=None):
         else:
             if len(models) != len(package['models']) and not input_arg.get('tag'):
                 raise Exception(
-                    f"resuming from multi-task model, you should specific which task to use with --tag, from {package['tags']}")
+                    f"resuming from multi-task task, you should specific which task to use with --tag, from {package['tags']}")
             elif len(models) != len(package['models']):
                 tags = input_arg.get('tag')
             else:
