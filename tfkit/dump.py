@@ -17,37 +17,36 @@ def parse_dump_args(args):
 
 
 def main(arg=None):
-    arg = parse_dump_args(sys.argv[1:]) if arg is None else parse_dump_args(arg)
+    arg = parse_dump_args(
+        sys.argv[1:]) if arg is None else parse_dump_args(arg)
     model, model_type, model_class, model_info, model_preprocessor = load_trained_model(
-        arg.get("model")
-    )
+        arg.get("model"))
     tokenizer = model.tokenizer
     pretrained_config = model_info.get("model_config")
     if model_type == "clm" and "gpt" in pretrained_config:
-        hf_model = AutoModelWithLMHead.from_pretrained(model_info.get("model_config"))
+        hf_model = AutoModelWithLMHead.from_pretrained(
+            model_info.get("model_config"))
         hf_model.eval()
         hf_model.transformer = model.pretrained
         hf_model.lm_head.weight = model.model.weight
         hf_model.config.tie_word_embeddings = False
         hf_model, tokenizer = add_tokens_to_pretrain(
-            hf_model, tokenizer, model_info.get("add_tokens", [])
-        )
+            hf_model, tokenizer, model_info.get("add_tokens", []))
         hf_model.save_pretrained(arg.get("dumpdir"))
     elif model_type == "seq2seq" and "bart" in pretrained_config:
-        hf_model = AutoModelForSeq2SeqLM.from_pretrained(model_info.get("model_config"))
+        hf_model = AutoModelForSeq2SeqLM.from_pretrained(
+            model_info.get("model_config"))
         hf_model.eval()
         hf_model.lm_head = model.model
         hf_model.model = model.pretrained
         hf_model.config.tie_word_embeddings = False
         hf_model.config.tie_encoder_decoder = False
         hf_model, tokenizer = add_tokens_to_pretrain(
-            hf_model, tokenizer, model_info.get("add_tokens", [])
-        )
+            hf_model, tokenizer, model_info.get("add_tokens", []))
         hf_model.save_pretrained(arg.get("dumpdir"))
     elif model_type == "clas":
         hf_model = AutoModelForSequenceClassification.from_pretrained(
-            model_info.get("model_config")
-        )
+            model_info.get("model_config"))
         hf_model.classifier.weight = model.classifier_list[0].weight
         hf_model.save_pretrained(arg.get("dumpdir"))
     else:

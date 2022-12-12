@@ -17,16 +17,13 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class TestDataset(unittest.TestCase):
+
     def check_type_for_dataloader(self, data_item):
-        if (
-            (
-                isinstance(data_item, list)
-                and not isinstance(data_item[-1], str)
-                and self.check_type_for_dataloader(data_item[-1])
-            )
-            or isinstance(data_item, numpy.ndarray)
-            or isinstance(data_item, int)
-        ):
+        if ((isinstance(data_item, list)
+             and not isinstance(data_item[-1], str)
+             and self.check_type_for_dataloader(data_item[-1]))
+                or isinstance(data_item, numpy.ndarray)
+                or isinstance(data_item, int)):
             return True
         else:
             return False

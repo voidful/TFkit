@@ -5,6 +5,7 @@ from tfkit.utility.preprocess import GeneralNLPPreprocessor
 
 
 class Preprocessor(GeneralNLPPreprocessor):
+
     def read_file_to_data(self, path):
         return get_gen_data_from_file(path)
 
@@ -22,7 +23,8 @@ class Preprocessor(GeneralNLPPreprocessor):
             yield {
                 "input": self.tokenizer.convert_tokens_to_ids(tokenized_input),
                 "previous": self.tokenizer.convert_tokens_to_ids(previous),
-                "target": self.tokenizer.convert_tokens_to_ids(tokenized_target),
+                "target":
+                self.tokenizer.convert_tokens_to_ids(tokenized_target),
             }
 
     def postprocess(self, item, tokenizer, maxlen, **kwargs):

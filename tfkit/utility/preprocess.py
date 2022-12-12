@@ -58,24 +58,24 @@ class GeneralNLPPreprocessor:
             t_target_list,
             t_input_index,
             t_target_index,
-        ) = self.preprocess_component_split_into_list(item["input"], item.get("target"))
+        ) = self.preprocess_component_split_into_list(item["input"],
+                                                      item.get("target"))
         for t_input, t_target, t_input_index, t_target_index in zip(
-            t_input_list, t_target_list, t_input_index, t_target_index
-        ):
-            slice_length = (
-                self.parameters["maxlen"] - self.parameters.get("reserved_len") - 3
-            )
-            item["input"] = [tok.tok_begin(self.tokenizer)] + t_input[:slice_length]
+                t_input_list, t_target_list, t_input_index, t_target_index):
+            slice_length = (self.parameters["maxlen"] -
+                            self.parameters.get("reserved_len") - 3)
+            item["input"] = [tok.tok_begin(self.tokenizer)
+                             ] + t_input[:slice_length]
             item["input_index"] = t_input_index
             item["target_index"] = t_target_index
             if len(t_target) > 0:
                 item["target"] = t_target
             for convert_feature_input_dict in self.preprocess_component_convert_to_id(
-                item
-            ):
+                    item):
                 if self.uint16_save:
                     data_item = {
-                        k: np.array(v, dtype=uint16) if isinstance(v, list) else v
+                        k:
+                        np.array(v, dtype=uint16) if isinstance(v, list) else v
                         for k, v in convert_feature_input_dict.items()
                     }
                 else:
@@ -90,7 +90,9 @@ class GeneralNLPPreprocessor:
             item["input"] = "".join(part[:-1])
         return item
 
-    def preprocess_component_split_into_list(self, input_text, target_text=None):
+    def preprocess_component_split_into_list(self,
+                                             input_text,
+                                             target_text=None):
         t_input_list, t_input_index = tok.handle_exceed(
             self.tokenizer,
             input_text,
@@ -105,26 +107,24 @@ class GeneralNLPPreprocessor:
                 mode=self.parameters.get("handle_exceed"),
             )
         elif target_text:
-            t_target_list, t_target_index = [target_text * len(t_input_list)], [
-                [0] * len(t_input_list)
-            ]
+            t_target_list, t_target_index = [target_text * len(t_input_list)
+                                             ], [[0] * len(t_input_list)]
         else:
-            t_target_list, t_target_index = ["" * len(t_input_list)], [
-                [0] * len(t_input_list)
-            ]
+            t_target_list, t_target_index = ["" * len(t_input_list)
+                                             ], [[0] * len(t_input_list)]
         return t_input_list, t_target_list, t_input_index, t_target_index
 
     def preprocess_component_convert_to_id(self, item):
         yield {
-            k: self.tokenizer.convert_tokens_to_ids(v) if isinstance(v, list) else v
+            k: self.tokenizer.convert_tokens_to_ids(v)
+            if isinstance(v, list) else v
             for k, v in item.items()
         }
 
     def postprocess(self, item, tokenizer, maxlen, **kwargs):
         return {
             key: torch.tensor(value).to(self.device)
-            for key, value in item.items()
-            if isinstance(value, list)
+            for key, value in item.items() if isinstance(value, list)
         }
 
     def postprocess_batch(self, feature_dict, **kwargs):
@@ -135,10 +135,16 @@ class GeneralNLPPreprocessor:
 
 
 class GeneralCVPreprocessor:
+
     def __init__(self, feature_extractor, kwargs={}):
         self.feature_extractor = feature_extractor
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.parameters = {**{"feature_extractor": feature_extractor}, **kwargs}
+        self.parameters = {
+            **{
+                "feature_extractor": feature_extractor
+            },
+            **kwargs
+        }
 
     def read_file_to_data(self, filepath):
         assert "plz override this funciton"
@@ -150,14 +156,23 @@ class GeneralCVPreprocessor:
 
     def postprocess(self, item, **kwargs):
         item["input"] = self.feature_extractor(item["input"])
-        return {key: torch.tensor(value).to(self.device) for key, value in item.items()}
+        return {
+            key: torch.tensor(value).to(self.device)
+            for key, value in item.items()
+        }
 
 
 class GeneralSpeechPreprocessor:
+
     def __init__(self, feature_extractor, kwargs={}):
         self.feature_extractor = feature_extractor
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.parameters = {**{"feature_extractor": feature_extractor}, **kwargs}
+        self.parameters = {
+            **{
+                "feature_extractor": feature_extractor
+            },
+            **kwargs
+        }
 
     def read_file_to_data(self, filepath):
         assert "plz override this funciton"
@@ -169,4 +184,7 @@ class GeneralSpeechPreprocessor:
 
     def postprocess(self, item, **kwargs):
         item["input"] = self.feature_extractor(item["input"])
-        return {key: torch.tensor(value).to(self.device) for key, value in item.items()}
+        return {
+            key: torch.tensor(value).to(self.device)
+            for key, value in item.items()
+        }

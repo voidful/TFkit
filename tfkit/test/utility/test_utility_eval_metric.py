@@ -13,9 +13,11 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class TestEval(unittest.TestCase):
+
     @pytest.mark.skip()
     def testER(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "abc", "abb///acc///abc", task="default")
@@ -73,7 +75,8 @@ class TestEval(unittest.TestCase):
             print(s)
 
     def testEMF1(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "abc", "abb///acc///abc", task="default")
@@ -147,14 +150,19 @@ class TestEval(unittest.TestCase):
 
     def test_tokenize_text(self):
         tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
-        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer, normalize_text=False)
-        self.assertEqual(eval.tokenize_text("How's this work"), "How's this work")
-        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer, normalize_text=True)
-        self.assertEqual(eval.tokenize_text("How's this work"), "how ' s this work")
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer,
+                                                    normalize_text=False)
+        self.assertEqual(eval.tokenize_text("How's this work"),
+                         "How's this work")
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer,
+                                                    normalize_text=True)
+        self.assertEqual(eval.tokenize_text("How's this work"),
+                         "how ' s this work")
 
     @pytest.mark.skip()
     def testNLGWithPAD(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "a b", "a b ///a c c", task="default")
@@ -175,7 +183,8 @@ class TestEval(unittest.TestCase):
 
     @pytest.mark.skip()
     def testNLG(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "a b c", "a b c///a c c///", task="default")
@@ -230,7 +239,8 @@ class TestEval(unittest.TestCase):
         self.assertTrue(s1[0] == s3[0] == s6[0])
 
     def testTag(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record(
             "input",
@@ -281,7 +291,8 @@ class TestEval(unittest.TestCase):
             print(s[1])
 
     def testClassify(self):
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
         eval.add_record("input", "abc", "abb///acc///abc", task="default")
         for s in eval.cal_score("classification"):
@@ -302,8 +313,10 @@ class TestEval(unittest.TestCase):
             print(s[1])
 
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
-        eval.add_record("input", ["1", "3", "2"], ["1", "2", "3"], task="default")
-        eval.add_record("input", ["1", "3", "2"], ["1", "3", "3"], task="default")
+        eval.add_record("input", ["1", "3", "2"], ["1", "2", "3"],
+                        task="default")
+        eval.add_record("input", ["1", "3", "2"], ["1", "3", "3"],
+                        task="default")
         for s in eval.cal_score("classification"):
             print(s[0])
             print(s[1])
@@ -409,7 +422,10 @@ class TestEval(unittest.TestCase):
         )
         eval.add_record(
             "input",
-            ["O", "B_Location", "I_Location", "I_Location", "I_Location", "I_Location"],
+            [
+                "O", "B_Location", "I_Location", "I_Location", "I_Location",
+                "I_Location"
+            ],
             [
                 "O",
                 "B_Location",

@@ -29,7 +29,8 @@ class TestModelLoader(unittest.TestCase):
     def test_load_predict_parameter(self):
         model_class = load_model_class("clas")
         # load pre-train task
-        tokenizer = BertTokenizer.from_pretrained("voidful/albert_chinese_tiny")
+        tokenizer = BertTokenizer.from_pretrained(
+            "voidful/albert_chinese_tiny")
         pretrained = AutoModel.from_pretrained("voidful/albert_chinese_tiny")
         model = model_class.Model(
             tokenizer=tokenizer,

@@ -48,6 +48,7 @@ def _f1_score(prediction, ground_truth):
 
 
 class EvalMetric:
+
     def __init__(self, tokenizer, normalize_text=True):
         self.tasks = defaultdict(lambda: defaultdict(list))
         self.tokenizer = tokenizer
@@ -56,16 +57,14 @@ class EvalMetric:
 
     def tokenize_text(self, text):
         text = self.tokenizer.decode(
-            self.tokenizer.encode(text, add_special_tokens=False)
-        )
+            self.tokenizer.encode(text, add_special_tokens=False))
         if self.normalize_text:
             text = text.replace(tok.tok_sep(self.tokenizer), " ")
             # return  _normalize_answer(text, task='others')  # remove punctuation
             # keep punctuation
             text = "".join(
                 (char if char.isalpha() or char == " " else " " + char + " ")
-                for char in text
-            )  # separate punctuation
+                for char in text)  # separate punctuation
             text = " ".join(text.split()).lower().strip()  # remove extra blank
         return text
 
@@ -101,12 +100,10 @@ class EvalMetric:
             target_list = []
             if tok.UNIVERSAL_SEP in ori_target:
                 target = ori_target
-                target_list.extend(
-                    [
-                        self.tokenize_text(st.strip())
-                        for st in ori_target.split(tok.UNIVERSAL_SEP)
-                    ]
-                )
+                target_list.extend([
+                    self.tokenize_text(st.strip())
+                    for st in ori_target.split(tok.UNIVERSAL_SEP)
+                ])
             else:
                 target = self.tokenize_text(ori_target.strip())
                 target_list.append(target)
@@ -146,12 +143,10 @@ class EvalMetric:
                     em_list = []
                     f1_list = []
                     for target in task["target_list"][pos]:
-                        if (
-                            _normalize_answer(str(predict))
-                            == _normalize_answer(str(target))
-                            and len(_normalize_answer(str(predict))) > 0
-                            or len(str(predict)) == len(str(target)) == 0
-                        ):
+                        if (_normalize_answer(
+                                str(predict)) == _normalize_answer(str(target))
+                                and len(_normalize_answer(str(predict))) > 0
+                                or len(str(predict)) == len(str(target)) == 0):
                             em_score = 1
                             f1_score = 1
                         else:
@@ -161,24 +156,29 @@ class EvalMetric:
                         f1_list.append(f1_score)
                     em += max(em_list)
                     f1 += max(f1_list)
-                    data_score.append(
-                        [
-                            predict,
-                            task["target_list"][pos][em_list.index(max(em_list))],
-                            {"em": max(em_list), "f1": max(f1_list)},
-                        ]
-                    )
+                    data_score.append([
+                        predict,
+                        task["target_list"][pos][em_list.index(max(em_list))],
+                        {
+                            "em": max(em_list),
+                            "f1": max(f1_list)
+                        },
+                    ])
                     total += 1
                 result = {
                     "EM": em / (total or not total),
                     "F1": f1 / (total or not total),
                 }
-                data_score = sorted(data_score, key=lambda i: i[2]["em"], reverse=True)
+                data_score = sorted(data_score,
+                                    key=lambda i: i[2]["em"],
+                                    reverse=True)
             if "er" in metric:
                 try:
                     import asrp
                 except ImportError:
-                    print("asrp package not install, plz install it: pip install asrp")
+                    print(
+                        "asrp package not install, plz install it: pip install asrp"
+                    )
                     raise
                 predicts = []
                 targets = []
@@ -187,8 +187,10 @@ class EvalMetric:
                     cer_list = []
                     for target in task["target_list"][pos]:
                         if len(target) > 0 and len(predict) > 0:
-                            wer_list.append(100 * asrp.wer([target], [predict]))
-                            cer_list.append(100 * asrp.cer([target], [predict]))
+                            wer_list.append(100 *
+                                            asrp.wer([target], [predict]))
+                            cer_list.append(100 *
+                                            asrp.cer([target], [predict]))
                         else:
                             wer_list.append(100)
                             cer_list.append(100)
@@ -197,14 +199,20 @@ class EvalMetric:
                     target = task["target_list"][pos][wer_list.index(wer)]
                     predicts.append(predict)
                     targets.append(target)
-                    data_score.append([predict, target, {"wer": wer, "cer": cer}])
+                    data_score.append(
+                        [predict, target, {
+                            "wer": wer,
+                            "cer": cer
+                        }])
 
-                wer = 100 * asrp.wer(targets, predicts) if len(target) > 0 else 100
-                cer = 100 * asrp.cer(targets, predicts) if len(target) > 0 else 100
+                wer = 100 * asrp.wer(targets,
+                                     predicts) if len(target) > 0 else 100
+                cer = 100 * asrp.cer(targets,
+                                     predicts) if len(target) > 0 else 100
                 result = {"WER": wer, "CER": cer}
-                data_score = sorted(
-                    data_score, key=lambda i: i[2]["wer"], reverse=False
-                )
+                data_score = sorted(data_score,
+                                    key=lambda i: i[2]["wer"],
+                                    reverse=False)
             if "nlg" in metric:
                 try:
                     from nlgeval import NLGEval
@@ -213,29 +221,30 @@ class EvalMetric:
                         "nlg-eval package not install, plz install it: pip install git+https://github.com/voidful/nlg-eval.git ; nlg-eval --setup ./nlg-eval-data/"
                     )
                     raise
-                nlgeval = NLGEval(
-                    no_skipthoughts=True, no_glove=True, metrics_to_omit=["METEOR"]
-                )
+                nlgeval = NLGEval(no_skipthoughts=True,
+                                  no_glove=True,
+                                  metrics_to_omit=["METEOR"])
 
                 target_list = task["target_list"]
                 predicted = task["predicted"]
                 for idx, tl in enumerate(target_list):
                     max_candidate = max([len(i) for i in target_list])
                     if max_candidate - len(tl) > 0:
-                        target_list[idx].extend([""] * (max_candidate - len(tl)))
+                        target_list[idx].extend([""] *
+                                                (max_candidate - len(tl)))
 
-                for t, p in tqdm(zip(target_list, predicted), total=len(target_list)):
-                    data_score.append(
-                        [
-                            p,
-                            t,
-                            nlgeval.compute_metrics(
-                                ref_list=list(map(list, zip(t))), hyp_list=[p]
-                            ),
-                        ]
-                    )
+                for t, p in tqdm(zip(target_list, predicted),
+                                 total=len(target_list)):
+                    data_score.append([
+                        p,
+                        t,
+                        nlgeval.compute_metrics(ref_list=list(map(
+                            list, zip(t))),
+                                                hyp_list=[p]),
+                    ])
                 result = nlgeval.compute_metrics(
-                    ref_list=list(map(list, zip(*task["target_list"]))),  # transpose
+                    ref_list=list(map(list,
+                                      zip(*task["target_list"]))),  # transpose
                     hyp_list=predicted,
                 )
                 data_score = sorted(data_score, key=lambda i: i[2]["ROUGE_L"])
@@ -249,21 +258,18 @@ class EvalMetric:
                 ]
                 mlb = MultiLabelBinarizer().fit([target_key])
                 # remove all blank target
-                task["target_list"] = [
-                    [j for j in sub if len(j) > 0] for sub in task["target_list"]
-                ]
+                task["target_list"] = [[j for j in sub if len(j) > 0]
+                                       for sub in task["target_list"]]
                 # modify for tagging result
                 if isinstance(task["ori_predicted_list"][0][0], list):
-                    target_list = sum(
-                        [[[j] for j in sub] for sub in task["target_list"]], []
-                    )
-                    predicted = sum(
-                        [[[j] for j in sub] for sub in task["ori_predicted_list"]], []
-                    )
+                    target_list = sum([[[j] for j in sub]
+                                       for sub in task["target_list"]], [])
+                    predicted = sum([[[j] for j in sub]
+                                     for sub in task["ori_predicted_list"]],
+                                    [])
                     if len(target_list) != len(predicted):
                         diff = len(task["target_list"]) - len(
-                            task["ori_predicted_list"]
-                        )
+                            task["ori_predicted_list"])
                         predicted.extend([[""]] * diff)
                 else:
                     target_list = task["target_list"]
@@ -278,13 +284,13 @@ class EvalMetric:
                                 mlb.transform([p]),
                                 average="weighted",
                             ),
-                        )
-                    )
+                        ))
                     data_score.append([p, t, score])
                 result = classification_report(
                     mlb.transform(target_list),
                     mlb.transform(predicted),
                     target_names=list(mlb.classes_),
                 )
-                data_score = sorted(data_score, key=lambda i: i[2]["fbeta_score"])
+                data_score = sorted(data_score,
+                                    key=lambda i: i[2]["fbeta_score"])
             yield (task_name, result, data_score)

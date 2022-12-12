@@ -16,9 +16,14 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class Model(nn.Module):
-    def __init__(
-        self, tokenizer, pretrained, tasks_detail, maxlen=512, dropout=0.1, **kwargs
-    ):
+
+    def __init__(self,
+                 tokenizer,
+                 pretrained,
+                 tasks_detail,
+                 maxlen=512,
+                 dropout=0.1,
+                 **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
@@ -32,8 +37,7 @@ class Model(nn.Module):
         self.classifier_list = nn.ModuleList()
         for task, labels in tasks_detail.items():
             self.classifier_list.append(
-                nn.Linear(self.pretrained.config.hidden_size, len(labels))
-            )
+                nn.Linear(self.pretrained.config.hidden_size, len(labels)))
             self.tasks[task] = len(self.classifier_list) - 1
         self.maxlen = maxlen
 
@@ -62,9 +66,8 @@ class Model(nn.Module):
         :param attention_mask:
         :return:
         """
-        input_mask_expanded = (
-            attention_mask.unsqueeze(-1).expand(model_output.size()).float()
-        )
+        input_mask_expanded = (attention_mask.unsqueeze(-1).expand(
+            model_output.size()).float())
         input_mask_expanded[input_mask_expanded < 0] = 0
         sum_embeddings = torch.sum(model_output * input_mask_expanded, 1)
         sum_mask = torch.clamp(input_mask_expanded.sum(1), min=1e-9)
@@ -73,7 +76,9 @@ class Model(nn.Module):
     def forward(self, batch_data, eval=False, **kwargs):
         # covert input to correct data type
         tasks = batch_data["task"]
-        tasks = [bytes(t).decode(encoding="utf-8", errors="ignore") for t in tasks]
+        tasks = [
+            bytes(t).decode(encoding="utf-8", errors="ignore") for t in tasks
+        ]
         inputs = torch.as_tensor(batch_data["input"])
         targets = torch.as_tensor(batch_data["target"])
         masks = torch.as_tensor(batch_data["mask"])
@@ -88,7 +93,8 @@ class Model(nn.Module):
             task_labels = self.tasks_detail[task]
 
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
-            pooled_output = self.dropout(self.mean_pooling(output, mask.unsqueeze(0)))
+            pooled_output = self.dropout(
+                self.mean_pooling(output, mask.unsqueeze(0)))
             classifier_output = self.classifier_list[task_id](pooled_output)
             # 0 for cls position
             reshaped_logit = classifier_output.view(-1, len(task_labels))
@@ -106,18 +112,18 @@ class Model(nn.Module):
                 result_dict["label_prob"].append({task: logit_label})
                 if "multi_label" in task:
                     result_dict["max_item"].append(
-                        {task: [k for k, v in logit_label.items() if v > 0.5]}
-                    )
+                        {task: [k for k, v in logit_label.items() if v > 0.5]})
                 else:
-                    result_dict["max_item"].append(
-                        {task: [task_labels[logit_prob.index(max(logit_prob))]]}
-                    )
+                    result_dict["max_item"].append({
+                        task: [task_labels[logit_prob.index(max(logit_prob))]]
+                    })
 
         if eval:
             outputs = result_dict
         else:
             loss = 0
-            for logit, labels, task in zip(result_logits, result_labels, tasks):
+            for logit, labels, task in zip(result_logits, result_labels,
+                                           tasks):
                 if "multi_label" in task:
                     loss += self.loss_fct_mt(logit, labels.type_as(logit))
                 else:

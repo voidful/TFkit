@@ -10,6 +10,7 @@ from tfkit.utility.dataloader import pad_batch
 
 
 class TestModel(unittest.TestCase):
+
     def testGenerationModel(self):
         input = "See you next time"
         maxlen = 32
@@ -17,23 +18,25 @@ class TestModel(unittest.TestCase):
         pretrained = AutoModel.from_pretrained("sshleifer/bart-tiny-random")
         # tfkit.task.seq2seq, tfkit.task.once, tfkit.task.oncectc, tfkit.task.clm
         for gmodel in [
-            tfkit.task.seq2seq,
-            tfkit.task.once,
-            tfkit.task.oncectc,
-            tfkit.task.clm,
+                tfkit.task.seq2seq,
+                tfkit.task.once,
+                tfkit.task.oncectc,
+                tfkit.task.clm,
         ]:
             print(str(gmodel))
             model = gmodel.Model(tokenizer, pretrained, maxlen=maxlen)
-            preprocessor = gmodel.Preprocessor(
-                tokenizer, maxlen=maxlen, handle_exceed="start_slice", reserved_len=0
-            )
-            for preprocessed_item in preprocessor.preprocess(
-                {"task": "taskA", "input": input}
-            ):
+            preprocessor = gmodel.Preprocessor(tokenizer,
+                                               maxlen=maxlen,
+                                               handle_exceed="start_slice",
+                                               reserved_len=0)
+            for preprocessed_item in preprocessor.preprocess({
+                    "task": "taskA",
+                    "input": input
+            }):
                 print("preprocessed_item", preprocessed_item)
-                feature = preprocessor.postprocess(
-                    preprocessed_item, tokenizer, maxlen=maxlen
-                )
+                feature = preprocessor.postprocess(preprocessed_item,
+                                                   tokenizer,
+                                                   maxlen=maxlen)
                 feature = preprocessor.postprocess_batch(feature)
                 print(model(feature, eval=True))
                 self.assertTrue(isinstance(model(feature, eval=True), dict))
@@ -49,9 +52,11 @@ class TestModel(unittest.TestCase):
             self.assertTrue(isinstance(detail, dict))
 
             # TopK
-            result, detail = model.predict(
-                input=input, decodenum=3, mode="topK", topK=3, filtersim=False
-            )
+            result, detail = model.predict(input=input,
+                                           decodenum=3,
+                                           mode="topK",
+                                           topK=3,
+                                           filtersim=False)
             print("topK", result)
             self.assertTrue(len(result) == 3)
             self.assertTrue(isinstance(result, list))
@@ -65,9 +70,10 @@ class TestModel(unittest.TestCase):
             self.assertTrue(isinstance(detail, dict))
 
             # TopP
-            result, detail = model.predict(
-                input=input, decodenum=3, mode="topP", topP=0.8
-            )
+            result, detail = model.predict(input=input,
+                                           decodenum=3,
+                                           mode="topP",
+                                           topP=0.8)
             print("TopP", len(result), result, model_dict)
             self.assertTrue(len(result) == 3)
             self.assertTrue(isinstance(result, list))
@@ -80,7 +86,8 @@ class TestModel(unittest.TestCase):
             self.assertTrue(isinstance(detail, dict))
             print("exceed max len", result)
 
-            result, model_dict = model.predict(input="T " * 550, reserved_len=10)
+            result, model_dict = model.predict(input="T " * 550,
+                                               reserved_len=10)
             print(result)
             self.assertTrue(isinstance(result, list))
             self.assertTrue(isinstance(detail, dict))

@@ -15,12 +15,10 @@ def list_all_model(ignore_list=[]):
     dataset_dir = os.path.abspath(__file__ + "/../../") + "/task"
     return list(
         filter(
-            lambda x: os.path.isdir(os.path.join(dataset_dir, x))
-            and "__pycache__" not in x
-            and x not in ignore_list,
+            lambda x: os.path.isdir(os.path.join(dataset_dir, x)) and
+            "__pycache__" not in x and x not in ignore_list,
             os.listdir(dataset_dir),
-        )
-    )
+        ))
 
 
 def load_predict_parameter(model, model_arg={}, enable_arg_panel=False):
@@ -56,7 +54,10 @@ def resize_pretrain_tok(pretrained, tokenizer):
     return pretrained, tokenizer
 
 
-def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens, sample_init=False):
+def add_tokens_to_pretrain(pretrained,
+                           tokenizer,
+                           add_tokens,
+                           sample_init=False):
     origin_vocab_size = tokenizer.vocab_size
     print("===ADD TOKEN===")
     num_added_toks = tokenizer.add_tokens(add_tokens)
@@ -65,9 +66,8 @@ def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens, sample_init=False)
     if sample_init:
         input_embedding = pretrained.get_input_embeddings()
         state_dict_weight = input_embedding.state_dict()["weight"]
-        state_dict_weight[origin_vocab_size : len(tokenizer)] = copy.copy(
-            state_dict_weight[100 : 100 + num_added_toks]
-        )
+        state_dict_weight[origin_vocab_size:len(tokenizer)] = copy.copy(
+            state_dict_weight[100:100 + num_added_toks])
         pretrained.set_input_embeddings(input_embedding)
     print("===============")
     return pretrained, tokenizer
@@ -86,7 +86,8 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     }
     print("===task info===")
     [
-        print(k, v[:10], "...") if isinstance(v, list) and len(v) > 10 else print(k, v)
+        print(k, v[:10], "...")
+        if isinstance(v, list) and len(v) > 10 else print(k, v)
         for k, v in model_info.items()
     ]
     print("===============")
@@ -94,9 +95,11 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     if "tags" in torchpack and len(torchpack["tags"]) > 1:
         if tag is None:
             print("Pick which models to use in multi-task models")
-            inquirer_res = inquirer.prompt(
-                [inquirer.List("tag", message="Select task", choices=torchpack["tags"])]
-            )
+            inquirer_res = inquirer.prompt([
+                inquirer.List("tag",
+                              message="Select task",
+                              choices=torchpack["tags"])
+            ])
             tag = inquirer_res["tag"]
         type_ind = torchpack["tags"].index(tag)
     else:
@@ -108,28 +111,21 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     if pretrained_config is not None:
         config = pretrained_config
     else:
-        config = (
-            torchpack["model_config"]
-            if "model_config" in torchpack
-            else torchpack["bert"]
-        )
-    model_types = (
-        [torchpack["type"]]
-        if not isinstance(torchpack["type"], list)
-        else torchpack["type"]
-    )
-    models_state = (
-        torchpack["models"]
-        if "models" in torchpack
-        else [torchpack["model_state_dict"]]
-    )
+        config = (torchpack["model_config"]
+                  if "model_config" in torchpack else torchpack["bert"])
+    model_types = ([
+        torchpack["type"]
+    ] if not isinstance(torchpack["type"], list) else torchpack["type"])
+    models_state = (torchpack["models"] if "models" in torchpack else
+                    [torchpack["model_state_dict"]])
     type = model_types[type_ind]
     add_tokens = torchpack["add_tokens"] if "add_tokens" in torchpack else None
     # load task
     tokenizer = AutoTokenizer.from_pretrained(config)
     pretrained = AutoModel.from_pretrained(config)
 
-    pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
+    pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer,
+                                                   add_tokens)
 
     model_class = load_model_class(type)
     task_detail = {}
@@ -153,9 +149,14 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     return model, type, model_class, model_info, preprocessor
 
 
-def save_model(
-    models, input_arg, models_tag, epoch, fname, logger, accelerator, add_tokens=None
-):
+def save_model(models,
+               input_arg,
+               models_tag,
+               epoch,
+               fname,
+               logger,
+               accelerator,
+               add_tokens=None):
     accelerator.wait_for_everyone()
     save_model = {
         "models": [accelerator.get_state_dict(m) for m in models],
@@ -210,17 +211,18 @@ def tie_encoder_decoder_weights(encoder, decoder, base_model_prefix):
                 len(encoder_modules) > 0
             ), f"Encoder module {encoder_pointer} does not match decoder module {decoder_pointer}"
 
-            all_encoder_weights = set(
-                [module_name + "/" + sub_name for sub_name in encoder_modules.keys()]
-            )
+            all_encoder_weights = set([
+                module_name + "/" + sub_name
+                for sub_name in encoder_modules.keys()
+            ])
             encoder_layer_pos = 0
             for name, module in decoder_modules.items():
                 if name.isdigit():
                     encoder_name = str(int(name) + encoder_layer_pos)
                     decoder_name = name
                     if not isinstance(
-                        decoder_modules[decoder_name],
-                        type(encoder_modules[encoder_name]),
+                            decoder_modules[decoder_name],
+                            type(encoder_modules[encoder_name]),
                     ) and len(encoder_modules) != len(decoder_modules):
                         # this can happen if the name corresponds to the position in a list module list of layers
                         # in this case the decoder has added a cross-attention that the encoder does not have
@@ -247,9 +249,8 @@ def tie_encoder_decoder_weights(encoder, decoder, base_model_prefix):
             uninitialized_encoder_weights += list(all_encoder_weights)
 
     # tie weights recursively
-    tie_encoder_to_decoder_recursively(
-        decoder, encoder, base_model_prefix, uninitialized_encoder_weights
-    )
+    tie_encoder_to_decoder_recursively(decoder, encoder, base_model_prefix,
+                                       uninitialized_encoder_weights)
     if len(uninitialized_encoder_weights) > 0:
         print(
             f"The following encoder weights were not tied to the decoder {uninitialized_encoder_weights}"

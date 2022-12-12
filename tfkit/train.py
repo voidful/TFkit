@@ -33,8 +33,12 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 def parse_train_args(args):
     parser = argparse.ArgumentParser()
-    exceed_mode = nlp2.function_get_all_arg_with_value(tok.handle_exceed)["mode"]
-    parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
+    exceed_mode = nlp2.function_get_all_arg_with_value(
+        tok.handle_exceed)["mode"]
+    parser.add_argument("--batch",
+                        type=int,
+                        default=20,
+                        help="batch size, default 20")
     parser.add_argument(
         "--lr",
         type=float,
@@ -42,7 +46,10 @@ def parse_train_args(args):
         default=[5e-5],
         help="learning rate, default 5e-5",
     )
-    parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
+    parser.add_argument("--epoch",
+                        type=int,
+                        default=10,
+                        help="epoch, default 10")
     parser.add_argument(
         "--maxlen",
         type=int,
@@ -66,19 +73,25 @@ def parse_train_args(args):
         default=0,
         help="auto add freq >= x UNK token to word table",
     )
-    parser.add_argument(
-        "--add_tokens_file", type=str, help="add token from a list file"
-    )
-    parser.add_argument(
-        "--add_tokens_config", type=str, help="add token from tokenizer config"
-    )
-    parser.add_argument(
-        "--train", type=str, nargs="+", required=True, help="train dataset path"
-    )
-    parser.add_argument(
-        "--test", type=str, nargs="+", required=True, help="test dataset path"
-    )
-    parser.add_argument("--no_eval", action="store_true", help="not running evaluation")
+    parser.add_argument("--add_tokens_file",
+                        type=str,
+                        help="add token from a list file")
+    parser.add_argument("--add_tokens_config",
+                        type=str,
+                        help="add token from tokenizer config")
+    parser.add_argument("--train",
+                        type=str,
+                        nargs="+",
+                        required=True,
+                        help="train dataset path")
+    parser.add_argument("--test",
+                        type=str,
+                        nargs="+",
+                        required=True,
+                        help="test dataset path")
+    parser.add_argument("--no_eval",
+                        action="store_true",
+                        help="not running evaluation")
     parser.add_argument(
         "--task",
         type=str,
@@ -87,9 +100,10 @@ def parse_train_args(args):
         choices=tfkit.utility.model.list_all_model(),
         help="task task",
     )
-    parser.add_argument(
-        "--tag", type=str, nargs="+", help="tag to identity task in multi-task"
-    )
+    parser.add_argument("--tag",
+                        type=str,
+                        nargs="+",
+                        help="tag to identity task in multi-task")
     parser.add_argument(
         "--config",
         type=str,
@@ -98,34 +112,39 @@ def parse_train_args(args):
         help="distilbert-base-multilingual-cased|voidful/albert_chinese_small",
     )
     parser.add_argument("--tok_config", type=str, help="tokenizer config")
-    parser.add_argument(
-        "--seed", type=int, default=609, help="random seed, default 609"
-    )
+    parser.add_argument("--seed",
+                        type=int,
+                        default=609,
+                        help="random seed, default 609")
     parser.add_argument(
         "--worker",
         type=int,
         default=8,
         help="number of worker on pre-processing, default 8",
     )
-    parser.add_argument(
-        "--grad_accum", type=int, default=1, help="gradient accumulation, default 1"
-    )
-    parser.add_argument(
-        "--tensorboard", action="store_true", help="Turn on tensorboard graphing"
-    )
-    parser.add_argument(
-        "--wandb", action="store_true", help="Turn on wandb with project name"
-    )
+    parser.add_argument("--grad_accum",
+                        type=int,
+                        default=1,
+                        help="gradient accumulation, default 1")
+    parser.add_argument("--tensorboard",
+                        action="store_true",
+                        help="Turn on tensorboard graphing")
+    parser.add_argument("--wandb",
+                        action="store_true",
+                        help="Turn on wandb with project name")
     parser.add_argument("--resume", help="resume training")
-    parser.add_argument("--cache", action="store_true", help="cache training data")
-    parser.add_argument(
-        "--panel", action="store_true", help="enable panel to input argument"
-    )
+    parser.add_argument("--cache",
+                        action="store_true",
+                        help="cache training data")
+    parser.add_argument("--panel",
+                        action="store_true",
+                        help="enable panel to input argument")
 
     input_arg, model_arg = parser.parse_known_args(args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
     model_arg = {
-        k.replace("--", ""): v for k, v in zip(model_arg[:-1:2], model_arg[1::2])
+        k.replace("--", ""): v
+        for k, v in zip(model_arg[:-1:2], model_arg[1::2])
     }
 
     return input_arg, model_arg
@@ -133,9 +152,10 @@ def parse_train_args(args):
 
 def optimizer(model, lr, total_step):
     optim = torch.optim.AdamW(model.parameters(), lr=lr)
-    scheduler = get_linear_schedule_with_warmup(
-        optim, num_warmup_steps=int(total_step * 0.05), num_training_steps=total_step
-    )
+    scheduler = get_linear_schedule_with_warmup(optim,
+                                                num_warmup_steps=int(
+                                                    total_step * 0.05),
+                                                num_training_steps=total_step)
     return [optim, scheduler]
 
 
@@ -166,19 +186,18 @@ def model_train(
         optim = optimizer(
             model,
             input_arg.get("lr")[i]
-            if i < len(input_arg.get("lr"))
-            else input_arg.get("lr")[0],
+            if i < len(input_arg.get("lr")) else input_arg.get("lr")[0],
             total_iter_length,
         )
-        model, optim, dataloader = accelerator.prepare(model, optim, dataloader)
+        model, optim, dataloader = accelerator.prepare(model, optim,
+                                                       dataloader)
         optims_schs.append(optim)
         models.append(model)
         data_iters.append(iter(dataloader))
 
     while not end:
-        for (model, optim_sch, mtag, train_batch) in zip(
-            models, optims_schs, models_tag, data_iters
-        ):
+        for (model, optim_sch, mtag,
+             train_batch) in zip(models, optims_schs, models_tag, data_iters):
             optim = optim_sch[0]
             scheduler = optim_sch[1]
             train_batch = next(train_batch, None)
@@ -218,7 +237,8 @@ def model_train(
     return t_loss / total_iter
 
 
-def model_eval(models, dataloaders, fname, input_arg, epoch, logger, accelerator):
+def model_eval(models, dataloaders, fname, input_arg, epoch, logger,
+               accelerator):
     t_loss = 0
     t_length = 0
     for m in models:
@@ -247,24 +267,26 @@ def model_eval(models, dataloaders, fname, input_arg, epoch, logger, accelerator
     return avg_t_loss
 
 
-def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_arg):
+def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg,
+                         input_arg):
     models = []
     train_dataset = []
     test_dataset = []
     train_ds_maxlen = 0
     test_ds_maxlen = 0
     for model_class_name, train_file, test_file in zip_longest(
-        input_arg.get("task"),
-        input_arg.get("train"),
-        input_arg.get("test"),
-        fillvalue="",
+            input_arg.get("task"),
+            input_arg.get("train"),
+            input_arg.get("test"),
+            fillvalue="",
     ):
         # get task class
         model_class = load_model_class(model_class_name)
 
         # load dataset
         ds_parameter = {**model_arg, **input_arg}
-        train_ds = get_dataset(train_file, model_class, tokenizer, ds_parameter)
+        train_ds = get_dataset(train_file, model_class, tokenizer,
+                               ds_parameter)
         test_ds = get_dataset(test_file, model_class, tokenizer, ds_parameter)
 
         # load task
@@ -277,14 +299,12 @@ def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_ar
         )
 
         # append to max len
-        train_ds_maxlen = (
-            train_ds.__len__()
-            if train_ds.__len__() > train_ds_maxlen
-            else train_ds_maxlen
-        )
-        test_ds_maxlen = (
-            test_ds.__len__() if test_ds.__len__() > test_ds_maxlen else test_ds_maxlen
-        )
+        train_ds_maxlen = (train_ds.__len__()
+                           if train_ds.__len__() > train_ds_maxlen else
+                           train_ds_maxlen)
+        test_ds_maxlen = (test_ds.__len__()
+                          if test_ds.__len__() > test_ds_maxlen else
+                          test_ds_maxlen)
 
         train_dataset.append(train_ds)
         test_dataset.append(test_ds)
@@ -294,9 +314,8 @@ def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_ar
 
 
 def main(arg=None):
-    input_arg, model_arg = (
-        parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
-    )
+    input_arg, model_arg = (parse_train_args(sys.argv[1:])
+                            if arg is None else parse_train_args(arg))
     accelerator = Accelerator()
     nlp2.get_dir_with_notexist_create(input_arg.get("savedir"))
     logger = Logger(
@@ -312,13 +331,14 @@ def main(arg=None):
     nlp2.set_seed(input_arg.get("seed"))
 
     tokenizer = load_pretrained_tokenizer(
-        input_arg.get("tok_config", input_arg["config"])
-    )
-    pretrained = load_pretrained_model(input_arg.get("config"), input_arg.get("task"))
+        input_arg.get("tok_config", input_arg["config"]))
+    pretrained = load_pretrained_model(input_arg.get("config"),
+                                       input_arg.get("task"))
     pretrained, tokenizer = resize_pretrain_tok(pretrained, tokenizer)
     if input_arg.get("maxlen") == 0:
         if hasattr(pretrained.config, "max_position_embeddings"):
-            input_arg.update({"maxlen": pretrained.config.max_position_embeddings})
+            input_arg.update(
+                {"maxlen": pretrained.config.max_position_embeddings})
         else:
             input_arg.update({"maxlen": 1024})
 
@@ -333,23 +353,24 @@ def main(arg=None):
         )
     if input_arg.get("add_tokens_file", None):
         logger.write_log("Add token from file")
-        add_tokens = nlp2.read_files_into_lines(input_arg.get("add_tokens_file"))
+        add_tokens = nlp2.read_files_into_lines(
+            input_arg.get("add_tokens_file"))
 
     if input_arg.get("add_tokens_config", None):
         logger.write_log("Add token from config")
-        add_tokens = tok.get_all_tok_from_config(input_arg.get("add_tokens_config"))
+        add_tokens = tok.get_all_tok_from_config(
+            input_arg.get("add_tokens_config"))
 
     if add_tokens:
         pretrained, tokenizer = tfkit.utility.model.add_tokens_to_pretrain(
-            pretrained, tokenizer, add_tokens, sample_init=True
-        )
+            pretrained, tokenizer, add_tokens, sample_init=True)
 
     # load task and data
-    models_tag = (
-        input_arg.get("tag")
-        if input_arg.get("tag", None) is not None
-        else [m.lower() + "_" + str(ind) for ind, m in enumerate(input_arg.get("task"))]
-    )
+    models_tag = (input_arg.get("tag")
+                  if input_arg.get("tag", None) is not None else [
+                      m.lower() + "_" + str(ind)
+                      for ind, m in enumerate(input_arg.get("task"))
+                  ])
 
     (
         models,
@@ -357,7 +378,8 @@ def main(arg=None):
         test_dataset,
         train_ds_maxlen,
         test_ds_maxlen,
-    ) = load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_arg)
+    ) = load_model_and_datas(tokenizer, pretrained, accelerator, model_arg,
+                             input_arg)
     # balance sample for multi-task
     for ds in train_dataset:
         ds.increase_with_sampling(train_ds_maxlen)
@@ -380,8 +402,7 @@ def main(arg=None):
             pin_memory=False,
             collate_fn=dataloader_collate,
             num_workers=input_arg.get("worker"),
-        )
-        for ds in train_dataset
+        ) for ds in train_dataset
     ]
     test_dataloaders = [
         data.DataLoader(
@@ -391,8 +412,7 @@ def main(arg=None):
             pin_memory=False,
             collate_fn=dataloader_collate,
             num_workers=input_arg.get("worker"),
-        )
-        for ds in test_dataset
+        ) for ds in test_dataset
     ]
 
     # loading task back
@@ -403,7 +423,8 @@ def main(arg=None):
         if "model_state_dict" in package:
             models[0].load_state_dict(package["model_state_dict"])
         else:
-            if len(models) != len(package["models"]) and not input_arg.get("tag"):
+            if len(models) != len(
+                    package["models"]) and not input_arg.get("tag"):
                 raise Exception(
                     f"resuming from multi-task task, you should specific which task to use with --tag, from {package['tags']}"
                 )
@@ -417,9 +438,8 @@ def main(arg=None):
         start_epoch = int(package.get("epoch", 1)) + 1
 
     # train/eval loop
-    logger.write_log(
-        "training batch : " + str(input_arg.get("batch") * input_arg.get("grad_accum"))
-    )
+    logger.write_log("training batch : " +
+                     str(input_arg.get("batch") * input_arg.get("grad_accum")))
     for epoch in range(start_epoch, start_epoch + input_arg.get("epoch")):
         start_time = time.time()
         fname = os.path.join(input_arg.get("savedir"), str(epoch))
@@ -465,9 +485,8 @@ def main(arg=None):
 
         if input_arg.get("no_eval") is False:
             logger.write_log(f"=========eval at epoch={epoch}=========")
-            eval_avg_loss = model_eval(
-                models, test_dataloaders, fname, input_arg, epoch, logger, accelerator
-            )
+            eval_avg_loss = model_eval(models, test_dataloaders, fname,
+                                       input_arg, epoch, logger, accelerator)
             logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
         logger.write_log(
             f"=== Epoch execution time: {timedelta(seconds=(time.time() - start_time))} ==="

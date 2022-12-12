@@ -68,11 +68,8 @@ def handle_exceed(
     mode = mode[0] if isinstance(mode, list) else mode
     sep_tok = tok_sep(tokenizer)
     sep_split = seq.split(sep_tok)
-    ext_seq = (
-        [sep_tok] + tokenizer.tokenize(sep_tok.join(sep_split[1:]))
-        if len(sep_split) > 1 and keep_after_sep
-        else []
-    )
+    ext_seq = ([sep_tok] + tokenizer.tokenize(sep_tok.join(sep_split[1:]))
+               if len(sep_split) > 1 and keep_after_sep else [])
     t_seq = tokenizer.tokenize(sep_split[0])
     if mode == "noop":
         return [t_seq + ext_seq], [[0, len(t_seq + ext_seq)]]
@@ -82,9 +79,11 @@ def handle_exceed(
         else:
             return [], [[0, 0]]
     if mode == "slide":
-        return nlp2.sliding_windows(t_seq, maxlen - len(ext_seq), append_seq=ext_seq)
+        return nlp2.sliding_windows(t_seq,
+                                    maxlen - len(ext_seq),
+                                    append_seq=ext_seq)
     if mode == "start_slice":
-        slices = t_seq[: maxlen - len(ext_seq)]
+        slices = t_seq[:maxlen - len(ext_seq)]
         slices.extend(ext_seq)
         return [slices], [[0, maxlen - len(ext_seq)]]
     if mode == "end_slice":

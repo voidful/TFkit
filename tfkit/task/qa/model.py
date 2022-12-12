@@ -13,7 +13,13 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=128, dropout=0.1, **kwargs):
+
+    def __init__(self,
+                 tokenizer,
+                 pretrained,
+                 maxlen=128,
+                 dropout=0.1,
+                 **kwargs):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
@@ -53,18 +59,18 @@ class Model(nn.Module):
             reshaped_end_logits = softmax(end_logits, dim=1)
             start_prob = reshaped_start_logits.data.tolist()[0]
             end_prob = reshaped_end_logits.data.tolist()[0]
-            result_dict["label_prob_all"].append(
-                {
-                    "start": dict(zip(range(len(start_prob)), start_prob)),
-                    "end": dict(zip(range(len(end_prob)), end_prob)),
-                }
-            )
-            result_dict["label_map"].append(
-                {
-                    "start": start_prob.index(max(start_prob)),
-                    "end": end_prob.index(max(end_prob)),
-                }
-            )
+            result_dict["label_prob_all"].append({
+                "start":
+                dict(zip(range(len(start_prob)), start_prob)),
+                "end":
+                dict(zip(range(len(end_prob)), end_prob)),
+            })
+            result_dict["label_map"].append({
+                "start":
+                start_prob.index(max(start_prob)),
+                "end":
+                end_prob.index(max(end_prob)),
+            })
             outputs = result_dict
         else:
             start_loss = self.loss_fct(start_logits, start_positions)

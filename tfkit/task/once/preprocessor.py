@@ -4,16 +4,21 @@ from tfkit.utility.preprocess import GeneralNLPPreprocessor
 
 
 class Preprocessor(GeneralNLPPreprocessor):
+
     def read_file_to_data(self, path):
         return get_gen_data_from_file(path)
 
     def set_global_parameters(self):
         self.tokenize_target = True
 
-    def preprocess_component_convert_to_id(
-        self, item, likelihood=["none", "pos", "neg", "both"], **param_dict
-    ):
-        likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
+    def preprocess_component_convert_to_id(self,
+                                           item,
+                                           likelihood=[
+                                               "none", "pos", "neg", "both"
+                                           ],
+                                           **param_dict):
+        likelihood = likelihood[0] if isinstance(likelihood,
+                                                 list) else likelihood
         tokenized_input, tokenized_target, n_target = (
             item["input"],
             item.get("target", None),
@@ -27,8 +32,8 @@ class Preprocessor(GeneralNLPPreprocessor):
             # formatting neg data in csv
             if n_target is None:
                 ntext_arr = [
-                    tok.tok_sep(self.tokenizer)
-                    + self.tokenizer.convert_tokens_to_string(tokenized_target)
+                    tok.tok_sep(self.tokenizer) +
+                    self.tokenizer.convert_tokens_to_string(tokenized_target)
                 ]
             elif tok.tok_sep(self.tokenizer) in n_target:
                 ntext_arr = [
@@ -39,9 +44,12 @@ class Preprocessor(GeneralNLPPreprocessor):
                 ntext_arr = [n_target.strip()]
             for neg_text in ntext_arr:
                 yield {
-                    "input": self.tokenizer.convert_tokens_to_ids(tokenized_input),
-                    "target": self.tokenizer.convert_tokens_to_ids(tokenized_target),
-                    "ntarget": self.tokenizer.convert_tokens_to_ids(neg_text),
+                    "input":
+                    self.tokenizer.convert_tokens_to_ids(tokenized_input),
+                    "target":
+                    self.tokenizer.convert_tokens_to_ids(tokenized_target),
+                    "ntarget":
+                    self.tokenizer.convert_tokens_to_ids(neg_text),
                 }
 
     def postprocess(self, item, tokenizer, maxlen, **kwargs):
@@ -65,7 +73,8 @@ class Preprocessor(GeneralNLPPreprocessor):
             row_dict["ntarget"] = [-1] * maxlen
             if "ntarget" in item and len(item["ntarget"].strip()) > 0:
                 tokenized_ntarget_id = item["ntarget"]
-                tokenized_ntarget_id.extend([-1] * (maxlen - len(tokenized_ntarget_id)))
+                tokenized_ntarget_id.extend(
+                    [-1] * (maxlen - len(tokenized_ntarget_id)))
                 if len(tokenized_ntarget_id) <= maxlen:
                     row_dict["ntarget"] = tokenized_ntarget_id
 

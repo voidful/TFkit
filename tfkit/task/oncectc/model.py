@@ -15,6 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
 
 class Model(nn.Module):
+
     def __init__(self, tokenizer, pretrained, maxlen=512, tasks_detail=None):
         super().__init__()
         self.tokenizer = tokenizer
@@ -23,12 +24,13 @@ class Model(nn.Module):
         self.blank_token = "<BLANK>"
         self.tokenizer.add_tokens(self.blank_token)
         self.pretrained.resize_token_embeddings(len(tokenizer))
-        self.blank_index = self.tokenizer.convert_tokens_to_ids([self.blank_token])[0]
+        self.blank_index = self.tokenizer.convert_tokens_to_ids(
+            [self.blank_token])[0]
         self.loss = SeqCTCLoss(blank_index=self.blank_index)
-        self.vocab_size = max(
-            self.pretrained.config.vocab_size, self.tokenizer.__len__()
-        )
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
+        self.vocab_size = max(self.pretrained.config.vocab_size,
+                              self.tokenizer.__len__())
+        self.model = nn.Linear(self.pretrained.config.hidden_size,
+                               self.vocab_size)
         predictor = NonAutoRegressivePredictor(self, Preprocessor)
         self.predictor = predictor
         self.predict = predictor.predict
@@ -49,7 +51,8 @@ class Model(nn.Module):
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
         batch_size = list(tokens_tensor.shape)[0]
-        prediction_scores = prediction_scores.view(batch_size, -1, self.vocab_size)
+        prediction_scores = prediction_scores.view(batch_size, -1,
+                                                   self.vocab_size)
 
         if eval:
             result_dict = {
@@ -63,11 +66,11 @@ class Model(nn.Module):
 
             pscore = prediction_scores.detach().cpu()
             predicted_indexs = pscore.argmax(2).tolist()[0]
-            predicted_tokens = self.tokenizer.convert_ids_to_tokens(predicted_indexs)
+            predicted_tokens = self.tokenizer.convert_ids_to_tokens(
+                predicted_indexs)
             output = []
             for pos, (predicted_index, predicted_token) in enumerate(
-                zip(predicted_indexs, predicted_tokens)
-            ):
+                    zip(predicted_indexs, predicted_tokens)):
                 if len(output) > 0 and predicted_index == output[-1]:
                     continue
                 if predicted_token == self.blank_token:
@@ -83,8 +86,8 @@ class Model(nn.Module):
                 if max_return > 1:
                     topK = torch.topk(softmax_score, max_return)
                     for k, (prob, tid) in enumerate(
-                        zip(topK.values.data.tolist(), topK.indices.data.tolist())
-                    ):
+                            zip(topK.values.data.tolist(),
+                                topK.indices.data.tolist())):
                         topK_ids[k].append(tid)
                         topK_probs[k] *= prob
                 else:
@@ -93,10 +96,9 @@ class Model(nn.Module):
                 start += 1
 
             result_dict["prob_list"] = topK_probs
-            result_dict["label_prob"] = [
-                [self.tokenizer.decode(ids), prob]
-                for ids, prob in zip(topK_ids, topK_probs)
-            ]
+            result_dict["label_prob"] = [[
+                self.tokenizer.decode(ids), prob
+            ] for ids, prob in zip(topK_ids, topK_probs)]
             result_dict["max_item"] = [i[0] for i in result_dict["label_prob"]]
             outputs = result_dict
         else:
@@ -118,10 +120,11 @@ class Model(nn.Module):
                 target_length_tensors,
             )
 
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            loss_fct = nn.CrossEntropyLoss(
+                ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(
-                prediction_scores.view(-1, self.vocab_size), loss_tensors.view(-1)
-            )
+                prediction_scores.view(-1, self.vocab_size),
+                loss_tensors.view(-1))
             if not torch.all(negativeloss_tensors.eq(-1)).item():
                 negative_loss_fct = NegativeCElLoss()
                 negative_loss = negative_loss_fct(
