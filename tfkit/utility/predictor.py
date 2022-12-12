@@ -87,8 +87,10 @@ class ClassificationPredictor(BasePredictor):
                     [i[input_args['task']] for i in predictions['max_item'] if input_args['task'] in i][0])
                 ret_detail.append(predictions)
             else:
-                task_map = [i[input_args['task']] for i in predictions['label_prob'] if input_args['task'] in i][0]
-                ret_result.append(sorted(task_map, key=task_map.get, reverse=True)[:input_args['topK']])
+                task_map = [i[input_args['task']]
+                            for i in predictions['label_prob'] if input_args['task'] in i][0]
+                ret_result.append(sorted(task_map, key=task_map.get, reverse=True)[
+                                  :input_args['topK']])
                 ret_detail.append(predictions)
 
         # apply different strategy to merge result after sliding windows
@@ -100,7 +102,8 @@ class ClassificationPredictor(BasePredictor):
             for detail in ret_detail:
                 prob_map = detail['label_prob'][0][input_args['task']]
                 result_value = [v for _, v in prob_map.items()]
-                results_entropy.append(Categorical(probs=torch.tensor(result_value)).entropy().data.tolist())
+                results_entropy.append(Categorical(
+                    probs=torch.tensor(result_value)).entropy().data.tolist())
                 results_prob.append(max(result_value))
             min_entropy_index = results_entropy.index(min(results_entropy))
             max_prob_index = results_prob.index(max(results_prob))
@@ -135,22 +138,28 @@ class QuestionAnsweringPredictor(BasePredictor):
 
             for items in proc.preprocess({"task": input_args['task'], "input": input_args['input']}):
                 raw_input = items['raw_input']
-                feature = proc.postprocess(items, self.model.tokenizer, self.model.maxlen)
+                feature = proc.postprocess(
+                    items, self.model.tokenizer, self.model.maxlen)
             for k, v in feature.items():
                 feature[k] = [v]
 
             result = self.model.forward(feature, eval=True)
-            start_dict = [i['start'] for i in result['label_prob_all'] if 'start' in i][0]
-            end_dict = [i['end'] for i in result['label_prob_all'] if 'end' in i][0]
+            start_dict = [i['start']
+                          for i in result['label_prob_all'] if 'start' in i][0]
+            end_dict = [i['end']
+                        for i in result['label_prob_all'] if 'end' in i][0]
 
             answers = []
-            sorted_start = sorted(start_dict.items(), key=lambda item: item[1], reverse=True)[:50]
-            sorted_end = sorted(end_dict.items(), key=lambda item: item[1], reverse=True)[:50]
+            sorted_start = sorted(start_dict.items(),
+                                  key=lambda item: item[1], reverse=True)[:50]
+            sorted_end = sorted(
+                end_dict.items(), key=lambda item: item[1], reverse=True)[:50]
             for start_index, start_prob in sorted_start:
                 for end_index, end_prob in sorted_end:
                     if start_index > end_index:
                         continue
-                    answers.append((start_index, end_index, start_prob + end_prob))
+                    answers.append(
+                        (start_index, end_index, start_prob + end_prob))
             answer_results = sorted(answers, key=lambda answers: answers[2],
                                     reverse=True)[:input_args['topK']]
             ret_result.append(
@@ -169,11 +178,14 @@ class QuestionAnsweringPredictor(BasePredictor):
             results_prob = []
             results_entropy = []
             for detail in non_empty_detail:
-                prob_start = detail['label_prob_all'][0]['start'][int(detail['label_map'][0]['start'])]
-                prob_end = detail['label_prob_all'][0]['end'][int(detail['label_map'][0]['end'])]
+                prob_start = detail['label_prob_all'][0]['start'][int(
+                    detail['label_map'][0]['start'])]
+                prob_end = detail['label_prob_all'][0]['end'][int(
+                    detail['label_map'][0]['end'])]
                 prob_sum = [sum(x) for x in zip(list(detail['label_prob_all'][0]['start'].values()),
                                                 list(detail['label_prob_all'][0]['end'].values()))]
-                results_entropy.append(Categorical(probs=torch.tensor(prob_sum)).entropy().data.tolist())
+                results_entropy.append(Categorical(
+                    probs=torch.tensor(prob_sum)).entropy().data.tolist())
                 results_prob.append(-np.log(prob_start) + -np.log(prob_end))
         return non_empty_result, non_empty_detail
 
@@ -219,11 +231,16 @@ class TaggingPredictor(BasePredictor):
                     token_prob = list(token_pred.values())[0]
                     max_label = max(token_prob, key=token_prob.get)
                     max_prob = token_prob[max_label]
-                    max_entropy = Categorical(probs=torch.tensor(list(token_prob.values()))).entropy().data.tolist()
-                    predicted_pos_prob[token_map['pos']]['char'] = token_map['word']
-                    predicted_pos_prob[token_map['pos']]['labels'].append(max_label)
-                    predicted_pos_prob[token_map['pos']]['prob'].append(max_prob)
-                predicted_pos_prob[token_map['pos']]['entropy'].append(max_entropy)
+                    max_entropy = Categorical(probs=torch.tensor(
+                        list(token_prob.values()))).entropy().data.tolist()
+                    predicted_pos_prob[token_map['pos']
+                                       ]['char'] = token_map['word']
+                    predicted_pos_prob[token_map['pos']
+                                       ]['labels'].append(max_label)
+                    predicted_pos_prob[token_map['pos']
+                                       ]['prob'].append(max_prob)
+                predicted_pos_prob[token_map['pos']
+                                   ]['entropy'].append(max_entropy)
 
             ret_detail.append(result)
 
@@ -232,7 +249,8 @@ class TaggingPredictor(BasePredictor):
                 if input_args['merge_strategy'] == 'count':
                     label = max(value['labels'], key=value['labels'].count)
                 if input_args['merge_strategy'] == 'entropy':
-                    min_entropy_index = value['entropy'].index(min(value['entropy']))
+                    min_entropy_index = value['entropy'].index(
+                        min(value['entropy']))
                     label = value['labels'][min_entropy_index]
                 if input_args['merge_strategy'] == 'prob':
                     max_prob_index = value['prob'].index(max(value['prob']))
@@ -273,7 +291,8 @@ class NonAutoRegressivePredictor(BaseTextGeneratePredictor):
                                      handle_exceed=input_args['handle_exceed'],
                                      reserved_len=input_args['reserved_len'])
             for items in proc.preprocess({"task": input_args['task'], "input": input_args['input']}):
-                feature = proc.postprocess(items, self.model.tokenizer, self.model.maxlen)
+                feature = proc.postprocess(
+                    items, self.model.tokenizer, self.model.maxlen)
             for k, v in feature.items():
                 feature[k] = [v]
             predictions = self.model.forward(feature, eval=True, beamsearch=input_args['decodenum'] > 1,
@@ -286,7 +305,8 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
     def processing(self, input_args):
         previous = []
         if tok.UNIVERSAL_SEP in input_args['input']:
-            previous = self.model.tokenizer.tokenize(input_args['input'].split(tok.UNIVERSAL_SEP)[-1])
+            previous = self.model.tokenizer.tokenize(
+                input_args['input'].split(tok.UNIVERSAL_SEP)[-1])
             input_args['eos_num'] += 1
         sep_tok = tok.tok_sep(self.model.tokenizer)
         sequences = [[[], 1.0]]
@@ -327,21 +347,27 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                             prob_list = predictions['prob_list']
                             if 'topk' in input_args['mode']:
                                 sample_list = prob_list[:input_args['topK']]
-                                decode_range = max(input_args['decodenum'], input_args['topK'])
-                                prob_norm = [float(i) / sum(sample_list) for i in sample_list]
+                                decode_range = max(
+                                    input_args['decodenum'], input_args['topK'])
+                                prob_norm = [float(i) / sum(sample_list)
+                                             for i in sample_list]
                                 choice_list = np.random.choice(sample_list, p=prob_norm,
                                                                size=decode_range,
                                                                replace=False)
                             else:
                                 topP_list = np.cumsum(prob_list)
-                                index_overP = [i for i, x in enumerate(topP_list) if x > input_args['topP']]
-                                index_overP = 0 if len(index_overP) < 1 else index_overP[0]
+                                index_overP = [i for i, x in enumerate(
+                                    topP_list) if x > input_args['topP']]
+                                index_overP = 0 if len(
+                                    index_overP) < 1 else index_overP[0]
                                 sample_list = prob_list[:index_overP + 1]
-                                prob_norm = [float(i) / sum(sample_list) for i in sample_list]
+                                prob_norm = [float(i) / sum(sample_list)
+                                             for i in sample_list]
                                 choice_list = np.random.choice(sample_list, p=prob_norm,
                                                                size=input_args['decodenum'])
                             for idx in range(input_args['decodenum']):
-                                sampling_index = prob_list.index(choice_list[idx])
+                                sampling_index = prob_list.index(
+                                    choice_list[idx])
                                 k, v = label_prob[sampling_index]
                                 candidate = [tokens + [k], score + -log(v)]
                                 all_candidates.append(candidate)
@@ -351,14 +377,17 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                             for k, v in label_prob[:50]:
                                 if (input_args['no_repeat'] and len(tokens) > 0 and tokens[-1] == k) or len(k) < 1:
                                     continue
-                                candidate = [tokens + [k], score + -log(v) if v > 0 else 0]
+                                candidate = [tokens + [k],
+                                             score + -log(v) if v > 0 else 0]
                                 all_candidates.append(candidate)
                     else:
                         all_candidates.append(seq)
 
                 ordered = sorted(all_candidates, key=lambda tup: tup[1])
-                if input_args['filtersim']:  # default disable, it will took a lots of time on long sequence generation
-                    nlp2.filter_jaccard_similar_text_from_list(ordered, input_args['decodenum'])
+                # default disable, it will took a lots of time on long sequence generation
+                if input_args['filtersim']:
+                    nlp2.filter_jaccard_similar_text_from_list(
+                        ordered, input_args['decodenum'])
                 sequences = ordered[:input_args['decodenum']]
                 stop = 0
                 for i in sequences:

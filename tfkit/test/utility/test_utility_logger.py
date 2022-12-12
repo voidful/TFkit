@@ -1,3 +1,5 @@
+import tfkit
+import unittest
 import csv
 import sys
 import os
@@ -6,9 +8,6 @@ from tfkit.utility.logger import Logger
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import unittest
-import tfkit
 
 
 class TestLogger(unittest.TestCase):

@@ -1,3 +1,5 @@
+from transformers import BertTokenizer, AutoModel
+import unittest
 import os
 import sys
 
@@ -5,9 +7,6 @@ from tfkit.utility.model import list_all_model, load_model_class, load_predict_p
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import unittest
-from transformers import BertTokenizer, AutoModel
 
 
 class TestModelLoader(unittest.TestCase):
@@ -25,7 +24,8 @@ class TestModelLoader(unittest.TestCase):
     def test_load_predict_parameter(self):
         model_class = load_model_class('clas')
         # load pre-train task
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained(
+            'voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail={"taskA": ["a", "b"]},
                                   maxlen=128)

@@ -31,7 +31,8 @@ class TestTrain(unittest.TestCase):
 
     def test_optimizer(self):
         model_class = load_model_class('clas')
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained(
+            'voidful/albert_chinese_tiny')
         pretrained = AutoModel.from_pretrained('voidful/albert_chinese_tiny')
         model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail={"taskA": ["a", "b"]},
                                   maxlen=128)
@@ -124,7 +125,8 @@ class TestTrain(unittest.TestCase):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--task', 'clm', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50', '--resume', os.path.join(MTTASK_MODEL_DIR, "1.pt"),
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--resume', os.path.join(
+                 MTTASK_MODEL_DIR, "1.pt"),
              '--tag', 'clm'])
 
     @pytest.mark.skip()

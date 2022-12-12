@@ -21,12 +21,15 @@ class Preprocessor(GeneralNLPPreprocessor):
             tokenize_word = self.tokenizer.tokenize(word)
             for _ in range(len(tokenize_word)):
                 if _ < 1:  # only record first token (one word one record)
-                    word_token_mapping.append({'char': word, 'pos': pos, 'len': len(tokenize_word)})
-                token_word_mapping.append({'tok': tokenize_word[_], 'word': word, 'pos': len(word_token_mapping) - 1})
+                    word_token_mapping.append(
+                        {'char': word, 'pos': pos, 'len': len(tokenize_word)})
+                token_word_mapping.append(
+                    {'tok': tokenize_word[_], 'word': word, 'pos': len(word_token_mapping) - 1})
                 pos += 1
 
         t_input_list, t_pos_list = tok.handle_exceed(self.tokenizer, input_text, self.parameters['maxlen'] - 2,
-                                                     mode=self.parameters.get('handle_exceed'),
+                                                     mode=self.parameters.get(
+                                                         'handle_exceed'),
                                                      keep_after_sep=False)
         preprocessed_data = []
         for t_input, t_pos in zip(t_input_list, t_pos_list):  # -1 for cls
@@ -49,7 +52,8 @@ class Preprocessor(GeneralNLPPreprocessor):
                     print(self.tokenizer.decode(input_id))
                     print(input_id)
                     print(target_id)
-                    print("input target len not equal ", len(input_id), len(target_id))
+                    print("input target len not equal ",
+                          len(input_id), len(target_id))
                     continue
                 row_dict['target'] = target_id
 
@@ -63,10 +67,11 @@ class Preprocessor(GeneralNLPPreprocessor):
 
     def postprocess(self, item, tokenizer, maxlen, **kwargs):
         labels = item['task_dict']
-        print("item['input']",len(item['input']))
+        print("item['input']", len(item['input']))
         mask_id = [1] * len(item['input'])
         mask_id.extend([0] * (maxlen - len(mask_id)))
-        item['input'].extend([0] * (self.parameters['maxlen'] - len(item['input'])))
+        item['input'].extend(
+            [0] * (self.parameters['maxlen'] - len(item['input'])))
         row_dict = {
             'input': item['input'],
             'mask': mask_id,
@@ -80,7 +85,8 @@ class Preprocessor(GeneralNLPPreprocessor):
                 target_id = [labels['tag'].index("O")] + target_id
             else:
                 target_id = [target_id[0]] + target_id
-            target_id.extend([0] * (self.parameters['maxlen'] - len(target_id)))
+            target_id.extend(
+                [0] * (self.parameters['maxlen'] - len(target_id)))
             row_dict['target'] = target_id
 
         return row_dict

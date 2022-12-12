@@ -26,7 +26,8 @@ def get_dataset(file_path, task_class, tokenizer, parameter):
 
 class TFKitDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, preprocessor, preprocessing_arg={}):
-        cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
+        cache_path = fpath + "_" + \
+            tokenizer.name_or_path.replace("/", "_") + ".cache"
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
         self.tokenizer = tokenizer
@@ -57,7 +58,8 @@ class TFKitDataset(data.Dataset):
             print(f"There are {length} datas after preprocessing.")
             if preprocessing_arg.get('cache', False):
                 with open(cache_path, 'wb') as fo:
-                    outdata = {'sample': sample, 'task': self.task_dict, 'length': length}
+                    outdata = {'sample': sample,
+                               'task': self.task_dict, 'length': length}
                     joblib.dump(outdata, fo)
         self.length = length
         self.sample = sample
@@ -73,6 +75,7 @@ class TFKitDataset(data.Dataset):
 
     def __getitem__(self, idx):
         return self.preprocessor.postprocess(
-            {**{'task_dict': self.task_dict}, **{key: self.sample[key][idx] for key in self.sample.keys()}},
+            {**{'task_dict': self.task_dict}, **
+                {key: self.sample[key][idx] for key in self.sample.keys()}},
             self.tokenizer,
             maxlen=self.preprocessor.parameters['maxlen'])

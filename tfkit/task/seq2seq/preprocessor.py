@@ -13,11 +13,12 @@ class Preprocessor(GeneralNLPPreprocessor):
         self.tokenize_target = True
 
     def preprocess_component_convert_to_id(self, item, likelihood=['none', 'pos', 'neg', 'both'], **param_dict):
-        likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
+        likelihood = likelihood[0] if isinstance(
+            likelihood, list) else likelihood
         tokenized_input, tokenized_target, n_target, b_target = item['input'], \
-                                                      item.get('target', None), \
-                                                      item.get('ntarget', None), \
-                                                      item.get('btarget', None)
+            item.get('target', None), \
+            item.get('ntarget', None), \
+            item.get('btarget', None)
         previous = item.get("previous", [])
         if tokenized_target is None:
             yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
@@ -34,7 +35,8 @@ class Preprocessor(GeneralNLPPreprocessor):
                     ntext_arr = [
                         tok.tok_sep(self.tokenizer) + self.tokenizer.convert_tokens_to_string(tokenized_target)]
                 elif tok.tok_sep(self.tokenizer) in n_target:
-                    ntext_arr = [ntext.strip() for ntext in n_target.split(tok.tok_sep(self.tokenizer))]
+                    ntext_arr = [ntext.strip() for ntext in n_target.split(
+                        tok.tok_sep(self.tokenizer))]
                 else:
                     ntext_arr = [n_target.strip()]
                 for neg_text in ntext_arr:

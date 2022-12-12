@@ -46,8 +46,10 @@ class GeneralNLPPreprocessor:
                                                                     t_target_list,
                                                                     t_input_index,
                                                                     t_target_index):
-            slice_length = self.parameters['maxlen'] - self.parameters.get('reserved_len') - 3
-            item['input'] = [tok.tok_begin(self.tokenizer)] + t_input[:slice_length]
+            slice_length = self.parameters['maxlen'] - \
+                self.parameters.get('reserved_len') - 3
+            item['input'] = [tok.tok_begin(
+                self.tokenizer)] + t_input[:slice_length]
             item['input_index'] = t_input_index
             item['target_index'] = t_target_index
             if len(t_target) > 0:
@@ -77,9 +79,11 @@ class GeneralNLPPreprocessor:
                                                               maxlen=self.parameters['maxlen'] - 3,
                                                               mode=self.parameters.get('handle_exceed'))
         elif target_text:
-            t_target_list, t_target_index = [target_text * len(t_input_list)], [[0] * len(t_input_list)]
+            t_target_list, t_target_index = [
+                target_text * len(t_input_list)], [[0] * len(t_input_list)]
         else:
-            t_target_list, t_target_index = ['' * len(t_input_list)], [[0] * len(t_input_list)]
+            t_target_list, t_target_index = [
+                '' * len(t_input_list)], [[0] * len(t_input_list)]
         return t_input_list, t_target_list, t_input_index, t_target_index
 
     def preprocess_component_convert_to_id(self, item):
@@ -96,7 +100,8 @@ class GeneralCVPreprocessor:
     def __init__(self, feature_extractor, kwargs={}):
         self.feature_extractor = feature_extractor
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.parameters = {**{'feature_extractor': feature_extractor}, **kwargs}
+        self.parameters = {
+            **{'feature_extractor': feature_extractor}, **kwargs}
 
     def read_file_to_data(self, filepath):
         assert 'plz override this funciton'
@@ -115,7 +120,8 @@ class GeneralSpeechPreprocessor:
     def __init__(self, feature_extractor, kwargs={}):
         self.feature_extractor = feature_extractor
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.parameters = {**{'feature_extractor': feature_extractor}, **kwargs}
+        self.parameters = {
+            **{'feature_extractor': feature_extractor}, **kwargs}
 
     def read_file_to_data(self, filepath):
         assert 'plz override this funciton'

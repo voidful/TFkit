@@ -1,3 +1,7 @@
+from tfkit.utility.loss import SeqCTCLoss
+from tfkit.utility.tok import *
+from tfkit.utility.loss import *
+from torch.nn.functional import softmax
 import sys
 import os
 from collections import defaultdict
@@ -7,11 +11,6 @@ from tfkit.utility.predictor import NonAutoRegressivePredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-from torch.nn.functional import softmax
-from tfkit.utility.loss import *
-from tfkit.utility.tok import *
-from tfkit.utility.loss import SeqCTCLoss
 
 
 class Model(nn.Module):
@@ -23,10 +22,13 @@ class Model(nn.Module):
         self.blank_token = "<BLANK>"
         self.tokenizer.add_tokens(self.blank_token)
         self.pretrained.resize_token_embeddings(len(tokenizer))
-        self.blank_index = self.tokenizer.convert_tokens_to_ids([self.blank_token])[0]
+        self.blank_index = self.tokenizer.convert_tokens_to_ids([self.blank_token])[
+            0]
         self.loss = SeqCTCLoss(blank_index=self.blank_index)
-        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
+        self.vocab_size = max(
+            self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(
+            self.pretrained.config.hidden_size, self.vocab_size)
         predictor = NonAutoRegressivePredictor(self, Preprocessor)
         self.predictor = predictor
         self.predict = predictor.predict
@@ -47,7 +49,8 @@ class Model(nn.Module):
         sequence_output = output[0]
         prediction_scores = self.model(sequence_output)
         batch_size = list(tokens_tensor.shape)[0]
-        prediction_scores = prediction_scores.view(batch_size, -1, self.vocab_size)
+        prediction_scores = prediction_scores.view(
+            batch_size, -1, self.vocab_size)
 
         if eval:
             result_dict = {
@@ -61,7 +64,8 @@ class Model(nn.Module):
 
             pscore = prediction_scores.detach().cpu()
             predicted_indexs = pscore.argmax(2).tolist()[0]
-            predicted_tokens = self.tokenizer.convert_ids_to_tokens(predicted_indexs)
+            predicted_tokens = self.tokenizer.convert_ids_to_tokens(
+                predicted_indexs)
             output = []
             for pos, (predicted_index, predicted_token) in enumerate(zip(predicted_indexs, predicted_tokens)):
                 if len(output) > 0 and predicted_index == output[-1]:
@@ -108,7 +112,8 @@ class Model(nn.Module):
                                     target_tensors.view(batch_size, -1),
                                     target_length_tensors)
 
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            loss_fct = nn.CrossEntropyLoss(
+                ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       loss_tensors.view(-1))
             if not torch.all(negativeloss_tensors.eq(-1)).item():

@@ -23,7 +23,8 @@ class Preprocessor(GeneralNLPPreprocessor):
 
     def preprocess_component_convert_to_id(self, item, **param_dict):
         input_text, target = item['input'], item.get('target', None)
-        tokenized_input = [tok.tok_begin(self.tokenizer)] + input_text + [tok.tok_sep(self.tokenizer)]
+        tokenized_input = [tok.tok_begin(
+            self.tokenizer)] + input_text + [tok.tok_sep(self.tokenizer)]
         input_id = self.tokenizer.convert_tokens_to_ids(tokenized_input)
         start_index = item['input_index'][0]
         end_index = item['input_index'][1]

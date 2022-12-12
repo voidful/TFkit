@@ -1,3 +1,6 @@
+from tfkit.utility.tok import *
+from tfkit.utility.loss import *
+from torch.nn.functional import softmax
 import os
 import sys
 from collections import defaultdict
@@ -8,18 +11,16 @@ from tfkit.utility.predictor import NonAutoRegressivePredictor
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-from torch.nn.functional import softmax
-from tfkit.utility.loss import *
-from tfkit.utility.tok import *
-
 
 class Model(nn.Module):
     def __init__(self, tokenizer, pretrained, maxlen=512, tasks_detail=None):
         super().__init__()
         self.tokenizer = tokenizer
         self.pretrained = pretrained
-        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
+        self.vocab_size = max(
+            self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(
+            self.pretrained.config.hidden_size, self.vocab_size)
         self.maxlen = maxlen
 
         predictor = NonAutoRegressivePredictor(self, Preprocessor)
@@ -78,7 +79,8 @@ class Model(nn.Module):
             negative_targets = batch_data['ntarget']
             loss_tensors = torch.as_tensor(targets)
             negativeloss_tensors = torch.as_tensor(negative_targets)
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            loss_fct = nn.CrossEntropyLoss(
+                ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       loss_tensors.view(-1))
             if not torch.all(negativeloss_tensors.eq(-1)).item():

@@ -1,12 +1,11 @@
+from transformers import AutoTokenizer, BertTokenizer
+import tfkit
+import unittest
 import sys
 import os
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import unittest
-import tfkit
-from transformers import AutoTokenizer, BertTokenizer
 
 
 class TestTok(unittest.TestCase):
@@ -14,7 +13,8 @@ class TestTok(unittest.TestCase):
     DATASET_DIR = os.path.join(ROOT_DIR, 'demo_data')
 
     def testTok(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained(
+            'voidful/albert_chinese_tiny')
         begin = tfkit.utility.tok.tok_begin(tokenizer)
         self.assertEqual(begin, "[CLS]")
         sep = tfkit.utility.tok.tok_sep(tokenizer)
@@ -36,10 +36,13 @@ class TestTok(unittest.TestCase):
         self.assertEqual(pad, "<pad>")
 
     def testGetXUnkToken(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
-        result = tfkit.utility.tok.get_topP_unk_token(tokenizer, file_paths=[], topP=0.5)
+        tokenizer = BertTokenizer.from_pretrained(
+            'voidful/albert_chinese_tiny')
+        result = tfkit.utility.tok.get_topP_unk_token(
+            tokenizer, file_paths=[], topP=0.5)
         self.assertFalse(result)
-        result = tfkit.utility.tok.get_freqK_unk_token(tokenizer, file_paths=[], freqK=10)
+        result = tfkit.utility.tok.get_freqK_unk_token(
+            tokenizer, file_paths=[], freqK=10)
         self.assertFalse(result)
         result = tfkit.utility.tok.get_freqK_unk_token(tokenizer, file_paths=[self.DATASET_DIR + '/unk_tok.csv'],
                                                        freqK=1)
@@ -49,11 +52,13 @@ class TestTok(unittest.TestCase):
         self.assertTrue(len(result) > 0)
 
     def testHandleExceed(self):
-        tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
+        tokenizer = BertTokenizer.from_pretrained(
+            'voidful/albert_chinese_tiny')
         seq = " ".join([str(_) for _ in range(100)])
         maxlen = 50
         for mode in ['noop', 'remove', 'slide', 'start_slice', 'end_slice']:
-            rlt, _ = tfkit.utility.tok.handle_exceed(tokenizer, seq, maxlen, mode=mode)
+            rlt, _ = tfkit.utility.tok.handle_exceed(
+                tokenizer, seq, maxlen, mode=mode)
             if mode == 'remove':
                 self.assertTrue(len(rlt) == 0)
             if mode == 'slide':

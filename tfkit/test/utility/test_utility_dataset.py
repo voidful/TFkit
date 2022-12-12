@@ -1,3 +1,6 @@
+from tfkit.test import *
+import tfkit
+import unittest
 import os
 import sys
 
@@ -9,10 +12,6 @@ from tfkit.utility.model import load_pretrained_tokenizer, load_model_class
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import unittest
-import tfkit
-from tfkit.test import *
 
 
 class TestDataset(unittest.TestCase):
@@ -43,7 +42,7 @@ class TestDataset(unittest.TestCase):
             'cache': False
         }
         ds = get_dataset(file_path=file_path, task_class=model_class, tokenizer=tokenizer,
-                                       parameter=dataset_arg)
+                         parameter=dataset_arg)
         print(ds, ds[0])
 
     # def testClassifier(self):

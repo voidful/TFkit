@@ -1,3 +1,7 @@
+from tfkit.task.qa.preprocessor import Preprocessor
+from torch.nn.functional import softmax
+import torch.nn as nn
+import torch
 import os
 import sys
 
@@ -5,11 +9,6 @@ from tfkit.utility.predictor import QuestionAnsweringPredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import torch
-import torch.nn as nn
-from torch.nn.functional import softmax
-from tfkit.task.qa.preprocessor import Preprocessor
 
 
 class Model(nn.Module):
@@ -34,7 +33,7 @@ class Model(nn.Module):
         self.predict = predictor.predict
 
     def forward(self, batch_data, eval=False, **kwargs):
-        print("batch_data",batch_data)
+        print("batch_data", batch_data)
         inputs = torch.as_tensor(batch_data['input'])
         masks = torch.as_tensor(batch_data['mask'])
         targets = torch.as_tensor(batch_data['target'])

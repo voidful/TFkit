@@ -1,3 +1,5 @@
+from tfkit.utility import tok
+import warnings
 import csv
 from collections import defaultdict
 
@@ -9,11 +11,7 @@ def warn(*args, **kwargs):
     pass
 
 
-import warnings
-
 warnings.warn = warn
-
-from tfkit.utility import tok
 
 
 def get_multiclas_data_from_file(fpath):
@@ -21,7 +19,8 @@ def get_multiclas_data_from_file(fpath):
     with open(fpath, 'r') as infile:
         reader = csv.DictReader(infile)
         fieldnames = reader.fieldnames
-        headers = ['input'] + ['target_' + str(i) for i in range(len(fieldnames) - 1)]
+        headers = ['input'] + ['target_' +
+                               str(i) for i in range(len(fieldnames) - 1)]
 
         is_multi_label = ""
         for rows in nlp2.read_csv_chunk(fpath, ','):
@@ -39,7 +38,8 @@ def get_multiclas_data_from_file(fpath):
                     item = item.strip()
                     if tok.UNIVERSAL_SEP in item:
                         for i in item.split(tok.UNIVERSAL_SEP):
-                            task_label_dict[task].append(i) if i not in task_label_dict[task] else task_label_dict[task]
+                            task_label_dict[task].append(
+                                i) if i not in task_label_dict[task] else task_label_dict[task]
                     else:
                         task_label_dict[task].append(item) if item not in task_label_dict[task] else task_label_dict[
                             task]
@@ -53,10 +53,13 @@ def get_multiclas_data_from_file(fpath):
                     pos += start_pos
                     task = headers[0] + "_" + headers[pos] + is_multi_label
                     item = item.strip()
-                    targets = item.split(tok.UNIVERSAL_SEP) if tok.UNIVERSAL_SEP in item else [item]
-                    targets = [task_label_dict[task][task_label_dict[task].index(target)] for target in targets]
+                    targets = item.split(
+                        tok.UNIVERSAL_SEP) if tok.UNIVERSAL_SEP in item else [item]
+                    targets = [task_label_dict[task][task_label_dict[task].index(
+                        target)] for target in targets]
                     input = row[0]
-                    chunk.append({"task": task, "input": input, "target": targets})
+                    chunk.append(
+                        {"task": task, "input": input, "target": targets})
             yield chunk
         return task_label_dict
 
@@ -72,7 +75,8 @@ def get_clas_data_from_file(fpath):
             target_text = row[1]
             if target_text not in task_label_dict[task]:
                 task_label_dict[task].append(target_text)
-            chunk.append({"task": task, "input": source_text, "target": task_label_dict[task].index(target_text)})
+            chunk.append({"task": task, "input": source_text,
+                         "target": task_label_dict[task].index(target_text)})
         yield chunk
     return task_label_dict
 
@@ -88,7 +92,8 @@ def get_gen_data_from_file(fpath):
             source_text = str(row[0]).strip()
             target_text = str(row[1]).strip()
             negative_text = str(row[2]).strip() if len(row) > 2 else None
-            chunk.append({"task": task, "input": source_text, "target": target_text, "ntarget": negative_text})
+            chunk.append({"task": task, "input": source_text,
+                         "target": target_text, "ntarget": negative_text})
         yield chunk
     return task_label_dict
 
@@ -101,7 +106,8 @@ def get_qa_data_from_file(fpath):
         chunk = []
         for row in rows:
             context, start, end = row
-            chunk.append({"task": task, "input": context, "target": [start,end]})
+            chunk.append(
+                {"task": task, "input": context, "target": [start, end]})
         yield chunk
     return task_label_dict
 

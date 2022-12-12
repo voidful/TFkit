@@ -27,15 +27,18 @@ def pad_batch(batch):
     """
     keys = list(batch[0].keys())
     for k in keys:
-        batch_key_length = [len(i[k]) if not isinstance(i[k], int) else 1 for i in batch]
+        batch_key_length = [len(i[k]) if not isinstance(
+            i[k], int) else 1 for i in batch]
         if len(set(batch_key_length)) > 1:  # is all value same? if no, it need to pad with max length
             pad_length = max(batch_key_length)
             for idx, _ in enumerate(batch):
                 if f"{k}_pad" in batch[idx]:
-                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), batch[idx][f"{k}_pad"][0])
+                    padded = nn.ConstantPad1d(
+                        (0, pad_length - len(batch[idx][k])), batch[idx][f"{k}_pad"][0])
 
                 else:
-                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), 0)
+                    padded = nn.ConstantPad1d(
+                        (0, pad_length - len(batch[idx][k])), 0)
                 # batch[idx][k] = torch.unsqueeze(padded(batch[idx][k]), 0)
                 batch[idx][k] = padded(batch[idx][k])
     for ind, dat in enumerate(batch):

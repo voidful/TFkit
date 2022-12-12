@@ -1,3 +1,5 @@
+from tfkit.utility.loss import *
+from torch.nn.functional import softmax
 import os
 import sys
 from collections import defaultdict, Counter
@@ -9,9 +11,6 @@ from torch.distributions import Categorical
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-from torch.nn.functional import softmax
-from tfkit.utility.loss import *
-
 
 class Model(nn.Module):
 
@@ -21,7 +20,8 @@ class Model(nn.Module):
         self.tokenizer = tokenizer
         self.pretrained = pretrained
         self.dropout = nn.Dropout(dropout)
-        self.tagger = nn.Linear(self.pretrained.config.hidden_size, len(labels))
+        self.tagger = nn.Linear(
+            self.pretrained.config.hidden_size, len(labels))
         self.labels = labels
         self.maxlen = maxlen
         self.loss_fct = FocalLoss()
@@ -40,7 +40,8 @@ class Model(nn.Module):
         # bert embedding
         token_tensor = torch.as_tensor(inputs, dtype=torch.long)
         mask_tensors = torch.as_tensor(masks)
-        bert_output = self.pretrained(token_tensor, attention_mask=mask_tensors)
+        bert_output = self.pretrained(
+            token_tensor, attention_mask=mask_tensors)
         res = bert_output[0]
         pooled_output = self.dropout(res)
         reshaped_logits = self.tagger(pooled_output)
@@ -55,7 +56,8 @@ class Model(nn.Module):
             result_labels = ilogit.data.tolist()
             start, end = batch_data['pos'][0]
             token_word_mapping = batch_data['token_word_mapping']
-            for pos, logit_prob in enumerate(result_labels[1:]):  # skip cls and sep
+            # skip cls and sep
+            for pos, logit_prob in enumerate(result_labels[1:]):
                 if start+pos >= len(token_word_mapping):
                     break
                 word = token_word_mapping[start + pos]['word']
@@ -69,16 +71,18 @@ class Model(nn.Module):
                         word: max(mean_prob, key=mean_prob.get)}
                 else:
                     max_index = logit_prob.index(max(logit_prob))
-                    result_dict['label_map'].append({word: self.labels[max_index]})
-                    result_dict['label_prob_all'].append({word: dict(zip(self.labels, logit_prob))})
+                    result_dict['label_map'].append(
+                        {word: self.labels[max_index]})
+                    result_dict['label_prob_all'].append(
+                        {word: dict(zip(self.labels, logit_prob))})
 
             result_dict['token_word_mapping'] = token_word_mapping[start:end]
             outputs = result_dict
         else:
             targets = batch_data["target"]
             target_tensor = torch.as_tensor(targets, dtype=torch.long)
-            loss = self.loss_fct(reshaped_logits.view(-1, len(self.labels)), target_tensor.view(-1))
+            loss = self.loss_fct(
+                reshaped_logits.view(-1, len(self.labels)), target_tensor.view(-1))
             outputs = loss
 
         return outputs
-

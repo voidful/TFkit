@@ -13,14 +13,16 @@ from transformers import AutoTokenizer, AutoModel
 def list_all_model(ignore_list=[]):
     dataset_dir = os.path.abspath(__file__ + "/../../") + '/task'
     return list(filter(
-        lambda x: os.path.isdir(os.path.join(dataset_dir, x)) and '__pycache__' not in x and x not in ignore_list,
+        lambda x: os.path.isdir(os.path.join(
+            dataset_dir, x)) and '__pycache__' not in x and x not in ignore_list,
         os.listdir(dataset_dir)))
 
 
 def load_predict_parameter(model, model_arg={}, enable_arg_panel=False):
     """use inquirer panel to let user input task parameter or just use default value"""
     return nlp2.function_argument_panel(model.predictor.wrap_input, model_arg,
-                                        disable_input_panel=(not enable_arg_panel),
+                                        disable_input_panel=(
+                                            not enable_arg_panel),
                                         func_parent=model,
                                         ignore_empty=True)
 
@@ -69,9 +71,11 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     torchpack = torch.load(model_path, map_location=device)
 
-    model_info = {key: torchpack[key] for key in torchpack.keys() if 'state_dict' not in key and 'models' not in key}
+    model_info = {key: torchpack[key] for key in torchpack.keys(
+    ) if 'state_dict' not in key and 'models' not in key}
     print("===task info===")
-    [print(k, v[:10], "...") if isinstance(v, list) and len(v) > 10 else print(k, v) for k, v in model_info.items()]
+    [print(k, v[:10], "...") if isinstance(v, list) and len(v)
+     > 10 else print(k, v) for k, v in model_info.items()]
     print('===============')
 
     if 'tags' in torchpack and len(torchpack['tags']) > 1:
@@ -91,15 +95,18 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
         config = pretrained_config
     else:
         config = torchpack['model_config'] if 'model_config' in torchpack else torchpack['bert']
-    model_types = [torchpack['type']] if not isinstance(torchpack['type'], list) else torchpack['type']
-    models_state = torchpack['models'] if 'models' in torchpack else [torchpack['model_state_dict']]
+    model_types = [torchpack['type']] if not isinstance(
+        torchpack['type'], list) else torchpack['type']
+    models_state = torchpack['models'] if 'models' in torchpack else [
+        torchpack['model_state_dict']]
     type = model_types[type_ind]
     add_tokens = torchpack['add_tokens'] if 'add_tokens' in torchpack else None
     # load task
     tokenizer = AutoTokenizer.from_pretrained(config)
     pretrained = AutoModel.from_pretrained(config)
 
-    pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
+    pretrained, tokenizer = add_tokens_to_pretrain(
+        pretrained, tokenizer, add_tokens)
 
     model_class = load_model_class(type)
     task_detail = {}
@@ -171,10 +178,11 @@ def tie_encoder_decoder_weights(encoder, decoder, base_model_prefix):
         decoder_modules = decoder_pointer._modules
         if len(decoder_modules) > 0:
             assert (
-                    len(encoder_modules) > 0
+                len(encoder_modules) > 0
             ), f"Encoder module {encoder_pointer} does not match decoder module {decoder_pointer}"
 
-            all_encoder_weights = set([module_name + "/" + sub_name for sub_name in encoder_modules.keys()])
+            all_encoder_weights = set(
+                [module_name + "/" + sub_name for sub_name in encoder_modules.keys()])
             encoder_layer_pos = 0
             for name, module in decoder_modules.items():
                 if name.isdigit():
@@ -208,7 +216,8 @@ def tie_encoder_decoder_weights(encoder, decoder, base_model_prefix):
             uninitialized_encoder_weights += list(all_encoder_weights)
 
     # tie weights recursively
-    tie_encoder_to_decoder_recursively(decoder, encoder, base_model_prefix, uninitialized_encoder_weights)
+    tie_encoder_to_decoder_recursively(
+        decoder, encoder, base_model_prefix, uninitialized_encoder_weights)
     if len(uninitialized_encoder_weights) > 0:
         print(
             f"The following encoder weights were not tied to the decoder {uninitialized_encoder_weights}"

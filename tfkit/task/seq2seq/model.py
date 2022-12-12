@@ -1,3 +1,9 @@
+import copy
+from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
+from torch.nn.functional import softmax
+from torch import nn
+import torch
+from torch.autograd.grad_mode import F
 import os
 import sys
 
@@ -9,13 +15,6 @@ from tfkit.utility.predictor import AutoRegressivePredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-from torch.autograd.grad_mode import F
-import torch
-from torch import nn
-from torch.nn.functional import softmax
-from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
-import copy
 
 
 class Model(nn.Module):
@@ -42,8 +41,10 @@ class Model(nn.Module):
             )
             decoder_hidden_size = decoder_config.hidden_size
 
-        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(decoder_hidden_size, self.vocab_size, bias=False)
+        self.vocab_size = max(
+            self.pretrained.config.vocab_size, self.tokenizer.__len__())
+        self.model = nn.Linear(decoder_hidden_size,
+                               self.vocab_size, bias=False)
         if init_weight is not None:
             self.model.weight = init_weight
         self.encoder_outputs = None
@@ -63,7 +64,8 @@ class Model(nn.Module):
         decoder_mask_tensors = torch.as_tensor(batch_data['decoder_mask'])
         if self.decoder_model:
             if not eval or self.encoder_outputs is None:
-                outputs = self.pretrained(input_tensors, attention_mask=encoder_mask_tensors)
+                outputs = self.pretrained(
+                    input_tensors, attention_mask=encoder_mask_tensors)
                 self.encoder_outputs = outputs[0]
             # Decoder
             prediction = self.decoder_model(
@@ -111,7 +113,8 @@ class Model(nn.Module):
             prediction_output = prediction['last_hidden_state']
             prediction_all_hidden = prediction.get('decoder_hidden_states')
             if eval and self.encoder_outputs is None:
-                self.encoder_outputs = (prediction['encoder_last_hidden_state'])
+                self.encoder_outputs = (
+                    prediction['encoder_last_hidden_state'])
             if eval and not beamsearch:
                 self.past_key_values = prediction.get('past_key_values', None)
         prediction_scores = self.model(prediction_output)
@@ -120,19 +123,22 @@ class Model(nn.Module):
             softmax_score = softmax(prediction_scores[0][0], dim=0)
             max_item_id = torch.argmax(softmax_score, -1).item()
             max_item_prob = softmax_score[max_item_id].item()
-            result_dict['max_item'] = (self.tokenizer.convert_ids_to_tokens(max_item_id), max_item_prob)
+            result_dict['max_item'] = (
+                self.tokenizer.convert_ids_to_tokens(max_item_id), max_item_prob)
             if max_return > 1:
                 topK = torch.topk(softmax_score, max_return)
                 prob_result = [(self.tokenizer.convert_ids_to_tokens(tid), prob) for prob, tid in
                                zip(topK.values.data.tolist(), topK.indices.data.tolist())]
-                result_dict['prob_list'] = softmax_score.data.tolist()[:max_return]
+                result_dict['prob_list'] = softmax_score.data.tolist()[
+                    :max_return]
                 result_dict['label_prob'] = prob_result
             outputs = result_dict
         else:
             targets = batch_data['target']
             negative_targets = batch_data['ntarget']
             loss_tensors = torch.as_tensor(targets)
-            loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
+            loss_fct = nn.CrossEntropyLoss(
+                ignore_index=-1)  # -1 index = padding token
             lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                loss_tensors.view(-1))
             if self.selfkd:
@@ -153,7 +159,8 @@ class Model(nn.Module):
                         'encoder_last_hidden_state'] if 'encoder_last_hidden_state' in backtran_predation else \
                         prediction[
                             'last_hidden_state']
-                    backtran_loss = F.cosine_similarity(self.encoder_hidden, backtran_hidden).mean()
+                    backtran_loss = F.cosine_similarity(
+                        self.encoder_hidden, backtran_hidden).mean()
                     lm_loss += backtran_loss
             negativeloss_tensors = torch.as_tensor(negative_targets)
             if not torch.all(negativeloss_tensors.eq(-1)).item():
