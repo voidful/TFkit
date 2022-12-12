@@ -30,13 +30,13 @@
 
 ## What is it
 
-TFKit is a tool kit mainly for language generation.  
-It leverages the use of transformers on many tasks with different models in this all-in-one framework.  
+TFKit is a tool kit mainly for language generation.
+It leverages the use of transformers on many tasks with different models in this all-in-one framework.
 All you need is a little change of config.
 
 ## Task Supported
 
-With transformer models - BERT/ALBERT/T5/BART......  
+With transformer models - BERT/ALBERT/T5/BART......
 | | |
 |-|-|
 | Text Generation | :memo: seq2seq language model |
@@ -135,5 +135,5 @@ Thanks for your interest.There are many ways to contribute to this project. Get 
 
 ## Icons reference
 
-Icons modify from <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>  
+Icons modify from <a href="http://www.freepik.com/" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
 Icons modify from <a href="https://www.flaticon.com/authors/nikita-golubev" title="Nikita Golubev">Nikita Golubev</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
