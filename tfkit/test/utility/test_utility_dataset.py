@@ -1,49 +1,55 @@
 import os
 import sys
+import unittest
 
 import numpy
 from transformers import AutoTokenizer
 
-from tfkit.utility.dataset import get_dataset, TFKitDataset
-from tfkit.utility.model import load_pretrained_tokenizer, load_model_class
+import tfkit
+from tfkit.test import *
+from tfkit.utility.dataset import get_dataset
+from tfkit.utility.dataset import TFKitDataset
+from tfkit.utility.model import load_model_class
+from tfkit.utility.model import load_pretrained_tokenizer
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
-import unittest
-import tfkit
-from tfkit.test import *
 
 
 class TestDataset(unittest.TestCase):
 
     def check_type_for_dataloader(self, data_item):
-        if (isinstance(data_item, list) and not isinstance(data_item[-1], str) and self.check_type_for_dataloader(
-                data_item[-1])) or \
-                isinstance(data_item, numpy.ndarray) or \
-                isinstance(data_item, int):
+        if ((isinstance(data_item, list)
+             and not isinstance(data_item[-1], str)
+             and self.check_type_for_dataloader(data_item[-1]))
+                or isinstance(data_item, numpy.ndarray)
+                or isinstance(data_item, int)):
             return True
         else:
             return False
 
     def test_check_type_for_dataloader(self):
         self.assertTrue(self.check_type_for_dataloader(123))
-        self.assertFalse(self.check_type_for_dataloader('a'))
-        self.assertFalse(self.check_type_for_dataloader(['a']))
-        self.assertFalse(self.check_type_for_dataloader([{'a'}]))
+        self.assertFalse(self.check_type_for_dataloader("a"))
+        self.assertFalse(self.check_type_for_dataloader(["a"]))
+        self.assertFalse(self.check_type_for_dataloader([{"a"}]))
 
     def test_get_dataset(self):
-        tokenizer = load_pretrained_tokenizer('voidful/albert_chinese_tiny')
-        model_class = load_model_class('clas')
+        tokenizer = load_pretrained_tokenizer("voidful/albert_chinese_tiny")
+        model_class = load_model_class("clas")
         file_path = CLAS_DATASET
         dataset_arg = {
-            'maxlen': 123,
-            'handle_exceed': 'slide',
-            'config': 'voidful/albert_chinese_tiny',
-            'cache': False
+            "maxlen": 123,
+            "handle_exceed": "slide",
+            "config": "voidful/albert_chinese_tiny",
+            "cache": False,
         }
-        ds = get_dataset(file_path=file_path, task_class=model_class, tokenizer=tokenizer,
-                                       parameter=dataset_arg)
+        ds = get_dataset(
+            file_path=file_path,
+            task_class=model_class,
+            tokenizer=tokenizer,
+            parameter=dataset_arg,
+        )
         print(ds, ds[0])
 
     # def testClassifier(self):
