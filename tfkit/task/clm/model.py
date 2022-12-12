@@ -10,7 +10,6 @@ sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 import torch
 from torch import nn
 from torch.nn.functional import softmax
-from tfkit.utility.loss import NegativeCElLoss
 
 
 class Model(nn.Module):
@@ -25,10 +24,13 @@ class Model(nn.Module):
         self.predictor = predictor
         self.predict = predictor.predict
 
+    def clean_cache(self):
+        self.encoder_outputs = None
+        self.past_key_values = None
+
     def forward(self, batch_data, eval=False, beamsearch=False, max_return=1, **kwargs):
         inputs = batch_data['input']
-        masks = batch_data['encoder_mask']
-
+        masks = batch_data['mask']
         tokens_tensor = torch.as_tensor(inputs)
         mask_tensors = torch.as_tensor(masks)
 
@@ -38,7 +40,7 @@ class Model(nn.Module):
         if eval:
             result_dict = {}
             start = batch_data['start'][0]
-            softmax_score = softmax(prediction_scores[0][start], dim=0)
+            softmax_score = softmax(prediction_scores[0][start], dim=-1).flatten()
             max_item_id = torch.argmax(softmax_score, -1).item()
             max_item_prob = softmax_score[max_item_id].item()
             result_dict['max_item'] = (self.tokenizer.convert_ids_to_tokens(max_item_id), max_item_prob)
@@ -51,16 +53,10 @@ class Model(nn.Module):
             outputs = result_dict
         else:
             targets = batch_data['target']
-            negative_targets = batch_data['ntarget']
             loss_tensors = torch.as_tensor(targets)
-            negativeloss_tensors = torch.as_tensor(negative_targets)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)  # -1 index = padding token
             masked_lm_loss = loss_fct(prediction_scores.view(-1, self.vocab_size),
                                       loss_tensors.view(-1))
-            if not torch.all(negativeloss_tensors.eq(-1)).item():
-                negative_loss_fct = NegativeCElLoss(ignore_index=-1)
-                negative_loss = negative_loss_fct(prediction_scores.view(-1, self.vocab_size),
-                                                  negativeloss_tensors.view(-1))
-                masked_lm_loss += negative_loss
+
             outputs = masked_lm_loss
         return outputs

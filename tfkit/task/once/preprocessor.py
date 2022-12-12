@@ -7,10 +7,12 @@ class Preprocessor(GeneralNLPPreprocessor):
     def read_file_to_data(self, path):
         return get_gen_data_from_file(path)
 
+    def set_global_parameters(self):
+        self.tokenize_target = True
+
     def preprocess_component_convert_to_id(self, item, likelihood=['none', 'pos', 'neg', 'both'], **param_dict):
         likelihood = likelihood[0] if isinstance(likelihood, list) else likelihood
         tokenized_input, tokenized_target, n_target = item['input'], item.get('target', None), item.get('ntarget', None)
-
         yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                'target': self.tokenizer.convert_tokens_to_ids(tokenized_target)}
         if "neg" in likelihood:
@@ -41,7 +43,6 @@ class Preprocessor(GeneralNLPPreprocessor):
         target_end = maxlen
         target_length = target_end - target_start
         t_input_id.extend([tok_pad] * (maxlen - len(t_input_id)))
-
         if 'target' in item and item['target'] is not None:
             target = item['target'] + [tok_sep]
             target.extend([-1] * (maxlen - len(target)))

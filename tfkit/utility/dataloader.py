@@ -1,7 +1,6 @@
-import copy
-
 import numpy
 import torch
+from torch import nn
 from torch.utils import data
 
 
@@ -19,36 +18,29 @@ def index_of(in_list, val):
         return -1
 
 
-def batch_reduce_pad(batch):
+def pad_batch(batch):
     """
     reduce batch data shape by reduce their padding to common max
     it needs to Handel some exception since some key is no need to be padded
     :param batch: list of dict, with key input and target as model input and target
     :return: list of dict
     """
-    has_pad = all([dat['input'][-1] == batch[0]['input'][-1] for dat in batch]) and \
-              batch[0]['input'][-1] == batch[0]['input'][-2]
-    if has_pad:
-        pad_token_input = batch[0]['input'][-1]
-        pad_start = max([list(dat['input']).index(pad_token_input) for dat in batch])
-        pad_token_target = batch[0]['target'][-1] if 'target' in batch[0] else None
-        if not isinstance(pad_token_target, numpy.ndarray) and pad_token_target:
-            # multi-label classification target will have an array target, should not pad this
-            pad_start = max(pad_start, max([index_of(list(dat['target']), pad_token_target) for dat in batch]))
-        if 'start' in batch[0]:
-            pad_start = max(pad_start, max([data['start'] for data in batch if 'start' in data]) + 1)
-        for ind, dat in enumerate(batch):
-            for k, v in dat.items():
-                if isinstance(v, list) and len(v) > 1 and k != 'task':  # not padding task name
-                    batch[ind][k] = v[:pad_start]
-                if k == 'input_length':
-                    batch[ind][k] = pad_start - 1
-                batch[ind][k] = numpy.asarray(batch[ind][k])
-    else:
-        for ind, dat in enumerate(batch):
-            for k, v in dat.items():
-                batch[ind][k] = numpy.asarray(batch[ind][k])
+    keys = list(batch[0].keys())
+    for k in keys:
+        batch_key_length = [len(i[k]) if not isinstance(i[k], int) else 1 for i in batch]
+        if len(set(batch_key_length)) > 1:  # is all value same? if no, it need to pad with max length
+            pad_length = max(batch_key_length)
+            for idx, _ in enumerate(batch):
+                if f"{k}_pad" in batch[idx]:
+                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), batch[idx][f"{k}_pad"][0])
 
+                else:
+                    padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), 0)
+                # batch[idx][k] = torch.unsqueeze(padded(batch[idx][k]), 0)
+                batch[idx][k] = padded(batch[idx][k])
+    for ind, dat in enumerate(batch):
+        for k, v in dat.items():
+            batch[ind][k] = numpy.asarray(batch[ind][k])
     return batch
 
 
@@ -58,6 +50,5 @@ def dataloader_collate(batch):
     :param batch: list of dict
     :return: batch: list of dict
     """
-    batch = copy.deepcopy(batch)
-    print("batch",batch)
-    return torch.utils.data._utils.collate.default_collate(batch_reduce_pad(batch))
+    # batch = copy.deepcopy(batch)
+    return torch.utils.data._utils.collate.default_collate(pad_batch(batch))

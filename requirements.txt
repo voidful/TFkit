@@ -1,9 +1,9 @@
 transformers>=3.3.0
 tensorboardX
 torch
-sklearn
+scikit-learn
 matplotlib
-nlp2>=1.8.43
+nlp2>=1.8.44
 tqdm>=4.45.0
 inquirer
 numpy
@@ -13,3 +13,4 @@ pandas
 accelerate>=0.5.1
 joblib
 pandas>=1.4.1
+scikit-learn

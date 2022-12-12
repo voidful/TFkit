@@ -1,13 +1,13 @@
 import json
 from collections import defaultdict
-from math import log
 
 import nlp2
 import numpy as np
 import torch
-from tfkit.utility import tok
-from tfkit.utility.dataloader import batch_reduce_pad
+from math import log
 from torch.distributions import Categorical
+
+from tfkit.utility import tok
 
 
 class BasePredictor:
@@ -80,9 +80,7 @@ class ClassificationPredictor(BasePredictor):
 
             for items in proc.preprocess({"task": input_args['task'], "input": input_args['input']}):
                 feature = proc.postprocess({**items, **{'task_dict': self.model.tasks}}, self.model.tokenizer,
-                                              self.model.maxlen)
-            for k, v in feature.items():
-                feature[k] = [v]
+                                           self.model.maxlen)
             predictions = self.model.forward(feature, eval=True)
             if input_args['topK'] < 2:
                 ret_result.append(
@@ -212,7 +210,7 @@ class TaggingPredictor(BasePredictor):
             for items in proc.preprocess({"task": input_args['task'], "input": input_args['input']}):
                 token_word_mapping = items['token_word_mapping']
                 feature = proc.postprocess({**items, **{'task_dict': self.model.labels}}, self.model.tokenizer,
-                                              self.model.maxlen)
+                                           self.model.maxlen)
                 for k, v in feature.items():
                     feature[k] = [v]
                 feature['token_word_mapping'] = token_word_mapping
@@ -307,18 +305,18 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                                                  reserved_len=input_args['reserved_len'])
                         for items in proc.preprocess(
                                 {"task": input_args['task'], "input": input_args['input'], 'previous': tokens}):
-                            feature_dict = proc.postprocess(items, self.model.tokenizer, self.model.maxlen)
+                            feature_dict = proc.postprocess_batch(
+                                proc.postprocess(items, self.model.tokenizer, self.model.maxlen))
 
                         # check input exceed
-                        if len(tokens) >= self.model.maxlen or feature_dict['start'] >= self.model.maxlen:
+                        if len(tokens) >= self.model.maxlen \
+                                or ('prev' in feature_dict and len(feature_dict['prev']) >= self.model.maxlen) \
+                                or ('input' in feature_dict and len(feature_dict['input']) >= self.model.maxlen):
                             exceed = True
                             all_candidates.append(seq)
                             continue
-
-                        feature_dict = batch_reduce_pad([feature_dict])[0]
-                        for k, v in feature_dict.items():
-                            feature_dict[k] = [v]
-                        predictions = self.model.forward(feature_dict, eval=True, use_prev=True,
+                        predictions = self.model.forward(feature_dict, eval=True, use_prev=False,
+                                                         output_hidden_states=True,
                                                          beamsearch=input_args['decodenum'] > 1,
                                                          max_return=max(input_args['decodenum'],
                                                                         input_args['topK']))
@@ -364,7 +362,7 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                 sequences = ordered[:input_args['decodenum']]
                 stop = 0
                 for i in sequences:
-                    # i[0] - sequence,i[1] - sequence score
+                    # i[0], i[1] - sequence, sequence score
                     if (i[0].count(sep_tok) >= input_args['eos_num']) or \
                             len(i[0]) > self.model.maxlen or \
                             0 < input_args['decode_maxlen'] < len(i[0]):
@@ -379,6 +377,5 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                 sequences[i][0] = self.model.tokenizer.decode(
                     self.model.tokenizer.convert_tokens_to_ids(sequences[i][0][slide_len:]))
 
-            self.model.encoder_hidden = None
-            self.model.past_key_values = None
+            self.model.clean_cache()
             return [i[0] for i in sequences], {'label_map': sequences}

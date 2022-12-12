@@ -101,11 +101,6 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
 
     pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
 
-    if 'tag' in type:  # for old version task
-        type = 'tag'
-    elif 'onebyone' in type:
-        type = 'onebyone'
-
     model_class = load_model_class(type)
     task_detail = {}
     if 'task-label' in torchpack:
@@ -116,6 +111,7 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     model = model_class.Model(tokenizer=tokenizer, pretrained=pretrained, tasks_detail=task_detail,
                               maxlen=maxlen)
     model.load_state_dict(models_state[type_ind], strict=False)
+    model = model.to(device)
 
     preprocessor = model_class.Preprocessor(tokenizer)
 

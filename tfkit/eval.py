@@ -7,9 +7,10 @@ from datetime import timedelta
 
 import nlp2
 import torch
+from tqdm.auto import tqdm
+
 from tfkit.utility.eval_metric import EvalMetric
 from tfkit.utility.model import load_trained_model, load_predict_parameter
-from tqdm.auto import tqdm
 
 transformers_logger = logging.getLogger('transformers')
 transformers_logger.setLevel(logging.CRITICAL)
@@ -18,8 +19,7 @@ transformers_logger.setLevel(logging.CRITICAL)
 def parse_eval_args(args):
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--task", nargs='+', type=str, help="task path")
-    group.add_argument("--models", nargs='+', type=str, help="task dir for multiple task evaluation")
+    group.add_argument("--model", nargs='+', type=str, help="evaluation model")
     parser.add_argument("--config", type=str, help='pre-trained task path after add token')
     parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas', 'er'],
                         help="evaluate metric")
@@ -31,15 +31,14 @@ def parse_eval_args(args):
     input_arg, model_arg = parser.parse_known_args(args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
     model_arg = {k.replace("--", ""): v for k, v in zip(model_arg[:-1:2], model_arg[1::2])}
-
     return input_arg, model_arg
 
 
 def main(arg=None):
     with torch.no_grad():
         eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
-        models = eval_arg.get('task', [])
-        for m in eval_arg.get('models', []):
+        models = eval_arg.get('model', [])
+        for m in models:
             for f in nlp2.get_files_from_dir(m):
                 if '.pt' == f[-3:]:
                     models.append(f)
@@ -95,7 +94,6 @@ def main(arg=None):
                             predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
                             processed_target = target[0].split(" ")
                             predicted = predicted.split(" ")
-
                         if eval_arg.get('print'):
                             print('===eval===')
                             print("input: ", input)

@@ -37,12 +37,12 @@ class TestModelLoader(unittest.TestCase):
         self.assertTrue('handle_exceed' in clas_param)
         self.assertTrue(isinstance(clas_param['handle_exceed'], str))
 
-    def test_load_trained_model(self):
-        model_path = os.path.join(self.MODEL_SAVE_PATH, '1.pt')
-        model, model_type, model_class, model_info, preprocessor = load_trained_model(model_path)
-        print(model)
-        print(model_type)
-        print(model_class)
-        print(model_info)
-        print(model.predict)
-        print(model.predict(input="a"))
+    # def test_load_trained_model(self):
+    #     model_path = os.path.join(self.MODEL_SAVE_PATH, '1.pt')
+    #     model, model_type, model_class, model_info, preprocessor = load_trained_model(model_path)
+    #     print(model)
+    #     print(model_type)
+    #     print(model_class)
+    #     print(model_info)
+    #     print(model.predict)
+    #     print(model.predict(input="a"))

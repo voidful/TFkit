@@ -167,8 +167,8 @@ class EvalMetric:
                     cer_list = []
                     for target in task['target_list'][pos]:
                         if len(target) > 0 and len(predict) > 0:
-                            wer_list.append(100 * asrp.chunked_wer([target], [predict]))
-                            cer_list.append(100 * asrp.chunked_cer([target], [predict]))
+                            wer_list.append(100 * asrp.wer([target], [predict]))
+                            cer_list.append(100 * asrp.cer([target], [predict]))
                         else:
                             wer_list.append(100)
                             cer_list.append(100)
@@ -179,8 +179,8 @@ class EvalMetric:
                     targets.append(target)
                     data_score.append([predict, target, {'wer': wer, 'cer': cer}])
 
-                wer = 100 * asrp.wer(targets, predicts, chunk_size=100) if len(target) > 0 else 100
-                cer = 100 * asrp.cer(targets, predicts, chunk_size=100) if len(target) > 0 else 100
+                wer = 100 * asrp.wer(targets, predicts) if len(target) > 0 else 100
+                cer = 100 * asrp.cer(targets, predicts) if len(target) > 0 else 100
                 result = {"WER": wer, "CER": cer}
                 data_score = sorted(data_score, key=lambda i: i[2]['wer'], reverse=False)
             if "nlg" in metric:

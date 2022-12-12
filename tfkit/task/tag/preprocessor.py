@@ -37,7 +37,6 @@ class Preprocessor(GeneralNLPPreprocessor):
 
             if target is not None:
                 target_token = []
-                print("self.parameters", item)
                 for input_word, target_label in zip(word_token_mapping, target.split(separator)):
                     if t_pos[0] <= input_word['pos'] < t_pos[1]:
                         for _ in range(input_word['len']):

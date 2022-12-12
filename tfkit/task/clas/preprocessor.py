@@ -1,3 +1,4 @@
+import torch
 from sklearn.preprocessing import MultiLabelBinarizer
 from tfkit.utility import tok
 from tfkit.utility.datafile import get_multiclas_data_from_file
@@ -32,4 +33,4 @@ class Preprocessor(GeneralNLPPreprocessor):
             else:
                 tokenize_label = [item['task_dict'][task].index(target[0])]
             row_dict['target'] = tokenize_label
-        return row_dict
+        return {key: torch.tensor(value) for key, value in row_dict.items()}

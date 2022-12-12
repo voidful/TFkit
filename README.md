@@ -29,24 +29,18 @@
 </p>
 
 ## What is it
-
-TFKit is a deep natural language process framework for classification/tagging/question answering/embedding study and language generation.  
+TFKit is a tool kit mainly for language generation.  
 It leverages the use of transformers on many tasks with different models in this all-in-one framework.   
 All you need is a little change of config.  
 
 ## Task Supported
-With transformer models - BERT/ALBERT/T5/BART......
+With transformer models - BERT/ALBERT/T5/BART......  
 |  |  |
 |-|-|
-| Classification  | :label: multi-class and multi-label classification |
-| Question Answering  | :page_with_curl: extractive qa |
-| Question Answering  | :radio_button: multiple-choice qa |
-| Tagging  | :eye_speech_bubble: sequence level tagging / sequence level with crf  |
 | Text Generation | :memo: seq2seq language model |
 | Text Generation | :pen: causal language model |
 | Text Generation | :printer: once generation model / once generation model with ctc loss |
 | Text Generation | :pencil: onebyone generation model |
-| Self-supervise Learning | :diving_mask: mask language model |
 
 # Getting Started
 Learn more from the [document](https://voidful.github.io/TFkit/).  
@@ -103,6 +97,15 @@ tfkit-eval \
   ```
 </details>
 
+## Not maintained task
+Due to time constraints, the following tasks are temporarily not supported
+|  |  |
+|-|-|
+| Classification  | :label: multi-class and multi-label classification |
+| Question Answering  | :page_with_curl: extractive qa |
+| Question Answering  | :radio_button: multiple-choice qa |
+| Tagging  | :eye_speech_bubble: sequence level tagging / sequence level with crf  |
+| Self-supervise Learning | :diving_mask: mask language model |
 
 ## Supplement
 - [transformers models list](https://huggingface.co/models): you can find any pretrained models here   

@@ -26,6 +26,10 @@ class Model(nn.Module):
         self.predictor = predictor
         self.predict = predictor.predict
 
+    def clean_cache(self):
+        self.encoder_outputs = None
+        self.past_key_values = None
+
     def forward(self, batch_data, eval=False, max_return=1, **kwargs):
         inputs = batch_data['input']
         masks = batch_data['mask']

@@ -1,10 +1,10 @@
-import os
 import unittest
+
 import pytest
+from transformers import BertTokenizer, AutoModel
+
 import tfkit
 from tfkit.test import *
-from transformers import BertTokenizer, AutoModel, AutoTokenizer
-
 from tfkit.utility.model import load_model_class
 
 
@@ -16,14 +16,14 @@ class TestTrain(unittest.TestCase):
 
     def test_parser(self):
         input_arg, model_arg = tfkit.train.parse_train_args(
-            ['--task', 'onebyone', '--train', 'train.csv', '--test', 'test.csv', '--config',
+            ['--task', 'once', '--train', 'train.csv', '--test', 'test.csv', '--config',
              'voidful/albert_chinese_tiny'])
         print(input_arg, model_arg)
-        self.assertTrue(input_arg.get('task') == ['onebyone'])
+        self.assertTrue(input_arg.get('task') == ['once'])
         self.assertTrue(isinstance(input_arg.get('train'), list))
 
         input_arg, model_arg = tfkit.train.parse_train_args(
-            ['--task', 'onebyone', '--train', 'train.csv', '--test', 'test.csv', '--config',
+            ['--task', 'once', '--train', 'train.csv', '--test', 'test.csv', '--config',
              'voidful/albert_chinese_tiny', '--likelihood', 'pos'])
         print(input_arg, model_arg)
         self.assertTrue(model_arg.get('likelihood') == 'pos')
@@ -43,28 +43,10 @@ class TestTrain(unittest.TestCase):
     def testMultiTask(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train', CLAS_DATASET, GEN_DATASET,
-             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'clas', 'clm', '--config',
+             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'once', 'clm', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50'])
         result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + MTTASK_MODEL_DIR + ' --train ' + CLAS_DATASET + ' ' + GEN_DATASET + ' --lr 5e-5 --test ' + CLAS_DATASET + ' ' + GEN_DATASET + ' --task clas clm --config voidful/albert_chinese_tiny --maxlen 50')
-        self.assertTrue(result == 0)
-
-    def testClas(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', CLAS_MODEL_DIR, '--train',
-             CLAS_DATASET, '--lr', '5e-5', '--test', CLAS_DATASET, '--task', 'clas', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + CLAS_MODEL_DIR + ' --train ' + CLAS_DATASET + ' --test ' + CLAS_DATASET + ' --task clas --config voidful/albert_chinese_tiny --maxlen 50')
-        self.assertTrue(result == 0)
-
-    def testGenOneByOne(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', ONEBYONE_MODEL_DIR, '--train',
-             GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--task', 'onebyone', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + ONEBYONE_MODEL_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --task onebyone --config voidful/albert_chinese_tiny --maxlen 50')
+            'tfkit-train --batch 2 --epoch 2 --savedir ' + MTTASK_MODEL_DIR + ' --train ' + CLAS_DATASET + ' ' + GEN_DATASET + ' --lr 5e-5 --test ' + CLAS_DATASET + ' ' + GEN_DATASET + ' --task once clm --config voidful/albert_chinese_tiny --maxlen 50')
         self.assertTrue(result == 0)
 
     def testGenOnce(self):
@@ -107,34 +89,6 @@ class TestTrain(unittest.TestCase):
              GEN_DATASET, '--lr', '5e-4', '--test', GEN_DATASET, '--task', 'clm', '--config',
              'prajjwal1/bert-small', '--maxlen', '20'])
 
-    def testGenWithSentLoss(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', MODEL_SAVE_DIR, '--train',
-             GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--task', 'onebyone', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + MODEL_SAVE_DIR + ' --train ' + GEN_DATASET + ' --test ' + GEN_DATASET + ' --task onebyone --config voidful/albert_chinese_tiny  --maxlen 50')
-        self.assertTrue(result == 0)
-
-    def testQA(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', QA_MODEL_DIR, '--train',
-             QA_DATASET, '--lr', '5e-5', '--test', QA_DATASET, '--task', 'qa', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + QA_MODEL_DIR + ' --train ' + QA_DATASET + ' --test ' + QA_DATASET + ' --task qa --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
-        self.assertTrue(result == 0)
-
-
-    def testTag(self):
-        tfkit.train.main(
-            ['--batch', '2', '--epoch', '1', '--savedir', TAG_MODEL_DIR, '--train',
-             TAG_DATASET, '--lr', '5e-5', '--test', TAG_DATASET, '--task', 'tag', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'slide'])
-        result = os.system(
-            'tfkit-train --batch 2 --epoch 2 --savedir ' + TAG_MODEL_DIR + ' --train ' + TAG_DATASET + ' --test ' + TAG_DATASET + ' --task tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
-        self.assertTrue(result == 0)
-
     def testAddTokenFile(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', ADDTOKFILE_SAVE_DIR, '--train',
@@ -158,14 +112,14 @@ class TestTrain(unittest.TestCase):
     def testResumeMultiModel(self):
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train', CLAS_DATASET, GEN_DATASET,
-             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'clas', 'clm', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'clas', 'clm'])
+             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'once', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'once', 'clm'])
         # resume to train all task
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train', CLAS_DATASET, GEN_DATASET,
-             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'clas', 'clm', '--config',
-             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'clas', 'clm', '--resume',
-             os.path.join(MTTASK_MODEL_DIR, "1.pt") ])
+             '--lr', '5e-5', '--test', CLAS_DATASET, GEN_DATASET, '--task', 'once', 'clm', '--config',
+             'voidful/albert_chinese_tiny', '--maxlen', '50', '--tag', 'once', 'clm', '--resume',
+             os.path.join(MTTASK_MODEL_DIR, "1.pt")])
         # resume to train only one task
         tfkit.train.main(
             ['--batch', '2', '--epoch', '1', '--savedir', MTTASK_MODEL_DIR, '--train',
@@ -179,3 +133,30 @@ class TestTrain(unittest.TestCase):
             ['--batch', '2', '--epoch', '1', '--savedir', ONCE_MODEL_DIR, '--train',
              GEN_DATASET, '--lr', '5e-5', '--test', GEN_DATASET, '--task', 'once', '--config',
              'voidful/albert_chinese_tiny', '--maxlen', '50', '--wandb'])
+
+    # def testClas(self):
+    #     tfkit.train.main(
+    #         ['--batch', '2', '--epoch', '1', '--savedir', CLAS_MODEL_DIR, '--train',
+    #          CLAS_DATASET, '--lr', '5e-5', '--test', CLAS_DATASET, '--task', 'clas', '--config',
+    #          'voidful/albert_chinese_tiny', '--maxlen', '50'])
+    #     result = os.system(
+    #         'tfkit-train --batch 2 --epoch 2 --savedir ' + CLAS_MODEL_DIR + ' --train ' + CLAS_DATASET + ' --test ' + CLAS_DATASET + ' --task clas --config voidful/albert_chinese_tiny --maxlen 50')
+    #     self.assertTrue(result == 0)
+    #
+    # def testQA(self):
+    #     tfkit.train.main(
+    #         ['--batch', '2', '--epoch', '1', '--savedir', QA_MODEL_DIR, '--train',
+    #          QA_DATASET, '--lr', '5e-5', '--test', QA_DATASET, '--task', 'qa', '--config',
+    #          'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'start_slice'])
+    #     result = os.system(
+    #         'tfkit-train --batch 2 --epoch 2 --savedir ' + QA_MODEL_DIR + ' --train ' + QA_DATASET + ' --test ' + QA_DATASET + ' --task qa --config voidful/albert_chinese_tiny --maxlen 512 --handle_exceed start_slice')
+    #     self.assertTrue(result == 0)
+    #
+    # def testTag(self):
+    #     tfkit.train.main(
+    #         ['--batch', '2', '--epoch', '1', '--savedir', TAG_MODEL_DIR, '--train',
+    #          TAG_DATASET, '--lr', '5e-5', '--test', TAG_DATASET, '--task', 'tag', '--config',
+    #          'voidful/albert_chinese_tiny', '--maxlen', '512', '--handle_exceed', 'slide'])
+    #     result = os.system(
+    #         'tfkit-train --batch 2 --epoch 2 --savedir ' + TAG_MODEL_DIR + ' --train ' + TAG_DATASET + ' --test ' + TAG_DATASET + ' --task tag --config voidful/albert_chinese_tiny --maxlen 50 --handle_exceed slide')
+    #     self.assertTrue(result == 0)
