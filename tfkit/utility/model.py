@@ -132,7 +132,6 @@ def save_model(models, input_arg, models_tag, epoch, fname, logger, accelerator,
     }
 
     for ind, m in enumerate(input_arg.get('task')):
-        m = accelerator.unwrap_model(m)
         if 'tag' in m:
             save_model['label'] = models[ind].labels
         if "clas" in m:
