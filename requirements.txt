@@ -2,7 +2,6 @@ transformers>=3.3.0
 tensorboard
 tensorboardX
 torch
-scikit-learn
 matplotlib
 nlp2>=1.8.44
 tqdm>=4.45.0
@@ -13,5 +12,4 @@ sentencepiece
 pandas
 accelerate>=0.5.1
 joblib
-pandas>=1.4.1
 scikit-learn

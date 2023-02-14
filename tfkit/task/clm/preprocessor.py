@@ -13,7 +13,6 @@ class Preprocessor(GeneralNLPPreprocessor):
         tokenized_target = self.tokenizer.tokenize(target) if target else None
         previous = item.get("previous", [])
         if tokenized_target is None:
-
             yield {'input': self.tokenizer.convert_tokens_to_ids(tokenized_input),
                    'previous': self.tokenizer.convert_tokens_to_ids(previous)}
         else:
@@ -26,7 +25,7 @@ class Preprocessor(GeneralNLPPreprocessor):
         row_dict = {}
         if 'target' in item:
             target = item['target']
-            t_target_id = [self.tok_pad_id] * len(t_input_id)
+            t_target_id = [-1] * len(t_input_id)
             mask_id = [0] * (len(t_target_id))
             t_target_id += target + [self.tok_sep_id]
             mask_id += [1] * (len(target + [self.tok_sep_id]))
@@ -42,4 +41,5 @@ class Preprocessor(GeneralNLPPreprocessor):
             row_dict['start'] = [len(t_input_id) - 1]
         row_dict['input'] = t_input_id
         row_dict['mask'] = mask_id
+        row_dict['target_pad'] = [-1]
         return {key: torch.tensor(value) for key, value in row_dict.items()}

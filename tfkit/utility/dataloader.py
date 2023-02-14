@@ -33,7 +33,6 @@ def pad_batch(batch):
             for idx, _ in enumerate(batch):
                 if f"{k}_pad" in batch[idx]:
                     padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), batch[idx][f"{k}_pad"][0])
-
                 else:
                     padded = nn.ConstantPad1d((0, pad_length - len(batch[idx][k])), 0)
                 # batch[idx][k] = torch.unsqueeze(padded(batch[idx][k]), 0)
