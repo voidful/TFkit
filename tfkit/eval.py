@@ -37,11 +37,16 @@ def parse_eval_args(args):
 def main(arg=None):
     with torch.no_grad():
         eval_arg, model_arg = parse_eval_args(sys.argv[1:]) if arg is None else parse_eval_args(arg)
-        models = eval_arg.get('model', [])
-        for m in models:
-            for f in nlp2.get_files_from_dir(m):
+        models_path = eval_arg.get('model', [])
+
+        if nlp2.is_dir_exist(models_path[0]):
+            models = []
+            for f in nlp2.get_files_from_dir(models_path[0]):
                 if '.pt' == f[-3:]:
                     models.append(f)
+        else:
+            models = models_path
+
         for model_path in models:
             start_time = time.time()
             valid = eval_arg.get('valid')[0]

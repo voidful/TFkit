@@ -13,3 +13,4 @@ pandas
 accelerate>=0.5.1
 joblib
 scikit-learn
+editdistance

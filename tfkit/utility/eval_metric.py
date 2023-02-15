@@ -4,8 +4,10 @@ import string
 from collections import Counter
 from collections import defaultdict
 
-from tfkit.utility import tok
+import editdistance as ed
 from tqdm.auto import tqdm
+
+from tfkit.utility import tok
 
 
 def _normalize_answer(s, task='emf1'):
@@ -44,6 +46,26 @@ def _f1_score(prediction, ground_truth):
     recall = 1.0 * num_same / len(ground_truth_tokens)
     f1 = (2 * precision * recall) / (precision + recall)
     return f1
+
+
+def _cer(groundtruth, hypothesis):
+    err = 0
+    tot = 0
+    for p, t in zip(hypothesis, groundtruth):
+        err += float(ed.eval(p.lower(), t.lower()))
+        tot += len(t)
+    return err / tot
+
+
+def _wer(groundtruth, hypothesis):
+    err = 0
+    tot = 0
+    for p, t in zip(hypothesis, groundtruth):
+        p = p.lower().split(' ')
+        t = t.lower().split(' ')
+        err += float(ed.eval(p, t))
+        tot += len(t)
+    return err / tot
 
 
 class EvalMetric:
@@ -154,12 +176,6 @@ class EvalMetric:
                 result = {"EM": em / (total or not total), "F1": f1 / (total or not total)}
                 data_score = sorted(data_score, key=lambda i: i[2]['em'], reverse=True)
             if "er" in metric:
-                try:
-                    import asrp
-                except ImportError:
-                    print(
-                        "asrp package not install, plz install it: pip install asrp")
-                    raise
                 predicts = []
                 targets = []
                 for pos, predict in enumerate(task['predicted']):
@@ -167,8 +183,8 @@ class EvalMetric:
                     cer_list = []
                     for target in task['target_list'][pos]:
                         if len(target) > 0 and len(predict) > 0:
-                            wer_list.append(100 * asrp.wer([target], [predict]))
-                            cer_list.append(100 * asrp.cer([target], [predict]))
+                            wer_list.append(100 * _wer([target], [predict]))
+                            cer_list.append(100 * _cer([target], [predict]))
                         else:
                             wer_list.append(100)
                             cer_list.append(100)
@@ -179,8 +195,8 @@ class EvalMetric:
                     targets.append(target)
                     data_score.append([predict, target, {'wer': wer, 'cer': cer}])
 
-                wer = 100 * asrp.wer(targets, predicts) if len(target) > 0 else 100
-                cer = 100 * asrp.cer(targets, predicts) if len(target) > 0 else 100
+                wer = 100 * _wer(targets, predicts) if len(target) > 0 else 100
+                cer = 100 * _cer(targets, predicts) if len(target) > 0 else 100
                 result = {"WER": wer, "CER": cer}
                 data_score = sorted(data_score, key=lambda i: i[2]['wer'], reverse=False)
             if "nlg" in metric:
