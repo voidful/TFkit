@@ -64,18 +64,18 @@ class TestEval(unittest.TestCase):
             'tfkit-eval --model ' + ADDTOKFILE_MODEL_PATH + ' --valid ' + ADDTOK_DATASET + ' --metric emf1 --print')
         self.assertTrue(result == 0)
 
+    def testEvalClassify(self):
+        tfkit.eval.main(
+            ['--model', CLAS_MODEL_PATH, '--valid', CLAS_DATASET, '--metric', 'clas', '--print'])
+        result = os.system(
+            'tfkit-eval --model ' + CLAS_MODEL_PATH + ' --valid ' + CLAS_DATASET + ' --metric clas --print')
+        self.assertTrue(result == 0)
+
     # def testEvalQA(self):
     #     tfkit.eval.main(
     #         ['--model', QA_MODEL_PATH, '--valid', QA_DATASET, '--metric', 'emf1', '--print'])
     #     result = os.system(
     #         'tfkit-eval --model ' + QA_MODEL_PATH + ' --valid ' + QA_DATASET + ' --metric emf1 --print')
-    #     self.assertTrue(result == 0)
-    #
-    # def testEvalClassify(self):
-    #     tfkit.eval.main(
-    #         ['--model', CLAS_MODEL_PATH, '--valid', CLAS_DATASET, '--metric', 'clas', '--print'])
-    #     result = os.system(
-    #         'tfkit-eval --model ' + CLAS_MODEL_PATH + ' --valid ' + CLAS_DATASET + ' --metric clas --print')
     #     self.assertTrue(result == 0)
     #
     # def testEvalTag(self):

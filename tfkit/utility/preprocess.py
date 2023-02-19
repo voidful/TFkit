@@ -86,7 +86,7 @@ class GeneralNLPPreprocessor:
         yield {k: self.tokenizer.convert_tokens_to_ids(v) if isinstance(v, list) else v for k, v in item.items()}
 
     def postprocess(self, item, tokenizer, maxlen, **kwargs):
-        return {key: torch.tensor(value).to(self.device) for key, value in item.items() if isinstance(value, list)}
+        return {key: torch.tensor(value) for key, value in item.items() if isinstance(value, list)}
 
     def postprocess_batch(self, feature_dict, **kwargs):
         return {key: torch.unsqueeze(torch.tensor(value), 0).to(self.device) for key, value in feature_dict.items()}
@@ -108,7 +108,7 @@ class GeneralCVPreprocessor:
 
     def postprocess(self, item, **kwargs):
         item['input'] = self.feature_extractor(item['input'])
-        return {key: torch.tensor(value).to(self.device) for key, value in item.items()}
+        return {key: torch.tensor(value) for key, value in item.items()}
 
 
 class GeneralSpeechPreprocessor:
@@ -118,7 +118,7 @@ class GeneralSpeechPreprocessor:
         self.parameters = {**{'feature_extractor': feature_extractor}, **kwargs}
 
     def read_file_to_data(self, filepath):
-        assert 'plz override this funciton'
+        assert 'plz override this function'
 
     def preprocess(self, item):
         preprocessed_data = []
@@ -127,4 +127,4 @@ class GeneralSpeechPreprocessor:
 
     def postprocess(self, item, **kwargs):
         item['input'] = self.feature_extractor(item['input'])
-        return {key: torch.tensor(value).to(self.device) for key, value in item.items()}
+        return {key: torch.tensor(value) for key, value in item.items()}

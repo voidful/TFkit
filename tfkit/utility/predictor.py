@@ -77,10 +77,10 @@ class ClassificationPredictor(BasePredictor):
             proc = self.preprocessor(self.model.tokenizer, maxlen=self.model.maxlen,
                                      handle_exceed=input_args['handle_exceed'],
                                      reserved_len=input_args['reserved_len'])
-
             for items in proc.preprocess({"task": input_args['task'], "input": input_args['input']}):
                 feature = proc.postprocess({**items, **{'task_dict': self.model.tasks}}, self.model.tokenizer,
                                            self.model.maxlen)
+            feature = proc.postprocess_batch(feature)
             predictions = self.model.forward(feature, eval=True)
             if input_args['topK'] < 2:
                 ret_result.append(

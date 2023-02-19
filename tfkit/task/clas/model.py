@@ -2,8 +2,9 @@ import os
 import sys
 
 import torch
-from tfkit.utility.predictor import ClassificationPredictor
 from torch import nn
+
+from tfkit.utility.predictor import ClassificationPredictor
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
@@ -83,7 +84,6 @@ class Model(nn.Module):
             task, input, mask = zin
             task_id = self.tasks[task]
             task_labels = self.tasks_detail[task]
-
             output = self.pretrained(input.unsqueeze(0), mask.unsqueeze(0))[0]
             pooled_output = self.dropout(self.mean_pooling(output, mask.unsqueeze(0)))
             classifier_output = self.classifier_list[task_id](pooled_output)
