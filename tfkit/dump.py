@@ -18,7 +18,7 @@ def main(arg=None):
     model, model_type, model_class, model_info, model_preprocessor = load_trained_model(arg.get('model'))
     tokenizer = model.tokenizer
     pretrained_config = model_info.get("model_config")
-    if model_type == 'clm' and "gpt" in pretrained_config:
+    if model_type == 'clm':
         hf_model = AutoModelWithLMHead.from_pretrained(model_info.get("model_config"))
         hf_model.eval()
         hf_model.transformer = model.pretrained
