@@ -1,7 +1,8 @@
 import argparse
 import sys
 
-from transformers import AutoModelWithLMHead, AutoModelForSeq2SeqLM, AutoModelForSequenceClassification
+from transformers import AutoModelForSeq2SeqLM, AutoModelForSequenceClassification, \
+    AutoModelForCausalLM
 
 from tfkit.utility.model import load_trained_model, add_tokens_to_pretrain
 
@@ -19,10 +20,14 @@ def main(arg=None):
     tokenizer = model.tokenizer
     pretrained_config = model_info.get("model_config")
     if model_type == 'clm':
-        hf_model = AutoModelWithLMHead.from_pretrained(model_info.get("model_config"))
+        hf_model = AutoModelForCausalLM.from_pretrained(model_info.get("model_config"))
         hf_model.eval()
         hf_model.transformer = model.pretrained
-        hf_model.lm_head.weight = model.model.weight
+        #check if lm_head in hf_model or not
+        if hasattr(hf_model, 'lm_head'):
+            hf_model.lm_head.weight = model.model.weight
+        else:
+            hf_model.cls.weight = model.model.weight
         hf_model.config.tie_word_embeddings = False
         hf_model, tokenizer = add_tokens_to_pretrain(hf_model, tokenizer, model_info.get('add_tokens', []))
         hf_model.save_pretrained(arg.get('dumpdir'))

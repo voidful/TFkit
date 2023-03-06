@@ -20,7 +20,7 @@ class TestEval(unittest.TestCase):
 
     def testDump(self):
         dump_dir = './cache/dump'
-        tfkit.dump.main(["--model", ADDTOKFILE_MODEL_PATH, '--dumpdir', dump_dir])
+        tfkit.dump.main(["--model", CLM_MODEL_PATH, '--dumpdir', dump_dir])
         result = os.system(
-            'tfkit-dump --model ' + ADDTOKFILE_MODEL_PATH + ' --dumpdir ' + dump_dir)
+            'tfkit-dump --model ' + CLM_MODEL_PATH + ' --dumpdir ' + dump_dir)
         self.assertTrue(result == 0)
