@@ -289,6 +289,7 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
             previous = self.model.tokenizer.tokenize(input_args['input'].split(tok.UNIVERSAL_SEP)[-1])
             input_args['eos_num'] += 1
         sep_tok = tok.tok_sep(self.model.tokenizer)
+        blank_tok_id = self.model.tokenizer.convert_tokens_to_ids(" ")
         sequences = [[[], 1.0]]
         with torch.no_grad():
             while True:
@@ -374,8 +375,10 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                 if sep_tok in sequences[i][0]:  # remove sep token
                     sequences[i][0] = sequences[i][0][:-1]
                 slide_len = len(previous) if len(previous) > 0 else 0
+                decode_ids = self.model.tokenizer.convert_tokens_to_ids(sequences[i][0][slide_len:])
                 sequences[i][0] = self.model.tokenizer.decode(
-                    self.model.tokenizer.convert_tokens_to_ids(sequences[i][0][slide_len:]))
+                    decode_ids) if blank_tok_id in decode_ids else self.model.tokenizer.decode(decode_ids).replace(" ",
+                                                                                                                   "")
 
             self.model.clean_cache()
             return [i[0] for i in sequences], {'label_map': sequences}

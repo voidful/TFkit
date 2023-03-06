@@ -1,8 +1,8 @@
 import nlp2
 import tfkit.utility.tok as tok
 import torch
-from tfkit.utility.datafile import get_qa_data_from_file
-from tfkit.utility.preprocess import GeneralNLPPreprocessor
+from tfkit.utility.data_filereader import get_qa_data_from_file
+from tfkit.utility.data_processor import GeneralNLPPreprocessor
 
 
 class Preprocessor(GeneralNLPPreprocessor):

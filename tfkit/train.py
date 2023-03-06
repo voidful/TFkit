@@ -15,7 +15,7 @@ from transformers import get_linear_schedule_with_warmup
 
 import tfkit
 import tfkit.utility.tok as tok
-from tfkit.utility.dataloader import dataloader_collate
+from tfkit.utility.data_loader import dataloader_collate
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
 from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model, \

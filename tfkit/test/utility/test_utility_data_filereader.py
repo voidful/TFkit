@@ -1,10 +1,10 @@
 import unittest
 
 from tfkit.test import *
-from tfkit.utility.datafile import *
+from tfkit.utility.data_filereader import *
 
 
-class TestDataPreprocess(unittest.TestCase):
+class TestDataFile(unittest.TestCase):
 
     def test_get_x_data_from_file(self):
         for get_x_iter in [get_gen_data_from_file(GEN_DATASET),

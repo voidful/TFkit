@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from tfkit.utility.dataloader import pad_batch
+from tfkit.utility.data_loader import pad_batch
 
 
 class TestUtilityDataLoader(unittest.TestCase):

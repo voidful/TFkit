@@ -79,8 +79,11 @@ class Model(nn.Module):
         else:
             if eval and self.encoder_outputs is not None and not beamsearch:
                 prev_tensors = prev_tensors[..., -1:]
+                encoder_batch_size, encoder_sequence_length, _ = self.encoder_outputs.size()
                 prediction = self.pretrained(
-                    encoder_outputs=self.encoder_outputs,
+                    input_ids=input_tensors,
+                    attention_mask=encoder_mask_tensors,
+                    # encoder_outputs=self.encoder_outputs,
                     decoder_input_ids=prev_tensors,
                     past_key_values=self.past_key_values,
                     output_hidden_states=self.selfkd,
@@ -90,7 +93,9 @@ class Model(nn.Module):
             elif eval and self.encoder_outputs is not None:
                 prev_tensors = prev_tensors[..., -1:]
                 prediction = self.pretrained(
-                    encoder_outputs=self.encoder_outputs,
+                    input_ids=input_tensors,
+                    attention_mask=encoder_mask_tensors,
+                    # encoder_outputs=self.encoder_outputs,
                     decoder_input_ids=prev_tensors,
                     past_key_values=self.past_key_values,
                     output_hidden_states=self.selfkd,

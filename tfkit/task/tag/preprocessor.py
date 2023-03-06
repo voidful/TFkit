@@ -1,6 +1,6 @@
 import tfkit.utility.tok as tok
-from tfkit.utility.datafile import get_tag_data_from_file
-from tfkit.utility.preprocess import GeneralNLPPreprocessor
+from tfkit.utility.data_filereader import get_tag_data_from_file
+from tfkit.utility.data_processor import GeneralNLPPreprocessor
 
 get_data_from_file = get_tag_data_from_file
 

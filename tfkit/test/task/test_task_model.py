@@ -1,7 +1,7 @@
 import unittest
 
 import tfkit
-from tfkit.utility.dataloader import pad_batch
+from tfkit.utility.data_loader import pad_batch
 from torch import Tensor
 from transformers import BertTokenizer, AutoModel, AutoTokenizer
 

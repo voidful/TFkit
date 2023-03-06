@@ -90,6 +90,8 @@ def get_gen_data_from_file(fpath):
             source_text = str(row[0]).strip()
             target_text = str(row[1]).strip()
             negative_text = str(row[2]).strip() if len(row) > 2 else None
+            if len(source_text) == 0 or len(target_text) == 0:
+                continue
             chunk.append({"task": task, "input": source_text, "target": target_text, "ntarget": negative_text})
         yield chunk
     return task_label_dict

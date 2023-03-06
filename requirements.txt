@@ -7,6 +7,7 @@ nlp2>=1.8.44
 tqdm>=4.45.0
 inquirer
 numpy
+scipy>=1.10.1
 pytorch-crf
 sentencepiece
 pandas
