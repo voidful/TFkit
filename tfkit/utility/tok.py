@@ -8,9 +8,9 @@ UNIVERSAL_SEP = "///"
 
 
 def tok_begin(tokenizer):
-    if tokenizer.special_tokens_map.get('bos_token'):
+    if tokenizer.special_tokens_map.get('bos_token') is not None:
         return tokenizer.special_tokens_map.get('bos_token')
-    elif tokenizer.special_tokens_map.get('cls_token'):
+    elif tokenizer.special_tokens_map.get('cls_token') is not None:
         tokenizer.special_tokens_map.get('cls_token')
     return 'cls'
 
@@ -20,10 +20,10 @@ def tok_begin_id(tokenizer):
 
 
 def tok_sep(tokenizer):
-    if tokenizer.special_tokens_map.get('sep_token'):
+    if tokenizer.special_tokens_map.get('sep_token') is not None:
         return tokenizer.special_tokens_map.get('sep_token')
-    elif tokenizer.special_tokens_map.get('eos_token'):
-        tokenizer.special_tokens_map.get('eos_token')
+    elif tokenizer.special_tokens_map.get('eos_token') is not None:
+        return tokenizer.special_tokens_map.get('eos_token')
     return 'sep'
 
 
