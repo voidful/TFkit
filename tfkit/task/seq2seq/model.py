@@ -1,6 +1,7 @@
 import os
 import sys
 
+import torch.nn.functional as F
 from transformers import AutoModel
 
 from tfkit.task.seq2seq import Preprocessor
@@ -10,7 +11,6 @@ from tfkit.utility.predictor import AutoRegressivePredictor
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-from torch.autograd.grad_mode import F
 import torch
 from torch import nn
 from torch.nn.functional import softmax

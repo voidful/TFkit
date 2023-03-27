@@ -376,9 +376,7 @@ class AutoRegressivePredictor(BaseTextGeneratePredictor):
                     sequences[i][0] = sequences[i][0][:-1]
                 slide_len = len(previous) if len(previous) > 0 else 0
                 decode_ids = self.model.tokenizer.convert_tokens_to_ids(sequences[i][0][slide_len:])
-                sequences[i][0] = self.model.tokenizer.decode(
-                    decode_ids) if blank_tok_id in decode_ids else self.model.tokenizer.decode(decode_ids).replace(" ",
-                                                                                                                   "")
+                sequences[i][0] = self.model.tokenizer.decode(decode_ids)
 
             self.model.clean_cache()
             return [i[0] for i in sequences], {'label_map': sequences}
