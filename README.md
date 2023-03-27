@@ -12,9 +12,6 @@
         <img alt="Download" src="https://img.shields.io/pypi/dm/tfkit">
     </a>
     <a href="https://github.com/voidful/tfkit">
-        <img alt="Build" src="https://img.shields.io/github/workflow/status/voidful/tfkit/Python package">
-    </a>
-    <a href="https://github.com/voidful/tfkit">
         <img alt="Last Commit" src="https://img.shields.io/github/last-commit/voidful/tfkit">
     </a>
     <a href="https://www.codefactor.io/repository/github/voidful/tfkit/overview/master">
