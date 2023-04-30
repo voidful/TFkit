@@ -23,7 +23,6 @@ def main(arg=None):
         hf_model = AutoModelForCausalLM.from_pretrained(model_info.get("model_config"))
         hf_model.eval()
         hf_model.transformer = model.pretrained
-        #check if lm_head in hf_model or not
         if hasattr(hf_model, 'lm_head'):
             hf_model.lm_head.weight = model.model.weight
         else:
@@ -34,8 +33,8 @@ def main(arg=None):
     elif model_type == 'seq2seq':
         hf_model = AutoModelForSeq2SeqLM.from_pretrained(model_info.get("model_config"))
         hf_model.eval()
-        hf_model.lm_head = model.model
         hf_model.model = model.pretrained
+        hf_model.lm_head = model.model
         hf_model.config.tie_word_embeddings = False
         hf_model.config.tie_encoder_decoder = False
         hf_model, tokenizer = add_tokens_to_pretrain(hf_model, tokenizer, model_info.get('add_tokens', []))

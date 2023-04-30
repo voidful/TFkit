@@ -40,10 +40,7 @@ def main(arg=None):
         models_path = eval_arg.get('model', [])
 
         if nlp2.is_dir_exist(models_path[0]):
-            models = []
-            for f in nlp2.get_files_from_dir(models_path[0]):
-                if '.pt' == f[-3:]:
-                    models.append(f)
+            models = [f for f in nlp2.get_files_from_dir(models_path[0]) if f.endswith('.pt')]
         else:
             models = models_path
 
@@ -56,10 +53,8 @@ def main(arg=None):
                                                                                           tag=eval_arg.get('tag'))
             predict_parameter = load_predict_parameter(model, model_arg, eval_arg.get('panel'))
 
-            if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-                eval_metrics = [EvalMetric(model.tokenizer) for _ in range(int(predict_parameter['decodenum']))]
-            else:
-                eval_metrics = [EvalMetric(model.tokenizer)]
+            eval_metrics = [EvalMetric(model.tokenizer)
+                            for _ in range(int(predict_parameter.get('decodenum', 1)))]
 
             print("PREDICT PARAMETER")
             print("=======================")
@@ -99,6 +94,7 @@ def main(arg=None):
                             predicted = " ".join([list(d.values())[0] for d in result_dict[0]['label_map']])
                             processed_target = target[0].split(" ")
                             predicted = predicted.split(" ")
+
                         if eval_arg.get('print'):
                             print('===eval===')
                             print("input: ", input)
@@ -108,42 +104,42 @@ def main(arg=None):
 
                         eval_metric.add_record(input, predicted, processed_target, eval_arg.get('metric'))
 
-            for eval_pos, eval_metric in enumerate(eval_metrics):
-                argtype = "_dataset" + valid.replace("/", "_").replace(".", "")
-                if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
-                    argtype += "_num_" + str(eval_pos)
-                if 'mode' in predict_parameter:
-                    para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
-                        predict_parameter['mode'].lower()
-                    argtype += "_mode_" + str(para_mode)
-                if 'filtersim' in predict_parameter:
-                    argtype += "_filtersim_" + str(predict_parameter['filtersim'])
-                outfile_name = model_path + argtype
+                    for eval_pos, eval_metric in enumerate(eval_metrics):
+                        argtype = f"_dataset{valid.replace('/', '_').replace('.', '_')}"
+                        if 'decodenum' in predict_parameter and int(predict_parameter['decodenum']) > 1:
+                            argtype += f"_num_{eval_pos}"
+                        if 'mode' in predict_parameter:
+                            para_mode = predict_parameter['mode'][0] if isinstance(predict_parameter['mode'], list) else \
+                                predict_parameter['mode'].lower()
+                            argtype += f"_mode_{para_mode}"
+                        if 'filtersim' in predict_parameter:
+                            argtype += f"_filtersim_{predict_parameter['filtersim']}"
+                        outfile_name = f"{model_path}{argtype}"
 
-                with open(outfile_name + "_predicted.csv", "w", encoding='utf8') as f:
-                    writer = csv.writer(f)
-                    records = eval_metric.get_record(eval_arg.get('metric'))
-                    writer.writerow(['input', 'predicted', 'targets'])
-                    for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
-                        writer.writerow([i, p, t])
-                print("write result at:", outfile_name)
+                        with open(f"{outfile_name}_predicted.csv", "w", encoding='utf8') as f:
+                            writer = csv.writer(f)
+                            records = eval_metric.get_record(eval_arg.get('metric'))
+                            writer.writerow(['input', 'predicted', 'targets'])
+                            for i, p, t in zip(records['ori_input'], records['ori_predicted'], records['ori_target']):
+                                writer.writerow([i, p, t])
+                        print("write result at:", outfile_name)
 
-                with open(outfile_name + "_each_data_score.csv", "w", encoding='utf8') as edsf:
-                    eds = csv.writer(edsf)
-                    with open(outfile_name + "_score.csv", "w", encoding='utf8') as f:
+                        with open(f"{outfile_name}_each_data_score.csv", "w", encoding='utf8') as edsf:
+                            eds = csv.writer(edsf)
+                            with open(f"{outfile_name}_score.csv", "w", encoding='utf8') as f:
+                                for i in eval_metric.cal_score(eval_arg.get('metric')):
+                                    f.write(f"TASK: {i[0]} , {eval_pos}\n")
+                                    f.write(f"{i[1]}\n")
+                                    eds.writerows(i[2])
+
+                        print("write score at:", outfile_name)
+
                         for i in eval_metric.cal_score(eval_arg.get('metric')):
-                            f.write("TASK: " + str(i[0]) + " , " + str(eval_pos) + '\n')
-                            f.write(str(i[1]) + '\n')
-                            eds.writerows(i[2])
+                            print("TASK: ", i[0], eval_pos)
+                            print(i[1])
 
-                print("write score at:", outfile_name)
-
-                for i in eval_metric.cal_score(eval_arg.get('metric')):
-                    print("TASK: ", i[0], eval_pos)
-                    print(i[1])
-
-            print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
+                    print(f"=== Execution time: {timedelta(seconds=(time.time() - start_time))} ===")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
