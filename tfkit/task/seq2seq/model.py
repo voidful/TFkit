@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn.functional import softmax
 from transformers import AutoModel
-
+import torch.nn.functional as F
 from tfkit.task.seq2seq import Preprocessor
 from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
 from tfkit.utility.model import tie_encoder_decoder_weights
