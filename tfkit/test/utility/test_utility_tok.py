@@ -24,7 +24,7 @@ class TestTok(unittest.TestCase):
         pad = tfkit.utility.tok.tok_pad(tokenizer)
         self.assertEqual(pad, "[PAD]")
 
-    def testTok(self):
+    def testTok_roberta(self):
         tokenizer = AutoTokenizer.from_pretrained('distilroberta-base')
         begin = tfkit.utility.tok.tok_begin(tokenizer)
         self.assertEqual(begin, "<s>")
