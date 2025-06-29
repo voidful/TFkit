@@ -66,13 +66,13 @@ tfkit-train \
 --lr 4e-5 \
 --maxlen 384 \
 --epoch 10 \
---savedir roberta_sentiment_classificer
+--savedir roberta_sentiment_classifier
 ```
 
 ### Step 3: Evaluate
 ```bash
 tfkit-eval \
---task roberta_sentiment_classificer/1.pt \
+--task roberta_sentiment_classifier/1.pt \
 --metric clas \
 --valid testing_data.csv
 ```
@@ -90,7 +90,7 @@ tfkit-eval \
     --lr 4e-5 \
     --maxlen 384 \
     --epoch 10 \
-    --savedir roberta_sentiment_classificer_multi_task
+    --savedir roberta_sentiment_classifier_multi_task
   ```
 </details>
 

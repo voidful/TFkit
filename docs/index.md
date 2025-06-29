@@ -73,7 +73,7 @@ tfkit-train \
 --lr 4e-5 \
 --maxlen 384 \
 --epoch 10 \
---savedir roberta_sentiment_classificer
+--savedir roberta_sentiment_classifier
 ```
 
 #### Third step - model eval
