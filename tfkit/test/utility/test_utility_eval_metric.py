@@ -151,6 +151,24 @@ class TestEval(unittest.TestCase):
         eval = tfkit.utility.eval_metric.EvalMetric(tokenizer, normalize_text=True)
         self.assertEqual(eval.tokenize_text("How's this work"), "how ' s this work")
 
+    def test_empty_er(self):
+        class DummyTokenizer:
+            special_tokens_map = {'sep_token': '[SEP]'}
+
+            def encode(self, text, add_special_tokens=False):
+                return text.split()
+
+            def decode(self, tokens, **kwargs):
+                return ' '.join(tokens)
+
+        tokenizer = DummyTokenizer()
+        eval = tfkit.utility.eval_metric.EvalMetric(tokenizer)
+        eval.add_record("", "", "", task='default')
+        results = list(eval.cal_score('er'))
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0][1]['WER'], 0)
+        self.assertEqual(results[0][1]['CER'], 0)
+
     @pytest.mark.skip()
     def testNLGWithPAD(self):
         tokenizer = BertTokenizer.from_pretrained('voidful/albert_chinese_tiny')
