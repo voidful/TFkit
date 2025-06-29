@@ -11,7 +11,7 @@ def tok_begin(tokenizer):
     if tokenizer.special_tokens_map.get('bos_token') is not None:
         return tokenizer.special_tokens_map.get('bos_token')
     elif tokenizer.special_tokens_map.get('cls_token') is not None:
-        tokenizer.special_tokens_map.get('cls_token')
+        return tokenizer.special_tokens_map.get('cls_token')
     return 'cls'
 
 
