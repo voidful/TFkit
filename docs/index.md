@@ -36,7 +36,7 @@ The key to combine different task together is to make different task with same d
 **notice**  
 
 * All data will be in csv format - tfkit will use **csv** for all task, normally it will have two columns, first columns is the input of models, the second column is the output of models.
-* Plane text with no tokenization - there is no need to tokenize text before training, or do re-calculating for tokenization, tfkit will handle it for you.
+* Plain text with no tokenization - there is no need to tokenize text before training, or do re-calculating for tokenization, tfkit will handle it for you.
 * No header is needed.
 
 For example, a sentiment classification dataset will be like:
