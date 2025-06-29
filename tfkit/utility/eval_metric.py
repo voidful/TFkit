@@ -195,8 +195,8 @@ class EvalMetric:
                     targets.append(target)
                     data_score.append([predict, target, {'wer': wer, 'cer': cer}])
 
-                wer = 100 * _wer(targets, predicts) if len(target) > 0 else 100
-                cer = 100 * _cer(targets, predicts) if len(target) > 0 else 100
+                wer = 100 * _wer(targets, predicts) if len(targets) > 0 else 100
+                cer = 100 * _cer(targets, predicts) if len(targets) > 0 else 100
                 result = {"WER": wer, "CER": cer}
                 data_score = sorted(data_score, key=lambda i: i[2]['wer'], reverse=False)
             if "nlg" in metric:
