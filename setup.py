@@ -25,7 +25,12 @@ setup(
     packages=find_packages(),
     install_requires=required,
     entry_points={
-        'console_scripts': ['tfkit-train=tfkit.train:main', 'tfkit-eval=tfkit.eval:main', 'tfkit-dump=tfkit.dump:main']
+        'console_scripts': [
+            'tfkit-train=tfkit.train:main', 
+            'tfkit-eval=tfkit.eval:main', 
+            'tfkit-dump=tfkit.dump:main',
+            'tfkit-config=tfkit.config_cli:main'
+        ]
     },
     py_modules=['tfkit'],
     python_requires=">=3.5.0",

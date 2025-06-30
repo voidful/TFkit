@@ -1,46 +1,36 @@
-import os
-import sys
+from typing import Dict, List, Any
 
 import torch
-from torch import nn
+from torch import nn, softmax, sigmoid
 
+from tfkit.task.clas import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.constants import DEFAULT_MAXLEN, DEFAULT_DROPOUT
+from tfkit.utility.loss import FocalLoss, BCEFocalLoss
 from tfkit.utility.predictor import ClassificationPredictor
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-from torch import softmax, sigmoid
-from tfkit.task.clas import Preprocessor
-from tfkit.utility.loss import FocalLoss, BCEFocalLoss
+class Model(BaseTFKitModel):
+    """Multi-class and multi-label classification model."""
 
-
-class Model(nn.Module):
-
-    def __init__(self, tokenizer, pretrained, tasks_detail, maxlen=512, dropout=0.1, **kwargs):
-        super().__init__()
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
-
+    def __init__(self, tokenizer, pretrained, tasks_detail: Dict[str, List[str]], 
+                 maxlen: int = DEFAULT_MAXLEN, dropout: float = DEFAULT_DROPOUT, **kwargs):
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        
+        # Initialize classification-specific components
         self.dropout = nn.Dropout(dropout)
         self.loss_fct = FocalLoss()
         self.loss_fct_mt = BCEFocalLoss()
-
+        
+        # Setup multi-task classification heads
         self.tasks = dict()
         self.tasks_detail = tasks_detail
         self.classifier_list = nn.ModuleList()
         for task, labels in tasks_detail.items():
-            self.classifier_list.append(nn.Linear(self.pretrained.config.hidden_size, len(labels)))
+            self.classifier_list.append(nn.Linear(self.get_hidden_size(), len(labels)))
             self.tasks[task] = len(self.classifier_list) - 1
-        self.maxlen = maxlen
-
-        self.pretrained = self.pretrained
-        self.classifier_list = self.classifier_list
-        self.loss_fct = self.loss_fct
-        self.loss_fct_mt = self.loss_fct_mt
-
-        predictor = ClassificationPredictor(self, Preprocessor)
-        self.predictor = predictor
-        self.predict = predictor.predict
+        
+        self._setup_predictor(ClassificationPredictor, Preprocessor)
 
     def get_all_task(self):
         """

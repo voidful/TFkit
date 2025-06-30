@@ -1,40 +1,30 @@
-import os
-import sys
-
-from tfkit.utility.predictor import QuestionAnsweringPredictor
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
 import torch
 import torch.nn as nn
 from torch.nn.functional import softmax
+
 from tfkit.task.qa.preprocessor import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.constants import DEFAULT_MAXLEN, DEFAULT_DROPOUT
+from tfkit.utility.predictor import QuestionAnsweringPredictor
 
 
-class Model(nn.Module):
+class Model(BaseTFKitModel):
+    """Question Answering model for extractive QA tasks."""
 
-    def __init__(self, tokenizer, pretrained, maxlen=128, dropout=0.1, **kwargs):
-        super().__init__()
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
-        self.maxlen = maxlen
-
+    def __init__(self, tokenizer, pretrained, maxlen: int = DEFAULT_MAXLEN, 
+                 dropout: float = DEFAULT_DROPOUT, **kwargs):
+        # QA models typically use smaller max length
+        if maxlen == DEFAULT_MAXLEN:
+            maxlen = 128
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        
         self.dropout = nn.Dropout(dropout)
         self.loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
-        # self.loss_fct = FocalLoss(ignore_index=-1)
-        # self.loss_fct = GWLoss()
-
-        self.pretrained = self.pretrained
-        self.qa_classifier = nn.Linear(self.pretrained.config.hidden_size, 2)
-        self.loss_fct = self.loss_fct
-
-        predictor = QuestionAnsweringPredictor(self, Preprocessor)
-        self.predictor = predictor
-        self.predict = predictor.predict
+        self.qa_classifier = nn.Linear(self.get_hidden_size(), 2)
+        
+        self._setup_predictor(QuestionAnsweringPredictor, Preprocessor)
 
     def forward(self, batch_data, eval=False, **kwargs):
-        print("batch_data",batch_data)
         inputs = torch.as_tensor(batch_data['input'])
         masks = torch.as_tensor(batch_data['mask'])
         targets = torch.as_tensor(batch_data['target'])

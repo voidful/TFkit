@@ -1,40 +1,31 @@
-import os
-import sys
 from collections import Counter
+from typing import Dict, List, Any, Optional
 
 import torch
 from torch import nn
 from torch.nn.functional import softmax
 
 from tfkit.task.tag import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.constants import DEFAULT_MAXLEN
 from tfkit.utility.loss import FocalLoss
 from tfkit.utility.predictor import TaggingPredictor
 
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
 
-
-class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, tasks_detail, maxlen=512, dropout=0.2, **kwargs):
-        super().__init__()
-        self.initialize_components(tokenizer, pretrained, tasks_detail, maxlen, dropout)
-
-    def initialize_components(self, tokenizer, pretrained, tasks_detail, maxlen, dropout):
-        labels = list(tasks_detail.values())[0]
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
+class Model(BaseTFKitModel):
+    """Sequence tagging model for token classification tasks."""
+    
+    def __init__(self, tokenizer, pretrained, tasks_detail: Dict[str, List[str]], 
+                 maxlen: int = DEFAULT_MAXLEN, dropout: float = 0.2, **kwargs):
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        
+        # Initialize tagging-specific components
+        self.labels = list(tasks_detail.values())[0]
         self.dropout = nn.Dropout(dropout)
-        self.tagger = nn.Linear(self.pretrained.config.hidden_size, len(labels))
-        self.labels = labels
-        self.maxlen = maxlen
+        self.tagger = nn.Linear(self.get_hidden_size(), len(self.labels))
         self.loss_fct = FocalLoss()
-
-        self.pretrained = self.pretrained
-        self.loss_fct = self.loss_fct
-
-        predictor = TaggingPredictor(self, Preprocessor)
-        self.predictor = predictor
-        self.predict = predictor.predict
+        
+        self._setup_predictor(TaggingPredictor, Preprocessor)
 
     def forward(self, batch_data, eval=False, separator=" ", **kwargs):
         inputs = batch_data["input"]

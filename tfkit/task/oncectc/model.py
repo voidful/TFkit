@@ -1,39 +1,36 @@
-import sys
-import os
 from collections import defaultdict
 
-from tfkit.task.once import Preprocessor
-from tfkit.utility.predictor import NonAutoRegressivePredictor
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
+import torch
+from torch import nn
 from torch.nn.functional import softmax
+
+from tfkit.task.once import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.constants import BLANK_TOKEN
 from tfkit.utility.loss import *
-from tfkit.utility.tok import *
 from tfkit.utility.loss import SeqCTCLoss
+from tfkit.utility.predictor import NonAutoRegressivePredictor
+from tfkit.utility.tok import *
 
 
-class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, tasks_detail=None):
-        super().__init__()
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
-        self.maxlen = maxlen
-        self.blank_token = "<BLANK>"
+class Model(BaseTFKitModel):
+    """Once generation model with CTC loss for non-autoregressive text generation."""
+    
+    def __init__(self, tokenizer, pretrained, maxlen=512, tasks_detail=None, **kwargs):
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        
+        # Setup CTC-specific components
+        self.blank_token = BLANK_TOKEN
         self.tokenizer.add_tokens(self.blank_token)
         self.pretrained.resize_token_embeddings(len(tokenizer))
         self.blank_index = self.tokenizer.convert_tokens_to_ids([self.blank_token])[0]
         self.loss = SeqCTCLoss(blank_index=self.blank_index)
+        
+        # Update vocab size after adding tokens
         self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
-        predictor = NonAutoRegressivePredictor(self, Preprocessor)
-        self.predictor = predictor
-        self.predict = predictor.predict
-
-    def clean_cache(self):
-        self.encoder_outputs = None
-        self.past_key_values = None
+        self.model = nn.Linear(self.get_hidden_size(), self.vocab_size)
+        
+        self._setup_predictor(NonAutoRegressivePredictor, Preprocessor)
 
     def forward(self, batch_data, eval=False, max_return=1, **kwargs):
         inputs = batch_data['input']

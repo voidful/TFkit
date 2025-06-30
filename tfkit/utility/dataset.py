@@ -7,6 +7,8 @@ import nlp2
 from torch.utils import data
 from tqdm.contrib.concurrent import process_map
 
+from tfkit.utility.constants import CACHE_EXTENSION
+
 try:
     from datasets import load_dataset
 except Exception:  # pragma: no cover - optional dependency
@@ -39,7 +41,7 @@ def get_dataset(file_path, task_class, tokenizer, parameter):
 
 class TFKitDataset(data.Dataset):
     def __init__(self, fpath, tokenizer, preprocessor, preprocessing_arg={}):
-        cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + ".cache"
+        cache_path = fpath + "_" + tokenizer.name_or_path.replace("/", "_") + CACHE_EXTENSION
         self.task_dict = {}
         self.preprocessor = preprocessor(tokenizer, kwargs=preprocessing_arg)
         self.tokenizer = tokenizer

@@ -1,32 +1,37 @@
 import copy
+from typing import Optional, Tuple
 
 import torch
 from torch import nn
 from torch.nn.functional import softmax
-from transformers import AutoModel
 import torch.nn.functional as F
+from transformers import AutoModel
+
 from tfkit.task.seq2seq import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.constants import DEFAULT_MAXLEN
 from tfkit.utility.loss import NegativeCElLoss, SelfKDLoss
 from tfkit.utility.model import tie_encoder_decoder_weights
 from tfkit.utility.predictor import AutoRegressivePredictor
 
 
-class Model(nn.Module):
-    def __init__(self, tokenizer, pretrained, maxlen=512, selfkd=False, **kwargs):
-        super().__init__()
-        self.maxlen = maxlen
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
+class Model(BaseTFKitModel):
+    """Sequence-to-sequence model for text generation tasks."""
+    
+    def __init__(self, tokenizer, pretrained, maxlen: int = DEFAULT_MAXLEN, 
+                 selfkd: bool = False, **kwargs):
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        
         self.selfkd = selfkd
-        self.decoder_model, init_weight = self.initialize_decoder()
-        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(self.decoder_hidden_size, self.vocab_size, bias=False)
+        self.decoder_model, init_weight = self._initialize_decoder()
+        self.model = nn.Linear(self.decoder_hidden_size, self.get_vocab_size(), bias=False)
         if init_weight is not None:
             self.model.weight = init_weight
-        self.predictor = AutoRegressivePredictor(self, Preprocessor)
-        self.predict = self.predictor.predict
+            
+        self._setup_predictor(AutoRegressivePredictor, Preprocessor)
 
-    def initialize_decoder(self):
+    def _initialize_decoder(self) -> Tuple[Optional[nn.Module], Optional[torch.Tensor]]:
+        """Initialize decoder model and return initial weights if available."""
         init_weight = None
 
         if hasattr(self.pretrained, 'decoder'):

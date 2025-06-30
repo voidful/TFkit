@@ -1,32 +1,19 @@
-import os
-import sys
-
-from tfkit.task.clm import Preprocessor
-from tfkit.utility.predictor import AutoRegressivePredictor
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.abspath(os.path.join(dir_path, os.pardir)))
-
 import torch
 from torch import nn
 from torch.nn.functional import softmax
 
+from tfkit.task.clm import Preprocessor
+from tfkit.utility.base_model import BaseTFKitModel
+from tfkit.utility.predictor import AutoRegressivePredictor
 
-class Model(nn.Module):
+
+class Model(BaseTFKitModel):
+    """Causal Language Model for text generation."""
+    
     def __init__(self, tokenizer, pretrained, maxlen=512, **kwargs):
-        super().__init__()
-        self.tokenizer = tokenizer
-        self.pretrained = pretrained
-        self.vocab_size = max(self.pretrained.config.vocab_size, self.tokenizer.__len__())
-        self.model = nn.Linear(self.pretrained.config.hidden_size, self.vocab_size)
-        self.maxlen = maxlen
-        predictor = AutoRegressivePredictor(self, Preprocessor)
-        self.predictor = predictor
-        self.predict = predictor.predict
-
-    def clean_cache(self):
-        self.encoder_outputs = None
-        self.past_key_values = None
+        super().__init__(tokenizer, pretrained, maxlen, **kwargs)
+        self.model = nn.Linear(self.get_hidden_size(), self.get_vocab_size())
+        self._setup_predictor(AutoRegressivePredictor, Preprocessor)
 
     def forward(self, batch_data, eval=False, beamsearch=False, max_return=1, **kwargs):
         inputs = batch_data['input']

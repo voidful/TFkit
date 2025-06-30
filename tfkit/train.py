@@ -10,58 +10,88 @@ import nlp2
 import torch
 from accelerate import Accelerator
 from torch.utils import data
-from tqdm.auto import tqdm
-from transformers import get_linear_schedule_with_warmup
 
 import tfkit
 import tfkit.utility.tok as tok
+from tfkit.utility.constants import (
+    DEFAULT_BATCH_SIZE, DEFAULT_LEARNING_RATE, DEFAULT_EPOCHS, DEFAULT_MAXLEN,
+    DEFAULT_SEED, DEFAULT_WORKER_COUNT, DEFAULT_GRADIENT_ACCUMULATION,
+    DEFAULT_CHECKPOINT_DIR, DEFAULT_PRETRAINED_MODEL,
+    ENV_TOKENIZERS_PARALLELISM, ENV_OMP_NUM_THREADS
+)
 from tfkit.utility.data_loader import dataloader_collate
 from tfkit.utility.dataset import get_dataset
 from tfkit.utility.logger import Logger
-from tfkit.utility.model import load_model_class, save_model, load_pretrained_tokenizer, load_pretrained_model, \
-    resize_pretrain_tok
+from tfkit.utility.config import ConfigManager
+from tfkit.utility.model import (
+    load_model_class, save_model, load_pretrained_tokenizer, 
+    load_pretrained_model, resize_pretrain_tok
+)
+from tfkit.utility.training_utils import TrainingManager
 
 transformers_logger = logging.getLogger('transformers')
 transformers_logger.setLevel(logging.CRITICAL)
 
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
-os.environ["OMP_NUM_THREADS"] = "1"
+os.environ[ENV_TOKENIZERS_PARALLELISM] = "false"
+os.environ[ENV_OMP_NUM_THREADS] = "1"
 
 
 def parse_train_args(args):
-    parser = argparse.ArgumentParser()
+    """Parse command line arguments for training."""
+    parser = argparse.ArgumentParser(description="Train TFKit models")
     exceed_mode = nlp2.function_get_all_arg_with_value(tok.handle_exceed)['mode']
-    parser.add_argument("--batch", type=int, default=20, help="batch size, default 20")
-    parser.add_argument("--lr", type=float, nargs='+', default=[5e-5], help="learning rate, default 5e-5")
-    parser.add_argument("--epoch", type=int, default=10, help="epoch, default 10")
-    parser.add_argument("--maxlen", type=int, default=0, help="max tokenized sequence length, default task max len")
+    
+    # Training parameters
+    parser.add_argument("--batch", type=int, default=DEFAULT_BATCH_SIZE, 
+                       help=f"batch size, default {DEFAULT_BATCH_SIZE}")
+    parser.add_argument("--lr", type=float, nargs='+', default=[DEFAULT_LEARNING_RATE], 
+                       help=f"learning rate, default {DEFAULT_LEARNING_RATE}")
+    parser.add_argument("--epoch", type=int, default=DEFAULT_EPOCHS, 
+                       help=f"epoch, default {DEFAULT_EPOCHS}")
+    parser.add_argument("--maxlen", type=int, default=0, 
+                       help="max tokenized sequence length, default task max len")
     parser.add_argument("--handle_exceed", choices=exceed_mode,
-                        help='select ways to handle input exceed max length')
-    parser.add_argument("--savedir", type=str, default="checkpoints/", help="task saving dir, default /checkpoints")
-    parser.add_argument("--add_tokens_freq", type=int, default=0,
-                        help="auto add freq >= x UNK token to word table")
-    parser.add_argument("--add_tokens_file", type=str,
-                        help="add token from a list file")
-    parser.add_argument("--add_tokens_config", type=str,
-                        help="add token from tokenizer config")
+                       help='select ways to handle input exceed max length')
+    parser.add_argument("--grad_accum", type=int, default=DEFAULT_GRADIENT_ACCUMULATION, 
+                       help=f"gradient accumulation, default {DEFAULT_GRADIENT_ACCUMULATION}")
+    
+    # Model and data parameters
+    parser.add_argument("--config", type=str, default=DEFAULT_PRETRAINED_MODEL, required=True,
+                       help='pretrained model config (e.g., bert-base-multilingual-cased)')
+    parser.add_argument("--tok_config", type=str, help='tokenizer config')
+    parser.add_argument("--task", type=str, required=True, nargs='+',
+                       choices=tfkit.utility.model.list_all_model(), help="task type")
+    parser.add_argument("--tag", type=str, nargs='+', help="tag to identify task in multi-task")
+    
+    # Data paths
     parser.add_argument("--train", type=str, nargs='+', required=True, help="train dataset path")
     parser.add_argument("--test", type=str, nargs='+', required=True, help="test dataset path")
+    parser.add_argument("--savedir", type=str, default=DEFAULT_CHECKPOINT_DIR, 
+                       help=f"task saving dir, default {DEFAULT_CHECKPOINT_DIR}")
+    
+    # Token handling
+    parser.add_argument("--add_tokens_freq", type=int, default=0,
+                       help="auto add freq >= x UNK token to word table")
+    parser.add_argument("--add_tokens_file", type=str, help="add token from a list file")
+    parser.add_argument("--add_tokens_config", type=str, help="add token from tokenizer config")
+    
+    # System parameters
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED, 
+                       help=f"random seed, default {DEFAULT_SEED}")
+    parser.add_argument("--worker", type=int, default=DEFAULT_WORKER_COUNT, 
+                       help=f"number of worker on pre-processing, default {DEFAULT_WORKER_COUNT}")
+    
+    # Options
     parser.add_argument("--no_eval", action='store_true', help="not running evaluation")
-    parser.add_argument("--task", type=str, required=True, nargs='+',
-                        choices=tfkit.utility.model.list_all_model(), help="task task")
-    parser.add_argument("--tag", type=str, nargs='+', help="tag to identity task in multi-task")
-    parser.add_argument("--config", type=str, default='bert-base-multilingual-cased', required=True,
-                        help='distilbert-base-multilingual-cased|voidful/albert_chinese_small')
-    parser.add_argument("--tok_config", type=str,
-                        help='tokenizer config')
-    parser.add_argument("--seed", type=int, default=609, help="random seed, default 609")
-    parser.add_argument("--worker", type=int, default=8, help="number of worker on pre-processing, default 8")
-    parser.add_argument("--grad_accum", type=int, default=1, help="gradient accumulation, default 1")
     parser.add_argument('--tensorboard', action='store_true', help='Turn on tensorboard graphing')
     parser.add_argument('--wandb', action='store_true', help='Turn on wandb with project name')
     parser.add_argument("--resume", help='resume training')
     parser.add_argument("--cache", action='store_true', help='cache training data')
     parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
+    
+    # Configuration file support
+    parser.add_argument("--config_file", type=str, help="path to configuration file (YAML or JSON)")
+    parser.add_argument("--save_config", type=str, help="save current configuration to file")
 
     input_arg, model_arg = parser.parse_known_args(args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
@@ -70,94 +100,8 @@ def parse_train_args(args):
     return input_arg, model_arg
 
 
-def optimizer(model, lr, total_step):
-    optim = torch.optim.AdamW(model.parameters(), lr=lr)
-    scheduler = get_linear_schedule_with_warmup(optim, num_warmup_steps=int(total_step * 0.05),
-                                                num_training_steps=total_step)
-    return [optim, scheduler]
-
-
-def model_train(models_list, dataloaders, models_tag, input_arg, epoch, logger, accelerator, fname, add_tokens):
-    optims_schs = []
-    models = []
-    total_iter = 0
-    t_loss = 0
-    end = False
-    total_iter_length = len(dataloaders[0])
-    pbar = tqdm(total=total_iter_length)
-
-    data_iters = []
-    for i, (model, dataloader) in enumerate(zip(models_list, dataloaders)):
-        if not accelerator.state.backend:
-            model = torch.nn.DataParallel(model)
-        model.train()
-        optim = optimizer(model, input_arg.get('lr')[i] if i < len(input_arg.get('lr')) else input_arg.get('lr')[0],
-                          total_iter_length)
-        model, optim, dataloader = accelerator.prepare(model, optim, dataloader)
-        optims_schs.append(optim)
-        models.append(model)
-        data_iters.append(iter(dataloader))
-
-    while not end:
-        for (model, optim_sch, mtag, train_batch) in zip(models, optims_schs, models_tag, data_iters):
-            optim = optim_sch[0]
-            scheduler = optim_sch[1]
-            train_batch = next(train_batch, None)
-            if train_batch is not None:
-                loss = model(train_batch)
-                loss = loss / input_arg.get('grad_accum')
-                accelerator.backward(loss.mean())
-                if (total_iter + 1) % input_arg.get('grad_accum') == 0:
-                    optim.step()
-                    model.zero_grad()
-                    scheduler.step()
-                t_loss += loss.mean().detach()
-                logger.write_metric("loss/step", loss.mean().detach(), epoch)
-                if total_iter % 100 == 0 and total_iter != 0:  # monitoring
-                    logger.write_log(
-                        f"epoch: {epoch}, tag: {mtag}, task: {model.__class__.__name__}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total:{total_iter_length}")
-                if total_iter % 50000 == 0 and total_iter != 0:  # cache
-                    save_model(models, input_arg, models_tag, epoch,
-                               f"{fname}_epoch_{epoch}_iter_{total_iter}", logger,
-                               add_tokens=add_tokens,
-                               accelerator=accelerator)
-            else:
-                end = True
-        pbar.update(1)
-        total_iter += 1
-    pbar.close()
-    logger.write_log(
-        f"epoch: {epoch}, step: {total_iter}, loss: {t_loss / total_iter if total_iter > 0 else 0}, total: {total_iter}")
-    return t_loss / total_iter
-
-
-def model_eval(models, dataloaders, fname, input_arg, epoch, logger, accelerator):
-    t_loss = 0
-    t_length = 0
-    for m in models:
-        m.eval()
-    with torch.no_grad():
-        total_iter_length = len(dataloaders[0])
-        iters = [iter(accelerator.prepare(ds)) for ds in dataloaders]
-        end = False
-        pbar = tqdm(total=total_iter_length)
-        while not end:
-            for model, batch in zip(models, iters):
-                test_batch = next(batch, None)
-                if test_batch is not None:
-                    loss = model(test_batch)
-                    loss = loss / input_arg.get('grad_accum')
-                    t_loss += loss.mean().detach()
-                    t_length += 1
-                    pbar.update(1)
-                else:
-                    end = True
-        pbar.close()
-
-    avg_t_loss = t_loss / t_length if t_length > 0 else 0
-    logger.write_log(f"task: {fname}, Total Loss: {avg_t_loss}")
-    logger.write_metric("eval_loss/step", avg_t_loss, epoch)
-    return avg_t_loss
+# Training functions now handled by TrainingManager class
+# These functions have been moved to tfkit.utility.training_utils
 
 
 def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_arg):
@@ -194,6 +138,36 @@ def load_model_and_datas(tokenizer, pretrained, accelerator, model_arg, input_ar
 
 def main(arg=None):
     input_arg, model_arg = parse_train_args(sys.argv[1:]) if arg is None else parse_train_args(arg)
+    
+    # Handle configuration file
+    config_manager = None
+    if input_arg.get('config_file'):
+        config_manager = ConfigManager(input_arg['config_file'])
+        # Update configuration with command line arguments (CLI args override config file)
+        config_manager.update_from_args(input_arg, section='training')
+        # Get the final arguments from the configuration
+        input_arg = config_manager.get_training_args()
+        # Remove None values and convert to expected format
+        input_arg = {k: v for k, v in input_arg.items() if v is not None}
+    
+    # Save configuration if requested
+    if input_arg.get('save_config'):
+        if config_manager is None:
+            config_manager = ConfigManager()
+            config_manager.update_from_args(input_arg, section='training')
+        config_manager.save_config(input_arg['save_config'])
+        print(f"Configuration saved to {input_arg['save_config']}")
+    
+    # Validate configuration
+    if config_manager:
+        validation_errors = config_manager.validate_config()
+        if validation_errors:
+            print("Configuration validation errors:")
+            for error in validation_errors:
+                print(f"  - {error}")
+            print("Please fix the configuration and try again.")
+            return
+    
     accelerator = Accelerator()
     nlp2.get_dir_with_notexist_create(input_arg.get('savedir'))
     logger = Logger(savedir=input_arg.get('savedir'), tensorboard=input_arg.get('tensorboard', False),
@@ -285,6 +259,9 @@ def main(arg=None):
                 models[ind].load_state_dict(package['models'][tag_ind])
         start_epoch = int(package.get('epoch', 1)) + 1
 
+    # Initialize training manager
+    trainer = TrainingManager(accelerator, logger)
+    
     # train/eval loop
     logger.write_log("training batch : " + str(input_arg.get('batch') * input_arg.get('grad_accum')))
     for epoch in range(start_epoch, start_epoch + input_arg.get('epoch')):
@@ -293,20 +270,29 @@ def main(arg=None):
 
         logger.write_log(f"=========train at epoch={epoch}=========")
         try:
-            train_avg_loss = model_train(models, train_dataloaders, models_tag, input_arg, epoch, logger, accelerator,
-                                         fname, add_tokens)
+            # Prepare models and optimizers
+            prepared_models, optims_schs, data_iters, total_iter_length = trainer.prepare_models_and_optimizers(
+                models, train_dataloaders, input_arg
+            )
+            
+            # Train for one epoch
+            train_avg_loss = trainer.train_epoch(
+                prepared_models, optims_schs, data_iters, models_tag, 
+                input_arg, epoch, fname, add_tokens, total_iter_length
+            )
             logger.write_metric("train_loss/epoch", train_avg_loss, epoch)
         except KeyboardInterrupt:
-            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, add_tokens=add_tokens,
-                       accelerator=accelerator)
+            save_model(models, input_arg, models_tag, epoch, fname + "_interrupt", logger, 
+                      add_tokens=add_tokens, accelerator=accelerator)
             pass
 
         logger.write_log(f"=========save at epoch={epoch}=========")
-        save_model(models, input_arg, models_tag, epoch, fname, logger, add_tokens=add_tokens, accelerator=accelerator)
+        save_model(models, input_arg, models_tag, epoch, fname, logger, 
+                  add_tokens=add_tokens, accelerator=accelerator)
 
         if input_arg.get('no_eval') is False:
             logger.write_log(f"=========eval at epoch={epoch}=========")
-            eval_avg_loss = model_eval(models, test_dataloaders, fname, input_arg, epoch, logger, accelerator)
+            eval_avg_loss = trainer.evaluate_models(models, test_dataloaders, fname, input_arg, epoch)
             logger.write_metric("eval_loss/epoch", eval_avg_loss, epoch)
         logger.write_log(f"=== Epoch execution time: {timedelta(seconds=(time.time() - start_time))} ===")
 

@@ -9,6 +9,7 @@ import nlp2
 import torch
 from tqdm.auto import tqdm
 
+from tfkit.utility.constants import SUPPORTED_METRICS, MODEL_EXTENSION
 from tfkit.utility.eval_metric import EvalMetric
 from tfkit.utility.model import load_trained_model, load_predict_parameter
 
@@ -17,16 +18,23 @@ transformers_logger.setLevel(logging.CRITICAL)
 
 
 def parse_eval_args(args):
-    parser = argparse.ArgumentParser()
+    """Parse command line arguments for evaluation."""
+    parser = argparse.ArgumentParser(description="Evaluate TFKit models")
+    
+    # Model specification
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--model", nargs='+', type=str, help="evaluation model")
-    parser.add_argument("--config", type=str, help='pre-trained task path after add token')
-    parser.add_argument("--metric", required=True, type=str, choices=['emf1', 'nlg', 'clas', 'er'],
-                        help="evaluate metric")
-    parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluate data path")
-    parser.add_argument("--tag", type=str, help="evaluate task tag for select multi-task task")
-    parser.add_argument("--print", action='store_true', help="print each pair of evaluate data")
-    parser.add_argument("--panel", action='store_true', help="enable panel to input argument")
+    group.add_argument("--model", nargs='+', type=str, help="evaluation model path(s)")
+    parser.add_argument("--config", type=str, help='pre-trained model config path after adding tokens')
+    
+    # Evaluation parameters
+    parser.add_argument("--metric", required=True, type=str, choices=SUPPORTED_METRICS,
+                       help=f"evaluation metric: {', '.join(SUPPORTED_METRICS)}")
+    parser.add_argument("--valid", required=True, type=str, nargs='+', help="evaluation data path(s)")
+    parser.add_argument("--tag", type=str, help="evaluation task tag for multi-task model selection")
+    
+    # Output options
+    parser.add_argument("--print", action='store_true', help="print each pair of evaluation data")
+    parser.add_argument("--panel", action='store_true', help="enable interactive panel for argument input")
 
     input_arg, model_arg = parser.parse_known_args(args)
     input_arg = {k: v for k, v in vars(input_arg).items() if v is not None}
@@ -40,7 +48,7 @@ def main(arg=None):
         models_path = eval_arg.get('model', [])
 
         if nlp2.is_dir_exist(models_path[0]):
-            models = [f for f in nlp2.get_files_from_dir(models_path[0]) if f.endswith('.pt')]
+            models = [f for f in nlp2.get_files_from_dir(models_path[0]) if f.endswith(MODEL_EXTENSION)]
         else:
             models = models_path
 
