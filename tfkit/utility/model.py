@@ -1,13 +1,21 @@
 import copy
 import importlib
 import os
-from typing import List
+from typing import Iterable, List, Sequence
 
 import inquirer
 import nlp2
 import torch
 from torch import nn
-from transformers import AutoTokenizer, AutoModel
+from transformers import (
+    AutoConfig,
+    AutoModel,
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoTokenizer,
+)
+
+from tfkit.utility.constants import ENV_TRUST_REMOTE_CODE
 
 
 def list_all_model(ignore_list=[]):
@@ -29,15 +37,83 @@ def load_model_class(model_name):
     return importlib.import_module('.' + model_name, 'tfkit.task')
 
 
-def load_pretrained_model(pretrained_config, model_type):
-    pretrained = AutoModel.from_pretrained(pretrained_config)
-    if 'clm' in model_type:
-        pretrained.config.is_decoder = True
-    return pretrained
+def _should_trust_remote_code(explicit: bool | None = None) -> bool:
+    """Determine whether remote code should be trusted when loading models."""
+
+    if explicit is not None:
+        return explicit
+
+    env_value = os.getenv(ENV_TRUST_REMOTE_CODE, "1").strip().lower()
+    return env_value in {"1", "true", "yes", "on"}
 
 
-def load_pretrained_tokenizer(pretrained_config):
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_config)
+def _normalize_model_types(model_type: Iterable[str] | str | None) -> Sequence[str]:
+    """Normalize model type input into a sequence for easier processing."""
+
+    if model_type is None:
+        return ()
+    if isinstance(model_type, str):
+        return (model_type,)
+    return tuple(model_type)
+
+
+def _requires_seq2seq_model(tasks: Sequence[str], config) -> bool:
+    """Determine if a sequence-to-sequence model should be used."""
+
+    if getattr(config, "is_encoder_decoder", False):
+        return True
+    return any(task in {"seq2seq"} for task in tasks)
+
+
+def _requires_causal_model(tasks: Sequence[str], config) -> bool:
+    """Determine if a causal language model should be used."""
+
+    if any(task in {"clm"} for task in tasks):
+        return True
+    architectures = getattr(config, "architectures", []) or []
+    return any("ForCausalLM" in arch for arch in architectures)
+
+
+def load_pretrained_model(pretrained_config, model_type, trust_remote_code: bool | None = None):
+    """Load a pretrained model compatible with the requested tasks."""
+
+    trust_remote = _should_trust_remote_code(trust_remote_code)
+    tasks = _normalize_model_types(model_type)
+    config = AutoConfig.from_pretrained(pretrained_config, trust_remote_code=trust_remote)
+
+    if _requires_seq2seq_model(tasks, config):
+        try:
+            return AutoModelForSeq2SeqLM.from_pretrained(
+                pretrained_config,
+                config=config,
+                trust_remote_code=trust_remote,
+            )
+        except (ValueError, OSError):
+            pass
+
+    if _requires_causal_model(tasks, config):
+        try:
+            return AutoModelForCausalLM.from_pretrained(
+                pretrained_config,
+                config=config,
+                trust_remote_code=trust_remote,
+            )
+        except (ValueError, OSError):
+            # Fall back to encoder model when causal head is unavailable
+            config.is_decoder = True
+
+    return AutoModel.from_pretrained(
+        pretrained_config,
+        config=config,
+        trust_remote_code=trust_remote,
+    )
+
+
+def load_pretrained_tokenizer(pretrained_config, trust_remote_code: bool | None = None):
+    tokenizer = AutoTokenizer.from_pretrained(
+        pretrained_config,
+        trust_remote_code=_should_trust_remote_code(trust_remote_code),
+    )
     return tokenizer
 
 
@@ -48,6 +124,9 @@ def resize_pretrain_tok(pretrained, tokenizer):
 
 
 def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens, sample_init=False):
+    if not add_tokens:
+        return pretrained, tokenizer
+
     origin_vocab_size = tokenizer.vocab_size
     print("===ADD TOKEN===")
     num_added_toks = tokenizer.add_tokens(add_tokens)
@@ -63,7 +142,7 @@ def add_tokens_to_pretrain(pretrained, tokenizer, add_tokens, sample_init=False)
     return pretrained, tokenizer
 
 
-def load_trained_model(model_path, pretrained_config=None, tag=None):
+def load_trained_model(model_path, pretrained_config=None, tag=None, trust_remote_code: bool | None = None):
     """loading saved task"""
 
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -96,8 +175,9 @@ def load_trained_model(model_path, pretrained_config=None, tag=None):
     type = model_types[type_ind]
     add_tokens = torchpack['add_tokens'] if 'add_tokens' in torchpack else None
     # load task
-    tokenizer = AutoTokenizer.from_pretrained(config)
-    pretrained = AutoModel.from_pretrained(config)
+    trust_remote = _should_trust_remote_code(trust_remote_code)
+    tokenizer = load_pretrained_tokenizer(config, trust_remote_code=trust_remote)
+    pretrained = load_pretrained_model(config, type, trust_remote_code=trust_remote)
 
     pretrained, tokenizer = add_tokens_to_pretrain(pretrained, tokenizer, add_tokens)
 

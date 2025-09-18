@@ -24,11 +24,25 @@ class Model(BaseTFKitModel):
         
         self.selfkd = selfkd
         self.decoder_model, init_weight = self._initialize_decoder()
-        self.model = nn.Linear(self.decoder_hidden_size, self.get_vocab_size(), bias=False)
-        if init_weight is not None:
-            self.model.weight = init_weight
-            
+        self.model = self._resolve_output_projection()
+
+        if self.model is None:
+            self.model = nn.Linear(self.decoder_hidden_size, self.get_vocab_size(), bias=False)
+            if init_weight is not None:
+                self.model.weight = init_weight
+
         self._setup_predictor(AutoRegressivePredictor, Preprocessor)
+
+    def _resolve_output_projection(self):
+        """Return the pretrained output head when available."""
+
+        if hasattr(self.pretrained, "get_output_embeddings"):
+            output_embeddings = self.pretrained.get_output_embeddings()
+            if output_embeddings is not None:
+                return output_embeddings
+        if hasattr(self.pretrained, "lm_head"):
+            return self.pretrained.lm_head
+        return None
 
     def _initialize_decoder(self) -> Tuple[Optional[nn.Module], Optional[torch.Tensor]]:
         """Initialize decoder model and return initial weights if available."""
@@ -55,7 +69,7 @@ class Model(BaseTFKitModel):
         else:
             prediction_output, prediction_all_hidden = self.encoder_forward(batch_data, eval, beamsearch)
 
-        prediction_scores = self.model(prediction_output)
+        prediction_scores = self._project_to_vocab(prediction_output)
 
         if eval:
             outputs = self.process_eval_output(prediction_scores, max_return)
@@ -128,7 +142,7 @@ class Model(BaseTFKitModel):
         if self.selfkd:
             selfkdloss_fct = SelfKDLoss(ignore_index=-1)
             for decoder_hidden in prediction_all_hidden[:-1]:
-                student = self.model(decoder_hidden)
+                student = self._project_to_vocab(decoder_hidden)
                 lm_loss += selfkdloss_fct(student.view(-1, self.vocab_size),
                                           prediction_scores.view(-1, self.vocab_size), loss_tensors.view(-1))
 
@@ -152,3 +166,6 @@ class Model(BaseTFKitModel):
             lm_loss += negative_loss
 
         return lm_loss
+
+    def _project_to_vocab(self, hidden_states):
+        return self.model(hidden_states)

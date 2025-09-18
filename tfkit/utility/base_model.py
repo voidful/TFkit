@@ -85,4 +85,4 @@ class BaseTFKitModel(nn.Module, ABC):
         Returns:
             Vocabulary size
         """
-        return self.vocab_size 
+        return self.vocab_size
